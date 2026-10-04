@@ -1,0 +1,133 @@
+import streamlit as st
+import paho.mqtt.client as mqtt
+import json
+import time
+import os
+
+st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
+
+@st.cache_resource
+def get_shared_data():
+    return {
+        "device_id": "MENUNGGU DATA...",
+        "operator": "-",
+        "shift": "-",
+        "status": "OFFLINE",
+        "target_qty": 0,
+        "progress_pct": 0,
+        "pos_x": 0.0,
+        "pos_y": 0.0,
+        "material_area_mm2": 0.0,
+        "duration_sec": 0.0,
+        "timestamp": "-",
+        "waste_pct": 100.0,
+        "logs": [],             
+        "last_log_ts": None     
+    }
+
+shared_data = get_shared_data()
+
+@st.cache_resource
+def start_mqtt():
+    def on_connect(client, userdata, flags, reason_code, properties):
+        client.subscribe("advantech/wise/visionest/telemetry")
+
+    def on_message(client, userdata, msg):
+        try:
+            payload = json.loads(msg.payload.decode('utf-8'))
+            
+            for key, value in payload.items():
+                if key not in ["logs", "last_log_ts"]:
+                    shared_data[key] = value
+            
+            if payload.get("status") == "CYCLE_COMPLETE":
+                ts = payload.get("timestamp")
+                if ts != shared_data["last_log_ts"]:
+                    shared_data["last_log_ts"] = ts
+                    entry = {
+                        "waktu": ts,
+                        "operator": payload.get("operator", "Unknown"),
+                        "shift": payload.get("shift", "Shift 1"),
+                        "pcs": payload.get("target_qty", 0),
+                        "area": payload.get("material_area_mm2", 0),
+                        "waste": payload.get("waste_pct", 100.0)
+                    }
+                    shared_data["logs"].insert(0, entry)
+        except Exception:
+            pass
+
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, "VISIONEST_WEB_DASHBOARD", transport="websockets")
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect("broker.hivemq.com", 8000, 60)
+    client.loop_start()
+    return client
+
+start_mqtt()
+data = shared_data
+
+# ==========================================
+# HEADER LOGO & TITLE
+# ==========================================
+col_title, col_logo1, col_logo2 = st.columns([6, 1, 1])
+
+with col_title:
+    st.title("🌐 VISIONEST - Production Enterprise Dashboard")
+
+with col_logo1:
+    if os.path.exists("pens_logo.png"):
+        st.image("pens_logo.png", width=70)
+
+with col_logo2:
+    if os.path.exists("advantech_logo.png"):
+        st.image("advantech_logo.png", width=120)
+
+st.markdown("---")
+
+# ==========================================
+# METRICS & STATUS
+# ==========================================
+col1, col2, col3 = st.columns(3)
+with col1:
+    st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
+with col2:
+    st.info(f"**👷 Operator Aktif:**\n### {data['operator']} | {data['shift']}")
+with col3:
+    stat = data['status']
+    if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS", "CYCLE_COMPLETE"]:
+        st.success(f"**🔄 Status:**\n### {stat}")
+    elif stat == "EMERGENCY_STOP_TRIGGERED":
+        st.error(f"**🚨 Status:**\n### {stat}")
+    else:
+        st.warning(f"**⏸️️ Status:**\n### {stat}")
+
+st.markdown("### 📊 Production Metrics")
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("🎯 Target Qty", f"{data['target_qty']} Pcs")
+m2.metric("⏱ Duration", f"{data['duration_sec']} Sec")
+m3.metric("✂️ Material Area", f"{data['material_area_mm2']} mm²")
+m4.metric("📈 Progress", f"{data['progress_pct']} %")
+st.progress(data['progress_pct'] / 100)
+
+st.markdown("---")
+
+# ==========================================
+# LOGGER BAWAH
+# ==========================================
+st.markdown("### 📝 Daily Production Logs & Material Waste")
+
+if not data["logs"]:
+    st.info("Belum ada riwayat pemotongan. Silakan jalankan mesin terlebih dahulu.")
+else:
+    for i, log in enumerate(data["logs"]):
+        with st.expander(f"✅ Pemotongan Selesai - {log['waktu']} (Oleh: {log['operator']} | {log['shift']})", expanded=(i==0)):
+            st.markdown(f"""
+            - **Total Pola (Qty):** {log['pcs']} Pcs
+            - **Luas Lembaran Kain:** {log['area']} mm²
+            - **Kain Terbuang (Scrap):** `{log['waste']:.1f}%`
+            """)
+
+st.caption(f"⏱️ Terakhir update: **{data['timestamp']}** | *Auto-refresh aktif*")
+
+time.sleep(1)
+st.rerun()
