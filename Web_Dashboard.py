@@ -98,18 +98,17 @@ start_mqtt()
 data = shared_data
 
 # ==========================================
-# HEADER LOGO & TITLE
+# HEADER LOGO & TITLE (MENGGUNAKAN 1 LOGO GABUNGAN)
 # ==========================================
-# Proporsi kolom diratakan agar ukuran logo seragam
-col_title, col_logo1, col_logo2, col_logo3 = st.columns([5.5, 1.5, 1.5, 1.5])
+col_title, col_logo = st.columns([7, 3])
 with col_title:
     st.title("🌐 VISIONEST - Production Enterprise Dashboard")
-with col_logo1:
-    if os.path.exists("advantech_logo.png"): st.image("advantech_logo.png", width=90)
-with col_logo2:
-    if os.path.exists("efortech_logo.png"): st.image("efortech_logo.png", width=90)
-with col_logo3:
-    if os.path.exists("pens_logo.png"): st.image("pens_logo.png", width=90)
+with col_logo:
+    # Memuat 1 file gambar yang isinya 3 logo berjejer
+    if os.path.exists("logo_pens_kanan.png"): 
+        st.image("logo_pens_kanan.png", use_container_width=True)
+    else:
+        st.write("[EFORTECH - ADVANTECH - PENS]")
 st.markdown("---")
 
 # ==========================================
