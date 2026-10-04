@@ -102,7 +102,7 @@ data = shared_data
 # ==========================================
 col_title, col_logo = st.columns([7, 3])
 with col_title:
-    st.title("🌐 VISIONEST - Production Enterprise Dashboard")
+    st.title("🌐 VISIONEST - by DEMIURGEN")
 with col_logo:
     # Memuat 1 file gambar yang isinya 3 logo berjejer
     if os.path.exists("logo_pens_kanan.png"): 
