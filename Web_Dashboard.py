@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
+# --- SISTEM DATABASE LOCAL UNTUK WEB ---
 DB_FILE = "visionest_logs.json"
 
 def load_db():
@@ -37,10 +38,10 @@ def get_shared_data():
         "progress_pct": 0,
         "pos_x": 0.0,
         "pos_y": 0.0,
-        "mat_p": 0.0,          # Diubah jadi Panjang
-        "mat_l": 0.0,          # Diubah jadi Lebar
-        "shape_name": "-",     # Nama Pola
-        "shape_poly": [],      # Koordinat Pola
+        "mat_p": 0.0,          
+        "mat_l": 0.0,          
+        "shape_name": "-",     
+        "shape_poly": [],      
         "duration_sec": 0.0,
         "timestamp": "-",
         "waste_pct": 100.0,
@@ -76,9 +77,12 @@ def start_mqtt():
                         "pcs": payload.get("target_qty", 0),
                         "ukuran": f"{payload.get('mat_p', 0)} x {payload.get('mat_l', 0)}",
                         "bentuk": payload.get("shape_name", "-"),
-                        "waste": payload.get("waste_pct", 100.0)
+                        "waste": payload.get("waste_pct", 100.0),
+                        "shape_poly": payload.get("shape_poly", []) # Simpan koordinat pola ke log
                     }
                     shared_data["logs"].insert(0, entry)
+                    
+                    # SIMPAN PERMANEN
                     save_db(shared_data["logs"], ts)
         except Exception:
             pass
@@ -133,7 +137,6 @@ st.markdown("### 📊 Live Telemetry")
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("🎯 Target Qty", f"{data['target_qty']} Pcs")
 m2.metric("⏱ Duration", f"{data['duration_sec']} Sec")
-# UBAH TAMPILAN JADI PxL
 m3.metric("📏 Material (P x L)", f"{data['mat_p']} x {data['mat_l']} mm") 
 m4.metric("📈 Progress", f"{data['progress_pct']} %")
 
@@ -142,14 +145,13 @@ prog_val = max(0.0, min(1.0, prog_val))
 st.progress(prog_val)
 
 # ==========================================
-# VISUALISASI BENTUK POLA KERJA (NEW)
+# VISUALISASI BENTUK POLA KERJA (REAL-TIME)
 # ==========================================
 if data["shape_poly"] and data["status"] != "SYSTEM_READY":
-    col_v1, col_v2, col_v3 = st.columns([1, 2, 1]) # Posisi di tengah
+    col_v1, col_v2, col_v3 = st.columns([1, 2, 1]) 
     with col_v2:
         st.markdown(f"<p style='text-align: center; color: #94a3b8;'><b>Preview Benda Kerja:</b> {data['shape_name']}</p>", unsafe_allow_html=True)
         
-        # Ekstrak titik X dan Y dari array polygon
         xs = [p[0] for p in data["shape_poly"]] + [data["shape_poly"][0][0]]
         ys = [p[1] for p in data["shape_poly"]] + [data["shape_poly"][0][1]]
         
@@ -159,12 +161,12 @@ if data["shape_poly"] and data["status"] != "SYSTEM_READY":
             name=data["shape_name"],
             mode='lines',
             line=dict(color='#0ea5e9', width=3),
-            fillcolor='rgba(14, 165, 233, 0.3)' # Warna Biru Keren
+            fillcolor='rgba(14, 165, 233, 0.3)' 
         ))
         
         fig_shape.update_layout(
             xaxis=dict(visible=False),
-            yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), # Bikin presisi ukurannya ga gepeng
+            yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), 
             margin=dict(t=10, b=10, l=10, r=10),
             height=200,
             paper_bgcolor='rgba(0,0,0,0)',
@@ -237,7 +239,7 @@ else:
 st.markdown("---")
 
 # ==========================================
-# LOGGER BAWAH
+# LOGGER BAWAH (DILENGKAPI HISTORICAL PREVIEW)
 # ==========================================
 col_log_1, col_log_2 = st.columns([8, 2])
 with col_log_1:
@@ -254,12 +256,40 @@ if not data["logs"]:
 else:
     for i, log in enumerate(data["logs"]):
         with st.expander(f"✅ Pemotongan Selesai - {log['waktu']} (Oleh: {log['operator']} | {log['shift']})", expanded=(i==0)):
+            
+            # Tampilkan metrik tekstual
             st.markdown(f"""
             - **Total Pola (Qty):** {log['pcs']} Pcs
             - **Dimensi Material:** `{log['ukuran']} mm`
-            - **Bentuk Pola:** `{log['bentuk']}`
+            - **Bentuk Pola:** `{log.get('bentuk', '-')}`
             - **Kain Terbuang (Scrap):** `{log['waste']:.1f}%`
             """)
+            
+            # Render bentuk pola historis (Warna Hijau)
+            poly_data = log.get('shape_poly', [])
+            if poly_data:
+                st.markdown("**Preview Pola yang Dipotong:**")
+                xs = [p[0] for p in poly_data] + [poly_data[0][0]]
+                ys = [p[1] for p in poly_data] + [poly_data[0][1]]
+                
+                fig_hist = go.Figure()
+                fig_hist.add_trace(go.Scatter(
+                    x=xs, y=ys, fill='toself', 
+                    mode='lines',
+                    line=dict(color='#10b981', width=3),
+                    fillcolor='rgba(16, 185, 129, 0.3)' 
+                ))
+                
+                fig_hist.update_layout(
+                    xaxis=dict(visible=False),
+                    yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
+                    margin=dict(t=0, b=0, l=0, r=0),
+                    height=120,
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    showlegend=False
+                )
+                st.plotly_chart(fig_hist, use_container_width=True, key=f"hist_{i}")
 
 st.caption(f"⏱ Terakhir update: **{data['timestamp']}** | *Auto-refresh aktif (2s)*")
 
