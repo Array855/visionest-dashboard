@@ -10,7 +10,6 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
-# --- SISTEM DATABASE LOCAL UNTUK WEB ---
 DB_FILE = "visionest_logs.json"
 
 def load_db():
@@ -38,7 +37,10 @@ def get_shared_data():
         "progress_pct": 0,
         "pos_x": 0.0,
         "pos_y": 0.0,
-        "material_area_mm2": 0.0,
+        "mat_p": 0.0,          # Diubah jadi Panjang
+        "mat_l": 0.0,          # Diubah jadi Lebar
+        "shape_name": "-",     # Nama Pola
+        "shape_poly": [],      # Koordinat Pola
         "duration_sec": 0.0,
         "timestamp": "-",
         "waste_pct": 100.0,
@@ -72,12 +74,11 @@ def start_mqtt():
                         "operator": payload.get("operator", "Unknown"),
                         "shift": payload.get("shift", "Shift 1"),
                         "pcs": payload.get("target_qty", 0),
-                        "area": payload.get("material_area_mm2", 0),
+                        "ukuran": f"{payload.get('mat_p', 0)} x {payload.get('mat_l', 0)}",
+                        "bentuk": payload.get("shape_name", "-"),
                         "waste": payload.get("waste_pct", 100.0)
                     }
                     shared_data["logs"].insert(0, entry)
-                    
-                    # SIMPAN PERMANEN
                     save_db(shared_data["logs"], ts)
         except Exception:
             pass
@@ -89,7 +90,6 @@ def start_mqtt():
     
     client.tls_set() 
     client.connect("broker.hivemq.com", 8884, 60)
-    
     client.loop_start()
     return client
 
@@ -100,18 +100,14 @@ data = shared_data
 # HEADER LOGO & TITLE
 # ==========================================
 col_title, col_logo1, col_logo2 = st.columns([6, 1, 1])
-
 with col_title:
     st.title("🌐 VISIONEST - Production Enterprise Dashboard")
-
 with col_logo1:
     if os.path.exists("pens_logo.png"):
         st.image("pens_logo.png", width=70)
-
 with col_logo2:
     if os.path.exists("advantech_logo.png"):
         st.image("advantech_logo.png", width=120)
-
 st.markdown("---")
 
 # ==========================================
@@ -137,12 +133,45 @@ st.markdown("### 📊 Live Telemetry")
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("🎯 Target Qty", f"{data['target_qty']} Pcs")
 m2.metric("⏱ Duration", f"{data['duration_sec']} Sec")
-m3.metric("✂️ Material Area", f"{data['material_area_mm2']} mm²")
+# UBAH TAMPILAN JADI PxL
+m3.metric("📏 Material (P x L)", f"{data['mat_p']} x {data['mat_l']} mm") 
 m4.metric("📈 Progress", f"{data['progress_pct']} %")
 
 prog_val = data['progress_pct'] / 100.0
 prog_val = max(0.0, min(1.0, prog_val))
 st.progress(prog_val)
+
+# ==========================================
+# VISUALISASI BENTUK POLA KERJA (NEW)
+# ==========================================
+if data["shape_poly"] and data["status"] != "SYSTEM_READY":
+    col_v1, col_v2, col_v3 = st.columns([1, 2, 1]) # Posisi di tengah
+    with col_v2:
+        st.markdown(f"<p style='text-align: center; color: #94a3b8;'><b>Preview Benda Kerja:</b> {data['shape_name']}</p>", unsafe_allow_html=True)
+        
+        # Ekstrak titik X dan Y dari array polygon
+        xs = [p[0] for p in data["shape_poly"]] + [data["shape_poly"][0][0]]
+        ys = [p[1] for p in data["shape_poly"]] + [data["shape_poly"][0][1]]
+        
+        fig_shape = go.Figure()
+        fig_shape.add_trace(go.Scatter(
+            x=xs, y=ys, fill='toself', 
+            name=data["shape_name"],
+            mode='lines',
+            line=dict(color='#0ea5e9', width=3),
+            fillcolor='rgba(14, 165, 233, 0.3)' # Warna Biru Keren
+        ))
+        
+        fig_shape.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), # Bikin presisi ukurannya ga gepeng
+            margin=dict(t=10, b=10, l=10, r=10),
+            height=200,
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            showlegend=False
+        )
+        st.plotly_chart(fig_shape, use_container_width=True)
 
 st.markdown("---")
 
@@ -155,13 +184,9 @@ if data["logs"]:
     df = pd.DataFrame(data["logs"])
     df = df.sort_values(by="waktu") 
     
-    # Trik layout [1, 2, 1] biar lebarnya 50% persis kayak kemaren tapi di tengah
     col_kiri, col_tengah, col_kanan = st.columns([1, 2, 1])
 
     with col_tengah:
-        # -----------------------------------------------------
-        # GRAFIK 1: MATERIAL USAGE (BERJEJER ADA JARAK)
-        # -----------------------------------------------------
         st.markdown("**1. Material Usage Efficiency (Historical Trend)**")
         
         df['Terpakai'] = 100.0 - df['waste']
@@ -174,7 +199,7 @@ if data["logs"]:
         
         fig_group.update_layout(
             barmode='group',
-            bargroupgap=0.1, # <-- Ini yang bikin ada jarak/spasi dikit antar batang
+            bargroupgap=0.1, 
             margin=dict(t=20, b=20, l=20, r=20),
             height=320,
             xaxis_title="Waktu Selesai",
@@ -186,11 +211,8 @@ if data["logs"]:
         )
         st.plotly_chart(fig_group, use_container_width=True)
 
-        st.markdown("<br>", unsafe_allow_html=True) # Jarak antara grafik 1 dan 2
+        st.markdown("<br>", unsafe_allow_html=True) 
 
-        # -----------------------------------------------------
-        # GRAFIK 2: PRODUCTION HISTORY
-        # -----------------------------------------------------
         st.markdown("**2. Production History (Pieces per Cycle)**")
         fig_bar = px.bar(
             df, x="waktu", y="pcs", color="shift",
@@ -234,7 +256,8 @@ else:
         with st.expander(f"✅ Pemotongan Selesai - {log['waktu']} (Oleh: {log['operator']} | {log['shift']})", expanded=(i==0)):
             st.markdown(f"""
             - **Total Pola (Qty):** {log['pcs']} Pcs
-            - **Luas Lembaran Kain:** {log['area']} mm²
+            - **Dimensi Material:** `{log['ukuran']} mm`
+            - **Bentuk Pola:** `{log['bentuk']}`
             - **Kain Terbuang (Scrap):** `{log['waste']:.1f}%`
             """)
 
