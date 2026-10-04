@@ -3,10 +3,10 @@ import paho.mqtt.client as mqtt
 import json
 import time
 import os
+import random
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
-# --- SISTEM DATABASE LOCAL UNTUK WEB ---
 DB_FILE = "visionest_logs.json"
 
 def load_db():
@@ -57,7 +57,6 @@ def start_mqtt():
                 if key not in ["logs", "last_log_ts"]:
                     shared_data[key] = value
             
-            # --- SOLUSI: PAKSA PROGRESS KE 100% KALAU UDAH BERES ---
             if payload.get("status") == "CYCLE_COMPLETE":
                 shared_data["progress_pct"] = 100
                 
@@ -73,47 +72,36 @@ def start_mqtt():
                         "waste": payload.get("waste_pct", 100.0)
                     }
                     shared_data["logs"].insert(0, entry)
-                    
-                    # SIMPAN PERMANEN KE DATABASE CLOUD
                     save_db(shared_data["logs"], ts)
         except Exception:
             pass
 
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, "VISIONEST_WEB_DASHBOARD", transport="websockets")
+    # FIX: Gunakan Client ID acak agar tidak bertabrakan dengan tab/perangkat lain
+    client_id = f"VISIONEST_WEB_{random.randint(10000, 99999)}"
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id, transport="websockets")
     client.on_connect = on_connect
     client.on_message = on_message
     
-    # Jalur Khusus Streamlit Cloud (WSS)
     client.tls_set() 
     client.connect("broker.hivemq.com", 8884, 60)
-    
     client.loop_start()
     return client
 
 start_mqtt()
 data = shared_data
 
-# ==========================================
-# HEADER LOGO & TITLE
-# ==========================================
 col_title, col_logo1, col_logo2 = st.columns([6, 1, 1])
-
 with col_title:
     st.title("🌐 VISIONEST - Production Enterprise Dashboard")
-
 with col_logo1:
     if os.path.exists("pens_logo.png"):
         st.image("pens_logo.png", width=70)
-
 with col_logo2:
     if os.path.exists("advantech_logo.png"):
         st.image("advantech_logo.png", width=120)
 
 st.markdown("---")
 
-# ==========================================
-# METRICS & STATUS
-# ==========================================
 col1, col2, col3 = st.columns(3)
 with col1:
     st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
@@ -135,17 +123,12 @@ m2.metric("⏱ Duration", f"{data['duration_sec']} Sec")
 m3.metric("✂️ Material Area", f"{data['material_area_mm2']} mm²")
 m4.metric("📈 Progress", f"{data['progress_pct']} %")
 
-# Pengaman tambahan biar grafik bar ga error kalo datanya ngaco
 prog_val = data['progress_pct'] / 100.0
 prog_val = max(0.0, min(1.0, prog_val))
 st.progress(prog_val)
 
 st.markdown("---")
 
-# ==========================================
-# LOGGER BAWAH
-# ==========================================
-# --- TOMBOL RESET LOGS WEB ---
 col_log_1, col_log_2 = st.columns([8, 2])
 with col_log_1:
     st.markdown("### 📝 Daily Production Logs & Material Waste")
@@ -169,5 +152,6 @@ else:
 
 st.caption(f"⏱️ Terakhir update: **{data['timestamp']}** | *Auto-refresh aktif*")
 
-time.sleep(1)
+# FIX: Kurangi beban refresh agar Streamlit Cloud tidak memutus eksekusi script
+time.sleep(2)
 st.rerun()
