@@ -10,7 +10,6 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
-# --- SISTEM DATABASE LOCAL UNTUK WEB ---
 DB_FILE = "visionest_logs.json"
 
 def load_db():
@@ -42,6 +41,7 @@ def get_shared_data():
         "mat_l": 0.0,          
         "shape_name": "-",     
         "shape_poly": [],      
+        "nested_polys": [],    # Variabel penampung layout
         "duration_sec": 0.0,
         "timestamp": "-",
         "waste_pct": 100.0,
@@ -59,14 +59,12 @@ def start_mqtt():
     def on_message(client, userdata, msg):
         try:
             payload = json.loads(msg.payload.decode('utf-8'))
-            
             for key, value in payload.items():
                 if key not in ["logs", "last_log_ts"]:
                     shared_data[key] = value
             
             if payload.get("status") == "CYCLE_COMPLETE":
                 shared_data["progress_pct"] = 100
-                
                 ts = payload.get("timestamp")
                 if ts != shared_data["last_log_ts"]:
                     shared_data["last_log_ts"] = ts
@@ -78,11 +76,10 @@ def start_mqtt():
                         "ukuran": f"{payload.get('mat_p', 0)} x {payload.get('mat_l', 0)}",
                         "bentuk": payload.get("shape_name", "-"),
                         "waste": payload.get("waste_pct", 100.0),
-                        "shape_poly": payload.get("shape_poly", []) # Simpan koordinat pola ke log
+                        "shape_poly": payload.get("shape_poly", []),
+                        "nested_polys": payload.get("nested_polys", []) # Simpan full layout ke log
                     }
                     shared_data["logs"].insert(0, entry)
-                    
-                    # SIMPAN PERMANEN
                     save_db(shared_data["logs"], ts)
         except Exception:
             pass
@@ -91,7 +88,6 @@ def start_mqtt():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id, transport="websockets")
     client.on_connect = on_connect
     client.on_message = on_message
-    
     client.tls_set() 
     client.connect("broker.hivemq.com", 8884, 60)
     client.loop_start()
@@ -101,35 +97,78 @@ start_mqtt()
 data = shared_data
 
 # ==========================================
+# FUNGSI UNTUK MUNCULIN JENDELA POP-UP (MODAL)
+# ==========================================
+@st.dialog("👁️ Digital Twin - Full Nesting Layout", width="large")
+def show_full_nesting_modal(log_data):
+    st.markdown(f"**Dimensi Material:** `{log_data['ukuran']}` | **Bentuk:** `{log_data.get('bentuk', '-')}` | **Total:** `{log_data['pcs']} Pcs`")
+    
+    mat_p, mat_l = 0, 0
+    try:
+        parts = log_data['ukuran'].split('x')
+        mat_p = float(parts[0].replace('mm', '').strip())
+        mat_l = float(parts[1].replace('mm', '').strip())
+    except:
+        pass
+        
+    fig_nest = go.Figure()
+    
+    # 1. Gambar Batas Kotak Material (Warna Merah)
+    if mat_p > 0 and mat_l > 0:
+        fig_nest.add_trace(go.Scatter(
+            x=[0, mat_p, mat_p, 0, 0], 
+            y=[0, 0, mat_l, mat_l, 0],
+            mode='lines',
+            line=dict(color='#ef4444', width=2),
+            name='Batas Material',
+            hoverinfo='skip'
+        ))
+        
+    # 2. Gambar Semua Pola yang Sudah Di-Nesting
+    nested = log_data.get('nested_polys', [])
+    for idx, poly in enumerate(nested):
+        xs = [p[0] for p in poly] + [poly[0][0]]
+        ys = [p[1] for p in poly] + [poly[0][1]]
+        fig_nest.add_trace(go.Scatter(
+            x=xs, y=ys, fill='toself', 
+            mode='lines',
+            line=dict(color='#eab308', width=1.5),
+            fillcolor='rgba(234, 179, 8, 0.4)', # Kuning Keemasan
+            name=f'Pcs {idx+1}'
+        ))
+        
+    fig_nest.update_layout(
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), # Biar ukurannya presisi (gak gepeng)
+        margin=dict(t=10, b=10, l=10, r=10),
+        height=450,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False
+    )
+    st.plotly_chart(fig_nest, use_container_width=True)
+
+# ==========================================
 # HEADER LOGO & TITLE
 # ==========================================
 col_title, col_logo1, col_logo2 = st.columns([6, 1, 1])
 with col_title:
     st.title("🌐 VISIONEST - Production Enterprise Dashboard")
 with col_logo1:
-    if os.path.exists("pens_logo.png"):
-        st.image("pens_logo.png", width=70)
+    if os.path.exists("pens_logo.png"): st.image("pens_logo.png", width=70)
 with col_logo2:
-    if os.path.exists("advantech_logo.png"):
-        st.image("advantech_logo.png", width=120)
+    if os.path.exists("advantech_logo.png"): st.image("advantech_logo.png", width=120)
 st.markdown("---")
 
-# ==========================================
-# METRICS & STATUS
-# ==========================================
 col1, col2, col3 = st.columns(3)
-with col1:
-    st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
-with col2:
-    st.info(f"**👷 Operator Aktif:**\n### {data['operator']} | {data['shift']}")
+with col1: st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
+with col2: st.info(f"**👷 Operator Aktif:**\n### {data['operator']} | {data['shift']}")
 with col3:
     stat = data['status']
     if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS", "CYCLE_COMPLETE"]:
         st.success(f"**🔄 Status:**\n### {stat}")
     elif stat == "EMERGENCY_STOP_TRIGGERED":
         st.error(f"**🚨 Status:**\n### {stat}")
-    elif stat == "SYSTEM_READY":
-        st.warning(f"**⏸ Status:**\n### {stat}")
     else:
         st.warning(f"**⏸ Status:**\n### {stat}")
 
@@ -139,113 +178,59 @@ m1.metric("🎯 Target Qty", f"{data['target_qty']} Pcs")
 m2.metric("⏱ Duration", f"{data['duration_sec']} Sec")
 m3.metric("📏 Material (P x L)", f"{data['mat_p']} x {data['mat_l']} mm") 
 m4.metric("📈 Progress", f"{data['progress_pct']} %")
+st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
 
-prog_val = data['progress_pct'] / 100.0
-prog_val = max(0.0, min(1.0, prog_val))
-st.progress(prog_val)
-
-# ==========================================
-# VISUALISASI BENTUK POLA KERJA (REAL-TIME)
-# ==========================================
 if data["shape_poly"] and data["status"] != "SYSTEM_READY":
     col_v1, col_v2, col_v3 = st.columns([1, 2, 1]) 
     with col_v2:
         st.markdown(f"<p style='text-align: center; color: #94a3b8;'><b>Preview Benda Kerja:</b> {data['shape_name']}</p>", unsafe_allow_html=True)
-        
         xs = [p[0] for p in data["shape_poly"]] + [data["shape_poly"][0][0]]
         ys = [p[1] for p in data["shape_poly"]] + [data["shape_poly"][0][1]]
-        
         fig_shape = go.Figure()
-        fig_shape.add_trace(go.Scatter(
-            x=xs, y=ys, fill='toself', 
-            name=data["shape_name"],
-            mode='lines',
-            line=dict(color='#0ea5e9', width=3),
-            fillcolor='rgba(14, 165, 233, 0.3)' 
-        ))
-        
-        fig_shape.update_layout(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), 
-            margin=dict(t=10, b=10, l=10, r=10),
-            height=200,
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            showlegend=False
-        )
+        fig_shape.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#0ea5e9', width=3), fillcolor='rgba(14, 165, 233, 0.3)'))
+        fig_shape.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=10, b=10, l=10, r=10), height=200, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
         st.plotly_chart(fig_shape, use_container_width=True)
 
 st.markdown("---")
 
 # ==========================================
-# EXECUTIVE ANALYTICS (ATAS BAWAH - CENTERED)
+# EXECUTIVE ANALYTICS
 # ==========================================
 st.markdown("### 📈 Executive Analytics")
-
 if data["logs"]:
     df = pd.DataFrame(data["logs"])
     df = df.sort_values(by="waktu") 
-    
     col_kiri, col_tengah, col_kanan = st.columns([1, 2, 1])
-
     with col_tengah:
         st.markdown("**1. Material Usage Efficiency (Historical Trend)**")
-        
         df['Terpakai'] = 100.0 - df['waste']
         df['Waste'] = df['waste']
-        
         fig_group = go.Figure(data=[
             go.Bar(name='Terpakai (Efektif)', x=df['waktu'], y=df['Terpakai'], marker_color='#10b981'),
             go.Bar(name='Sisa Kain (Waste)', x=df['waktu'], y=df['Waste'], marker_color='#ef4444')
         ])
-        
-        fig_group.update_layout(
-            barmode='group',
-            bargroupgap=0.1, 
-            margin=dict(t=20, b=20, l=20, r=20),
-            height=320,
-            xaxis_title="Waktu Selesai",
-            yaxis_title="Persentase Material (%)",
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
+        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='white'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_group, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True) 
 
         st.markdown("**2. Production History (Pieces per Cycle)**")
-        fig_bar = px.bar(
-            df, x="waktu", y="pcs", color="shift",
-            text="pcs",
-            color_discrete_sequence=px.colors.qualitative.Set2
-        )
-        fig_bar.update_layout(
-            margin=dict(t=20, b=20, l=20, r=20), 
-            height=320,
-            xaxis_title="Waktu Selesai", 
-            yaxis_title="Total Pola Dipotong",
-            paper_bgcolor='rgba(0,0,0,0)', 
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
-        )
+        fig_bar = px.bar(df, x="waktu", y="pcs", color="shift", text="pcs", color_discrete_sequence=px.colors.qualitative.Set2)
+        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='white'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_bar, use_container_width=True)
-
 else:
     st.info("Belum ada data produksi yang selesai (CYCLE_COMPLETE) untuk menampilkan grafik analitik.")
 
 st.markdown("---")
 
 # ==========================================
-# LOGGER BAWAH (DILENGKAPI HISTORICAL PREVIEW)
+# LOGGER BAWAH
 # ==========================================
 col_log_1, col_log_2 = st.columns([8, 2])
 with col_log_1:
     st.markdown("### 📝 Daily Production Logs Data")
 with col_log_2:
-    if st.button("🗑️ Reset Data Web", use_container_width=True):
+    if st.button("🗑️️ Reset Data Web", use_container_width=True):
         data["logs"] = []
         data["last_log_ts"] = None
         save_db([], None)
@@ -257,41 +242,31 @@ else:
     for i, log in enumerate(data["logs"]):
         with st.expander(f"✅ Pemotongan Selesai - {log['waktu']} (Oleh: {log['operator']} | {log['shift']})", expanded=(i==0)):
             
-            # Tampilkan metrik tekstual
-            st.markdown(f"""
-            - **Total Pola (Qty):** {log['pcs']} Pcs
-            - **Dimensi Material:** `{log['ukuran']} mm`
-            - **Bentuk Pola:** `{log.get('bentuk', '-')}`
-            - **Kain Terbuang (Scrap):** `{log['waste']:.1f}%`
-            """)
+            c_text, c_img = st.columns([6, 4])
             
-            # Render bentuk pola historis (Warna Hijau)
-            poly_data = log.get('shape_poly', [])
-            if poly_data:
-                st.markdown("**Preview Pola yang Dipotong:**")
-                xs = [p[0] for p in poly_data] + [poly_data[0][0]]
-                ys = [p[1] for p in poly_data] + [poly_data[0][1]]
-                
-                fig_hist = go.Figure()
-                fig_hist.add_trace(go.Scatter(
-                    x=xs, y=ys, fill='toself', 
-                    mode='lines',
-                    line=dict(color='#10b981', width=3),
-                    fillcolor='rgba(16, 185, 129, 0.3)' 
-                ))
-                
-                fig_hist.update_layout(
-                    xaxis=dict(visible=False),
-                    yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
-                    margin=dict(t=0, b=0, l=0, r=0),
-                    height=120,
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    showlegend=False
-                )
-                st.plotly_chart(fig_hist, use_container_width=True, key=f"hist_{i}")
+            with c_text:
+                st.markdown(f"""
+                - **Total Pola (Qty):** {log['pcs']} Pcs
+                - **Dimensi Material:** `{log['ukuran']} mm`
+                - **Bentuk Pola:** `{log.get('bentuk', '-')}`
+                - **Kain Terbuang (Scrap):** `{log['waste']:.1f}%`
+                """)
+                st.write("")
+                # TOMBOL BUAT MUNCULIN POP-UP DIGITAL TWIN
+                if log.get('nested_polys'):
+                    if st.button("👁️ Tampilkan Full Layout", key=f"btn_modal_{i}"):
+                        show_full_nesting_modal(log)
+            
+            with c_img:
+                poly_data = log.get('shape_poly', [])
+                if poly_data:
+                    xs = [p[0] for p in poly_data] + [poly_data[0][0]]
+                    ys = [p[1] for p in poly_data] + [poly_data[0][1]]
+                    fig_hist = go.Figure()
+                    fig_hist.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#10b981', width=3), fillcolor='rgba(16, 185, 129, 0.3)'))
+                    fig_hist.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=0, b=0, l=0, r=0), height=120, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+                    st.plotly_chart(fig_hist, use_container_width=True, key=f"hist_{i}")
 
 st.caption(f"⏱ Terakhir update: **{data['timestamp']}** | *Auto-refresh aktif (2s)*")
-
 time.sleep(2)
 st.rerun()
