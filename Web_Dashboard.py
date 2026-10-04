@@ -6,6 +6,7 @@ import os
 import random
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
@@ -146,48 +147,66 @@ st.progress(prog_val)
 st.markdown("---")
 
 # ==========================================
-# EXECUTIVE ANALYTICS (GRAFIK BARU)
+# EXECUTIVE ANALYTICS (GRAFIK BARU FULL WIDTH)
 # ==========================================
 st.markdown("### 📈 Executive Analytics")
-col_chart1, col_chart2 = st.columns(2)
 
-with col_chart1:
-    st.markdown("**1. Material Usage Efficiency (Real-time)**")
-    # Hitung rasio kain
-    waste_val = min(100.0, max(0.0, data['waste_pct']))
-    used_val = 100.0 - waste_val
+if data["logs"]:
+    df = pd.DataFrame(data["logs"])
+    df = df.sort_values(by="waktu") # Urutkan dari terlama ke terbaru biar grafiknya maju ke kanan
     
-    # Bikin Donut Chart pake Plotly
-    fig_pie = px.pie(
-        values=[used_val, waste_val], 
-        names=['Material Terpakai (Efektif)', 'Sisa Kain (Waste)'], 
-        hole=0.45,
-        color_discrete_sequence=['#10b981', '#ef4444'] # Hijau dan Merah
+    # -----------------------------------------------------
+    # GRAFIK 1: MATERIAL USAGE (STACKED BAR)
+    # -----------------------------------------------------
+    st.markdown("**1. Material Usage Efficiency (Historical Trend)**")
+    
+    # Hitung porsi terpakai vs terbuang untuk masing-masing log
+    df['Terpakai'] = 100.0 - df['waste']
+    df['Waste'] = df['waste']
+    
+    fig_stack = go.Figure(data=[
+        go.Bar(name='Material Terpakai (Efektif)', x=df['waktu'], y=df['Terpakai'], marker_color='#10b981'),
+        go.Bar(name='Sisa Kain (Waste)', x=df['waktu'], y=df['Waste'], marker_color='#ef4444')
+    ])
+    
+    fig_stack.update_layout(
+        barmode='stack', # Ini perintah saktinya buat numpuk bar-nya
+        margin=dict(t=20, b=20, l=20, r=20),
+        height=350,
+        xaxis_title="Waktu Selesai",
+        yaxis_title="Persentase Material (%)",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
     )
-    fig_pie.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320,
-                          paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                          font=dict(color='white'))
-    st.plotly_chart(fig_pie, use_container_width=True)
+    st.plotly_chart(fig_stack, use_container_width=True)
 
-with col_chart2:
+    st.markdown("<br>", unsafe_allow_html=True) # Jarak spasi antar grafik
+
+    # -----------------------------------------------------
+    # GRAFIK 2: PRODUCTION HISTORY (BAR CHART BIASA)
+    # -----------------------------------------------------
     st.markdown("**2. Production History (Pieces per Cycle)**")
-    if data["logs"]:
-        # Bikin Bar Chart dari data logs lokal
-        df = pd.DataFrame(data["logs"])
-        df = df.sort_values(by="waktu") # Urutkan dari yang paling lama ke baru
-        
-        fig_bar = px.bar(
-            df, x="waktu", y="pcs", color="shift",
-            text="pcs",
-            color_discrete_sequence=px.colors.qualitative.Set2
-        )
-        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320,
-                              xaxis_title="Waktu Selesai", yaxis_title="Total Pola Dipotong",
-                              paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                              font=dict(color='white'))
-        st.plotly_chart(fig_bar, use_container_width=True)
-    else:
-        st.info("Belum ada data produksi yang selesai (CYCLE_COMPLETE) untuk menampilkan grafik sejarah.")
+    fig_bar = px.bar(
+        df, x="waktu", y="pcs", color="shift",
+        text="pcs",
+        color_discrete_sequence=px.colors.qualitative.Set2
+    )
+    fig_bar.update_layout(
+        margin=dict(t=20, b=20, l=20, r=20), 
+        height=350,
+        xaxis_title="Waktu Selesai", 
+        yaxis_title="Total Pola Dipotong",
+        paper_bgcolor='rgba(0,0,0,0)', 
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white'),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+else:
+    st.info("Belum ada data produksi yang selesai (CYCLE_COMPLETE) untuk menampilkan grafik analitik.")
 
 st.markdown("---")
 
@@ -215,7 +234,7 @@ else:
             - **Kain Terbuang (Scrap):** `{log['waste']:.1f}%`
             """)
 
-st.caption(f"⏱️ Terakhir update: **{data['timestamp']}** | *Auto-refresh aktif (2s)*")
+st.caption(f"⏱️️ Terakhir update: **{data['timestamp']}** | *Auto-refresh aktif (2s)*")
 
 time.sleep(2)
 st.rerun()
