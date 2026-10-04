@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
+# --- SISTEM DATABASE LOCAL UNTUK WEB ---
 DB_FILE = "visionest_logs.json"
 
 def load_db():
@@ -97,58 +98,6 @@ start_mqtt()
 data = shared_data
 
 # ==========================================
-# FUNGSI UNTUK MUNCULIN JENDELA POP-UP (MODAL)
-# ==========================================
-@st.dialog("👁️ Digital Twin - Full Nesting Layout", width="large")
-def show_full_nesting_modal(log_data):
-    st.markdown(f"**Dimensi Material:** `{log_data['ukuran']}` | **Bentuk:** `{log_data.get('bentuk', '-')}` | **Total:** `{log_data['pcs']} Pcs`")
-    
-    mat_p, mat_l = 0, 0
-    try:
-        parts = log_data['ukuran'].split('x')
-        mat_p = float(parts[0].replace('mm', '').strip())
-        mat_l = float(parts[1].replace('mm', '').strip())
-    except:
-        pass
-        
-    fig_nest = go.Figure()
-    
-    # 1. Gambar Batas Kotak Material (Warna Merah)
-    if mat_p > 0 and mat_l > 0:
-        fig_nest.add_trace(go.Scatter(
-            x=[0, mat_p, mat_p, 0, 0], 
-            y=[0, 0, mat_l, mat_l, 0],
-            mode='lines',
-            line=dict(color='#ef4444', width=2),
-            name='Batas Material',
-            hoverinfo='skip'
-        ))
-        
-    # 2. Gambar Semua Pola yang Sudah Di-Nesting
-    nested = log_data.get('nested_polys', [])
-    for idx, poly in enumerate(nested):
-        xs = [p[0] for p in poly] + [poly[0][0]]
-        ys = [p[1] for p in poly] + [poly[0][1]]
-        fig_nest.add_trace(go.Scatter(
-            x=xs, y=ys, fill='toself', 
-            mode='lines',
-            line=dict(color='#eab308', width=1.5),
-            fillcolor='rgba(234, 179, 8, 0.4)', # Kuning Keemasan
-            name=f'Pcs {idx+1}'
-        ))
-        
-    fig_nest.update_layout(
-        xaxis=dict(visible=False),
-        yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), # Biar ukurannya presisi (gak gepeng)
-        margin=dict(t=10, b=10, l=10, r=10),
-        height=450,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        showlegend=False
-    )
-    st.plotly_chart(fig_nest, use_container_width=True)
-
-# ==========================================
 # HEADER LOGO & TITLE
 # ==========================================
 col_title, col_logo1, col_logo2 = st.columns([6, 1, 1])
@@ -160,6 +109,9 @@ with col_logo2:
     if os.path.exists("advantech_logo.png"): st.image("advantech_logo.png", width=120)
 st.markdown("---")
 
+# ==========================================
+# METRICS & STATUS
+# ==========================================
 col1, col2, col3 = st.columns(3)
 with col1: st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
 with col2: st.info(f"**👷 Operator Aktif:**\n### {data['operator']} | {data['shift']}")
@@ -224,13 +176,13 @@ else:
 st.markdown("---")
 
 # ==========================================
-# LOGGER BAWAH
+# LOGGER BAWAH (DENGAN INLINE TOGGLE)
 # ==========================================
 col_log_1, col_log_2 = st.columns([8, 2])
 with col_log_1:
     st.markdown("### 📝 Daily Production Logs Data")
 with col_log_2:
-    if st.button("🗑️️ Reset Data Web", use_container_width=True):
+    if st.button("🗑 Reset Data Web", use_container_width=True):
         data["logs"] = []
         data["last_log_ts"] = None
         save_db([], None)
@@ -243,6 +195,7 @@ else:
         with st.expander(f"✅ Pemotongan Selesai - {log['waktu']} (Oleh: {log['operator']} | {log['shift']})", expanded=(i==0)):
             
             c_text, c_img = st.columns([6, 4])
+            show_layout = False
             
             with c_text:
                 st.markdown(f"""
@@ -252,10 +205,10 @@ else:
                 - **Kain Terbuang (Scrap):** `{log['waste']:.1f}%`
                 """)
                 st.write("")
-                # TOMBOL BUAT MUNCULIN POP-UP DIGITAL TWIN
+                
+                # SAKLAR UNTUK MEMUNCULKAN DIGITAL TWIN FULL LAYOUT
                 if log.get('nested_polys'):
-                    if st.button("👁️ Tampilkan Full Layout", key=f"btn_modal_{i}"):
-                        show_full_nesting_modal(log)
+                    show_layout = st.toggle("👁️ Tampilkan Full Layout (Digital Twin)", key=f"tgl_modal_{i}")
             
             with c_img:
                 poly_data = log.get('shape_poly', [])
@@ -267,6 +220,47 @@ else:
                     fig_hist.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=0, b=0, l=0, r=0), height=120, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
                     st.plotly_chart(fig_hist, use_container_width=True, key=f"hist_{i}")
 
-st.caption(f"⏱ Terakhir update: **{data['timestamp']}** | *Auto-refresh aktif (2s)*")
-time.sleep(2)
-st.rerun()
+            # RENDER FULL LAYOUT JIKA SAKLAR DINYALAKAN (INLINE, NO GLITCH)
+            if log.get('nested_polys') and show_layout:
+                st.markdown("---")
+                st.markdown(f"<p style='text-align: center; color: #eab308;'><b>Simulasi Full Layout (Material: {log['ukuran']})</b></p>", unsafe_allow_html=True)
+                
+                mat_p, mat_l = 0, 0
+                try:
+                    parts = log['ukuran'].split('x')
+                    mat_p = float(parts[0].replace('mm', '').strip())
+                    mat_l = float(parts[1].replace('mm', '').strip())
+                except: pass
+                    
+                fig_nest = go.Figure()
+                
+                # Batas Material Merah
+                if mat_p > 0 and mat_l > 0:
+                    fig_nest.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode='lines', line=dict(color='#ef4444', width=2), hoverinfo='skip'))
+                    
+                # Susunan Pola Kuning
+                for idx, poly in enumerate(log['nested_polys']):
+                    xs = [p[0] for p in poly] + [poly[0][0]]
+                    ys = [p[1] for p in poly] + [poly[0][1]]
+                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#eab308', width=1.5), fillcolor='rgba(234, 179, 8, 0.4)', name=f'Pcs {idx+1}'))
+                    
+                fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=10, b=10, l=10, r=10), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+                
+                # Ditengahkan
+                c_kiri, c_tengah, c_kanan = st.columns([1, 4, 1])
+                with c_tengah:
+                    st.plotly_chart(fig_nest, use_container_width=True, key=f"full_layout_{i}")
+
+# ==========================================
+# FOOTER & SAKLAR AUTO-REFRESH
+# ==========================================
+st.markdown("---")
+col_foot1, col_foot2 = st.columns([8, 2])
+with col_foot1:
+    st.caption(f"⏱ Terakhir update: **{data['timestamp']}**")
+with col_foot2:
+    is_auto_refresh = st.toggle("🔄 Live Auto-Refresh", value=True, help="Matikan ini agar web tidak merefresh otomatis saat menganalisa grafik.")
+
+if is_auto_refresh:
+    time.sleep(2)
+    st.rerun()
