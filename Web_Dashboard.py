@@ -147,7 +147,7 @@ st.progress(prog_val)
 st.markdown("---")
 
 # ==========================================
-# EXECUTIVE ANALYTICS (KIRI-KANAN / SIDE-BY-SIDE)
+# EXECUTIVE ANALYTICS (ATAS BAWAH - CENTERED)
 # ==========================================
 st.markdown("### 📈 Executive Analytics")
 
@@ -155,12 +155,12 @@ if data["logs"]:
     df = pd.DataFrame(data["logs"])
     df = df.sort_values(by="waktu") 
     
-    # Dibagi jadi 2 kolom (setengah-setengah)
-    col_chart1, col_chart2 = st.columns(2)
+    # Trik layout [1, 2, 1] biar lebarnya 50% persis kayak kemaren tapi di tengah
+    col_kiri, col_tengah, col_kanan = st.columns([1, 2, 1])
 
-    with col_chart1:
+    with col_tengah:
         # -----------------------------------------------------
-        # GRAFIK 1: MATERIAL USAGE (GROUPED BAR / BERJEJER)
+        # GRAFIK 1: MATERIAL USAGE (BERJEJER ADA JARAK)
         # -----------------------------------------------------
         st.markdown("**1. Material Usage Efficiency (Historical Trend)**")
         
@@ -173,7 +173,8 @@ if data["logs"]:
         ])
         
         fig_group.update_layout(
-            barmode='group', # PERINTAH SAKTI: Biar grafiknya berjejer samping-sampingan
+            barmode='group',
+            bargroupgap=0.1, # <-- Ini yang bikin ada jarak/spasi dikit antar batang
             margin=dict(t=20, b=20, l=20, r=20),
             height=320,
             xaxis_title="Waktu Selesai",
@@ -185,9 +186,10 @@ if data["logs"]:
         )
         st.plotly_chart(fig_group, use_container_width=True)
 
-    with col_chart2:
+        st.markdown("<br>", unsafe_allow_html=True) # Jarak antara grafik 1 dan 2
+
         # -----------------------------------------------------
-        # GRAFIK 2: PRODUCTION HISTORY (BAR CHART BIASA)
+        # GRAFIK 2: PRODUCTION HISTORY
         # -----------------------------------------------------
         st.markdown("**2. Production History (Pieces per Cycle)**")
         fig_bar = px.bar(
