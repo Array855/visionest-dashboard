@@ -4,9 +4,12 @@ import json
 import time
 import os
 import random
+import pandas as pd
+import plotly.express as px
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
+# --- SISTEM DATABASE LOCAL UNTUK WEB ---
 DB_FILE = "visionest_logs.json"
 
 def load_db():
@@ -72,11 +75,12 @@ def start_mqtt():
                         "waste": payload.get("waste_pct", 100.0)
                     }
                     shared_data["logs"].insert(0, entry)
+                    
+                    # SIMPAN PERMANEN
                     save_db(shared_data["logs"], ts)
         except Exception:
             pass
 
-    # FIX: Gunakan Client ID acak agar tidak bertabrakan dengan tab/perangkat lain
     client_id = f"VISIONEST_WEB_{random.randint(10000, 99999)}"
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id, transport="websockets")
     client.on_connect = on_connect
@@ -84,24 +88,34 @@ def start_mqtt():
     
     client.tls_set() 
     client.connect("broker.hivemq.com", 8884, 60)
+    
     client.loop_start()
     return client
 
 start_mqtt()
 data = shared_data
 
+# ==========================================
+# HEADER LOGO & TITLE
+# ==========================================
 col_title, col_logo1, col_logo2 = st.columns([6, 1, 1])
+
 with col_title:
     st.title("🌐 VISIONEST - Production Enterprise Dashboard")
+
 with col_logo1:
     if os.path.exists("pens_logo.png"):
         st.image("pens_logo.png", width=70)
+
 with col_logo2:
     if os.path.exists("advantech_logo.png"):
         st.image("advantech_logo.png", width=120)
 
 st.markdown("---")
 
+# ==========================================
+# METRICS & STATUS
+# ==========================================
 col1, col2, col3 = st.columns(3)
 with col1:
     st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
@@ -113,10 +127,12 @@ with col3:
         st.success(f"**🔄 Status:**\n### {stat}")
     elif stat == "EMERGENCY_STOP_TRIGGERED":
         st.error(f"**🚨 Status:**\n### {stat}")
+    elif stat == "SYSTEM_READY":
+        st.warning(f"**⏸ Status:**\n### {stat}")
     else:
         st.warning(f"**⏸ Status:**\n### {stat}")
 
-st.markdown("### 📊 Production Metrics")
+st.markdown("### 📊 Live Telemetry")
 m1, m2, m3, m4 = st.columns(4)
 m1.metric("🎯 Target Qty", f"{data['target_qty']} Pcs")
 m2.metric("⏱ Duration", f"{data['duration_sec']} Sec")
@@ -129,9 +145,58 @@ st.progress(prog_val)
 
 st.markdown("---")
 
+# ==========================================
+# EXECUTIVE ANALYTICS (GRAFIK BARU)
+# ==========================================
+st.markdown("### 📈 Executive Analytics")
+col_chart1, col_chart2 = st.columns(2)
+
+with col_chart1:
+    st.markdown("**1. Material Usage Efficiency (Real-time)**")
+    # Hitung rasio kain
+    waste_val = min(100.0, max(0.0, data['waste_pct']))
+    used_val = 100.0 - waste_val
+    
+    # Bikin Donut Chart pake Plotly
+    fig_pie = px.pie(
+        values=[used_val, waste_val], 
+        names=['Material Terpakai (Efektif)', 'Sisa Kain (Waste)'], 
+        hole=0.45,
+        color_discrete_sequence=['#10b981', '#ef4444'] # Hijau dan Merah
+    )
+    fig_pie.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320,
+                          paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                          font=dict(color='white'))
+    st.plotly_chart(fig_pie, use_container_width=True)
+
+with col_chart2:
+    st.markdown("**2. Production History (Pieces per Cycle)**")
+    if data["logs"]:
+        # Bikin Bar Chart dari data logs lokal
+        df = pd.DataFrame(data["logs"])
+        df = df.sort_values(by="waktu") # Urutkan dari yang paling lama ke baru
+        
+        fig_bar = px.bar(
+            df, x="waktu", y="pcs", color="shift",
+            text="pcs",
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320,
+                              xaxis_title="Waktu Selesai", yaxis_title="Total Pola Dipotong",
+                              paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
+                              font=dict(color='white'))
+        st.plotly_chart(fig_bar, use_container_width=True)
+    else:
+        st.info("Belum ada data produksi yang selesai (CYCLE_COMPLETE) untuk menampilkan grafik sejarah.")
+
+st.markdown("---")
+
+# ==========================================
+# LOGGER BAWAH
+# ==========================================
 col_log_1, col_log_2 = st.columns([8, 2])
 with col_log_1:
-    st.markdown("### 📝 Daily Production Logs & Material Waste")
+    st.markdown("### 📝 Daily Production Logs Data")
 with col_log_2:
     if st.button("🗑️ Reset Data Web", use_container_width=True):
         data["logs"] = []
@@ -150,8 +215,7 @@ else:
             - **Kain Terbuang (Scrap):** `{log['waste']:.1f}%`
             """)
 
-st.caption(f"⏱️ Terakhir update: **{data['timestamp']}** | *Auto-refresh aktif*")
+st.caption(f"⏱️ Terakhir update: **{data['timestamp']}** | *Auto-refresh aktif (2s)*")
 
-# FIX: Kurangi beban refresh agar Streamlit Cloud tidak memutus eksekusi script
 time.sleep(2)
 st.rerun()
