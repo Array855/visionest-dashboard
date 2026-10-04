@@ -59,7 +59,12 @@ def start_mqtt():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, "VISIONEST_WEB_DASHBOARD", transport="websockets")
     client.on_connect = on_connect
     client.on_message = on_message
-    client.connect("broker.hivemq.com", 8000, 60)
+    
+    # --- PERBAIKAN: JALUR SSL/TLS UNTUK MENEMBUS BLOKIR STREAMLIT CLOUD ---
+    client.tls_set() 
+    client.connect("broker.hivemq.com", 8884, 60)
+    # ----------------------------------------------------------------------
+    
     client.loop_start()
     return client
 
@@ -99,7 +104,7 @@ with col3:
     elif stat == "EMERGENCY_STOP_TRIGGERED":
         st.error(f"**🚨 Status:**\n### {stat}")
     else:
-        st.warning(f"**⏸️️ Status:**\n### {stat}")
+        st.warning(f"**⏸ Status:**\n### {stat}")
 
 st.markdown("### 📊 Production Metrics")
 m1, m2, m3, m4 = st.columns(4)
