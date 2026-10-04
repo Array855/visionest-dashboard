@@ -42,7 +42,7 @@ def get_shared_data():
         "mat_l": 0.0,          
         "shape_name": "-",     
         "shape_poly": [],      
-        "nested_polys": [],    # Variabel penampung layout
+        "nested_polys": [],    
         "duration_sec": 0.0,
         "timestamp": "-",
         "waste_pct": 100.0,
@@ -78,7 +78,7 @@ def start_mqtt():
                         "bentuk": payload.get("shape_name", "-"),
                         "waste": payload.get("waste_pct", 100.0),
                         "shape_poly": payload.get("shape_poly", []),
-                        "nested_polys": payload.get("nested_polys", []) # Simpan full layout ke log
+                        "nested_polys": payload.get("nested_polys", [])
                     }
                     shared_data["logs"].insert(0, entry)
                     save_db(shared_data["logs"], ts)
@@ -100,13 +100,16 @@ data = shared_data
 # ==========================================
 # HEADER LOGO & TITLE
 # ==========================================
-col_title, col_logo1, col_logo2 = st.columns([6, 1, 1])
+# Susunan kolom: Title(Besar) | Advantech | Efortech | PENS
+col_title, col_logo1, col_logo2, col_logo3 = st.columns([6, 1.2, 1.2, 0.8])
 with col_title:
     st.title("🌐 VISIONEST - Production Enterprise Dashboard")
 with col_logo1:
-    if os.path.exists("pens_logo.png"): st.image("pens_logo.png", width=70)
-with col_logo2:
     if os.path.exists("advantech_logo.png"): st.image("advantech_logo.png", width=120)
+with col_logo2:
+    if os.path.exists("efortech_logo.png"): st.image("efortech_logo.png", width=120)
+with col_logo3:
+    if os.path.exists("pens_logo.png"): st.image("pens_logo.png", width=70)
 st.markdown("---")
 
 # ==========================================
@@ -176,7 +179,7 @@ else:
 st.markdown("---")
 
 # ==========================================
-# LOGGER BAWAH (DENGAN INLINE TOGGLE)
+# LOGGER BAWAH
 # ==========================================
 col_log_1, col_log_2 = st.columns([8, 2])
 with col_log_1:
@@ -192,7 +195,7 @@ if not data["logs"]:
     st.info("Belum ada riwayat pemotongan. Silakan jalankan mesin terlebih dahulu.")
 else:
     for i, log in enumerate(data["logs"]):
-        with st.expander(f"✅ Pemotongan Selesai - {log['waktu']} (Oleh: {log['operator']} | {log['shift']})", expanded=(i==0)):
+        with st.expander(f"✅ Pemotongan Selesai - {log['waktu']} (Oleh: {log['operator']} | {log['shift']})"):
             
             c_text, c_img = st.columns([6, 4])
             show_layout = False
@@ -206,7 +209,6 @@ else:
                 """)
                 st.write("")
                 
-                # SAKLAR UNTUK MEMUNCULKAN DIGITAL TWIN FULL LAYOUT
                 if log.get('nested_polys'):
                     show_layout = st.toggle("👁️ Tampilkan Full Layout (Digital Twin)", key=f"tgl_modal_{i}")
             
@@ -220,7 +222,6 @@ else:
                     fig_hist.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=0, b=0, l=0, r=0), height=120, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
                     st.plotly_chart(fig_hist, use_container_width=True, key=f"hist_{i}")
 
-            # RENDER FULL LAYOUT JIKA SAKLAR DINYALAKAN (INLINE, NO GLITCH)
             if log.get('nested_polys') and show_layout:
                 st.markdown("---")
                 st.markdown(f"<p style='text-align: center; color: #eab308;'><b>Simulasi Full Layout (Material: {log['ukuran']})</b></p>", unsafe_allow_html=True)
@@ -234,11 +235,9 @@ else:
                     
                 fig_nest = go.Figure()
                 
-                # Batas Material Merah
                 if mat_p > 0 and mat_l > 0:
                     fig_nest.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode='lines', line=dict(color='#ef4444', width=2), hoverinfo='skip'))
                     
-                # Susunan Pola Kuning
                 for idx, poly in enumerate(log['nested_polys']):
                     xs = [p[0] for p in poly] + [poly[0][0]]
                     ys = [p[1] for p in poly] + [poly[0][1]]
@@ -246,14 +245,10 @@ else:
                     
                 fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=10, b=10, l=10, r=10), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
                 
-                # Ditengahkan
                 c_kiri, c_tengah, c_kanan = st.columns([1, 4, 1])
                 with c_tengah:
                     st.plotly_chart(fig_nest, use_container_width=True, key=f"full_layout_{i}")
 
-# ==========================================
-# FOOTER & SAKLAR AUTO-REFRESH
-# ==========================================
 st.markdown("---")
 col_foot1, col_foot2 = st.columns([8, 2])
 with col_foot1:
