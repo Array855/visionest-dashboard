@@ -100,16 +100,16 @@ data = shared_data
 # ==========================================
 # HEADER LOGO & TITLE
 # ==========================================
-# Susunan kolom: Title(Besar) | Advantech | Efortech | PENS
-col_title, col_logo1, col_logo2, col_logo3 = st.columns([6, 1.2, 1.2, 0.8])
+# Proporsi kolom diratakan agar ukuran logo seragam
+col_title, col_logo1, col_logo2, col_logo3 = st.columns([5.5, 1.5, 1.5, 1.5])
 with col_title:
     st.title("🌐 VISIONEST - Production Enterprise Dashboard")
 with col_logo1:
-    if os.path.exists("advantech_logo.png"): st.image("advantech_logo.png", width=120)
+    if os.path.exists("advantech_logo.png"): st.image("advantech_logo.png", width=90)
 with col_logo2:
-    if os.path.exists("efortech_logo.png"): st.image("efortech_logo.png", width=120)
+    if os.path.exists("efortech_logo.png"): st.image("efortech_logo.png", width=90)
 with col_logo3:
-    if os.path.exists("pens_logo.png"): st.image("pens_logo.png", width=70)
+    if os.path.exists("pens_logo.png"): st.image("pens_logo.png", width=90)
 st.markdown("---")
 
 # ==========================================
