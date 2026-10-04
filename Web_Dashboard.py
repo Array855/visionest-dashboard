@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
-# --- SISTEM DATABASE LOCAL UNTUK WEB ---
+# --- LOCAL DATABASE SYSTEM FOR WEB ---
 DB_FILE = "visionest_logs.json"
 
 def load_db():
@@ -30,7 +30,7 @@ def save_db(logs_list, last_ts):
 def get_shared_data():
     db_data = load_db()
     return {
-        "device_id": "MENUNGGU DATA...",
+        "device_id": "WAITING FOR DATA...",
         "operator": "-",
         "shift": "-",
         "status": "OFFLINE",
@@ -98,13 +98,12 @@ start_mqtt()
 data = shared_data
 
 # ==========================================
-# HEADER LOGO & TITLE (MENGGUNAKAN 1 LOGO GABUNGAN)
+# HEADER LOGO & TITLE 
 # ==========================================
 col_title, col_logo = st.columns([7, 3])
 with col_title:
     st.title("🌐 VISIONEST - by DEMIURGEN")
 with col_logo:
-    # Memuat 1 file gambar yang isinya 3 logo berjejer
     if os.path.exists("logo_pens_kanan.png"): 
         st.image("logo_pens_kanan.png", use_container_width=True)
     else:
@@ -116,7 +115,7 @@ st.markdown("---")
 # ==========================================
 col1, col2, col3 = st.columns(3)
 with col1: st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
-with col2: st.info(f"**👷 Operator Aktif:**\n### {data['operator']} | {data['shift']}")
+with col2: st.info(f"**👷 Active Operator:**\n### {data['operator']} | {data['shift']}")
 with col3:
     stat = data['status']
     if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS", "CYCLE_COMPLETE"]:
@@ -137,7 +136,7 @@ st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
 if data["shape_poly"] and data["status"] != "SYSTEM_READY":
     col_v1, col_v2, col_v3 = st.columns([1, 2, 1]) 
     with col_v2:
-        st.markdown(f"<p style='text-align: center; color: #94a3b8;'><b>Preview Benda Kerja:</b> {data['shape_name']}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center; color: #94a3b8;'><b>Workpiece Preview:</b> {data['shape_name']}</p>", unsafe_allow_html=True)
         xs = [p[0] for p in data["shape_poly"]] + [data["shape_poly"][0][0]]
         ys = [p[1] for p in data["shape_poly"]] + [data["shape_poly"][0][1]]
         fig_shape = go.Figure()
@@ -160,8 +159,8 @@ if data["logs"]:
         df['Terpakai'] = 100.0 - df['waste']
         df['Waste'] = df['waste']
         fig_group = go.Figure(data=[
-            go.Bar(name='Terpakai (Efektif)', x=df['waktu'], y=df['Terpakai'], marker_color='#10b981'),
-            go.Bar(name='Sisa Kain (Waste)', x=df['waktu'], y=df['Waste'], marker_color='#ef4444')
+            go.Bar(name='Used (Effective)', x=df['waktu'], y=df['Terpakai'], marker_color='#10b981'),
+            go.Bar(name='Fabric Waste (Scrap)', x=df['waktu'], y=df['Waste'], marker_color='#ef4444')
         ])
         fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='white'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_group, use_container_width=True)
@@ -173,43 +172,43 @@ if data["logs"]:
         fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='white'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_bar, use_container_width=True)
 else:
-    st.info("Belum ada data produksi yang selesai (CYCLE_COMPLETE) untuk menampilkan grafik analitik.")
+    st.info("No completed production data (CYCLE_COMPLETE) to display analytical graphs yet.")
 
 st.markdown("---")
 
 # ==========================================
-# LOGGER BAWAH
+# LOGGER DATA
 # ==========================================
 col_log_1, col_log_2 = st.columns([8, 2])
 with col_log_1:
     st.markdown("### 📝 Daily Production Logs Data")
 with col_log_2:
-    if st.button("🗑 Reset Data Web", use_container_width=True):
+    if st.button("🗑 Reset Web Data", use_container_width=True):
         data["logs"] = []
         data["last_log_ts"] = None
         save_db([], None)
         st.rerun()
 
 if not data["logs"]:
-    st.info("Belum ada riwayat pemotongan. Silakan jalankan mesin terlebih dahulu.")
+    st.info("No cutting history yet. Please run the machine first.")
 else:
     for i, log in enumerate(data["logs"]):
-        with st.expander(f"✅ Pemotongan Selesai - {log['waktu']} (Oleh: {log['operator']} | {log['shift']})"):
+        with st.expander(f"✅ Cutting Completed - {log['waktu']} (By: {log['operator']} | {log['shift']})"):
             
             c_text, c_img = st.columns([6, 4])
             show_layout = False
             
             with c_text:
                 st.markdown(f"""
-                - **Total Pola (Qty):** {log['pcs']} Pcs
-                - **Dimensi Material:** `{log['ukuran']} mm`
-                - **Bentuk Pola:** `{log.get('bentuk', '-')}`
-                - **Kain Terbuang (Scrap):** `{log['waste']:.1f}%`
+                - **Total Patterns (Qty):** {log['pcs']} Pcs
+                - **Material Dimensions:** `{log['ukuran']} mm`
+                - **Pattern Shape:** `{log.get('bentuk', '-')}`
+                - **Wasted Fabric (Scrap):** `{log['waste']:.1f}%`
                 """)
                 st.write("")
                 
                 if log.get('nested_polys'):
-                    show_layout = st.toggle("👁️ Tampilkan Full Layout (Digital Twin)", key=f"tgl_modal_{i}")
+                    show_layout = st.toggle("👁️ Show Full Layout (Digital Twin)", key=f"tgl_modal_{i}")
             
             with c_img:
                 poly_data = log.get('shape_poly', [])
@@ -223,7 +222,7 @@ else:
 
             if log.get('nested_polys') and show_layout:
                 st.markdown("---")
-                st.markdown(f"<p style='text-align: center; color: #eab308;'><b>Simulasi Full Layout (Material: {log['ukuran']})</b></p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align: center; color: #eab308;'><b>Full Layout Simulation (Material: {log['ukuran']})</b></p>", unsafe_allow_html=True)
                 
                 mat_p, mat_l = 0, 0
                 try:
@@ -251,9 +250,9 @@ else:
 st.markdown("---")
 col_foot1, col_foot2 = st.columns([8, 2])
 with col_foot1:
-    st.caption(f"⏱ Terakhir update: **{data['timestamp']}**")
+    st.caption(f"⏱ Last updated: **{data['timestamp']}**")
 with col_foot2:
-    is_auto_refresh = st.toggle("🔄 Live Auto-Refresh", value=True, help="Matikan ini agar web tidak merefresh otomatis saat menganalisa grafik.")
+    is_auto_refresh = st.toggle("🔄 Live Auto-Refresh", value=True, help="Disable this to prevent the web from auto-refreshing while analyzing graphs.")
 
 if is_auto_refresh:
     time.sleep(2)
