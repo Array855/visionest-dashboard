@@ -6,8 +6,25 @@ import os
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
+# --- SISTEM DATABASE LOCAL UNTUK WEB ---
+DB_FILE = "visionest_logs.json"
+
+def load_db():
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r") as f:
+                return json.load(f)
+        except:
+            pass
+    return {"logs": [], "last_log_ts": None}
+
+def save_db(logs_list, last_ts):
+    with open(DB_FILE, "w") as f:
+        json.dump({"logs": logs_list, "last_log_ts": last_ts}, f)
+
 @st.cache_resource
 def get_shared_data():
+    db_data = load_db()
     return {
         "device_id": "MENUNGGU DATA...",
         "operator": "-",
@@ -21,8 +38,8 @@ def get_shared_data():
         "duration_sec": 0.0,
         "timestamp": "-",
         "waste_pct": 100.0,
-        "logs": [],             
-        "last_log_ts": None     
+        "logs": db_data.get("logs", []),             
+        "last_log_ts": db_data.get("last_log_ts", None)     
     }
 
 shared_data = get_shared_data()
@@ -40,7 +57,10 @@ def start_mqtt():
                 if key not in ["logs", "last_log_ts"]:
                     shared_data[key] = value
             
+            # --- SOLUSI: PAKSA PROGRESS KE 100% KALAU UDAH BERES ---
             if payload.get("status") == "CYCLE_COMPLETE":
+                shared_data["progress_pct"] = 100
+                
                 ts = payload.get("timestamp")
                 if ts != shared_data["last_log_ts"]:
                     shared_data["last_log_ts"] = ts
@@ -53,6 +73,9 @@ def start_mqtt():
                         "waste": payload.get("waste_pct", 100.0)
                     }
                     shared_data["logs"].insert(0, entry)
+                    
+                    # SIMPAN PERMANEN KE DATABASE CLOUD
+                    save_db(shared_data["logs"], ts)
         except Exception:
             pass
 
@@ -60,10 +83,9 @@ def start_mqtt():
     client.on_connect = on_connect
     client.on_message = on_message
     
-    # --- PERBAIKAN: JALUR SSL/TLS UNTUK MENEMBUS BLOKIR STREAMLIT CLOUD ---
+    # Jalur Khusus Streamlit Cloud (WSS)
     client.tls_set() 
     client.connect("broker.hivemq.com", 8884, 60)
-    # ----------------------------------------------------------------------
     
     client.loop_start()
     return client
@@ -112,14 +134,27 @@ m1.metric("🎯 Target Qty", f"{data['target_qty']} Pcs")
 m2.metric("⏱ Duration", f"{data['duration_sec']} Sec")
 m3.metric("✂️ Material Area", f"{data['material_area_mm2']} mm²")
 m4.metric("📈 Progress", f"{data['progress_pct']} %")
-st.progress(data['progress_pct'] / 100)
+
+# Pengaman tambahan biar grafik bar ga error kalo datanya ngaco
+prog_val = data['progress_pct'] / 100.0
+prog_val = max(0.0, min(1.0, prog_val))
+st.progress(prog_val)
 
 st.markdown("---")
 
 # ==========================================
 # LOGGER BAWAH
 # ==========================================
-st.markdown("### 📝 Daily Production Logs & Material Waste")
+# --- TOMBOL RESET LOGS WEB ---
+col_log_1, col_log_2 = st.columns([8, 2])
+with col_log_1:
+    st.markdown("### 📝 Daily Production Logs & Material Waste")
+with col_log_2:
+    if st.button("🗑️ Reset Data Web", use_container_width=True):
+        data["logs"] = []
+        data["last_log_ts"] = None
+        save_db([], None)
+        st.rerun()
 
 if not data["logs"]:
     st.info("Belum ada riwayat pemotongan. Silakan jalankan mesin terlebih dahulu.")
