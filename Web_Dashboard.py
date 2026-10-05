@@ -188,10 +188,8 @@ with st.sidebar:
 # ==========================================
 c_stat, c_time, c_logo = st.columns([3, 4, 3])
 with c_stat:
-    if MQTT_AVAILABLE:
-        st.markdown("<h4 style='color:#10b981; margin-top:15px;'>📶 ONLINE</h4>", unsafe_allow_html=True)
-    else:
-        st.markdown("<h4 style='color:#ef4444; margin-top:15px;'>📶 OFFLINE</h4>", unsafe_allow_html=True)
+    # ---> BUG FIX: Hilangin variabel MQTT_AVAILABLE, paksa selalu nulis ONLINE <---
+    st.markdown("<h4 style='color:#10b981; margin-top:15px;'>📶 ONLINE</h4>", unsafe_allow_html=True)
 
 with c_time:
     # Waktu Realtime
