@@ -9,10 +9,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 from streamlit_autorefresh import st_autorefresh
 
-# Mode 'Light'
-st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide")
+# Mode 'Light' dan Sidebar default kebuka
+st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide", initial_sidebar_state="expanded")
 
-# SUNTIKAN CSS TERANG YANG LEBIH AMAN (Tidak Merusak Warna Tombol Bawaan)
+# SUNTIKAN CSS TERANG (Sopan & Bersih)
 st.markdown("""
 <style>
     .stApp {
@@ -26,9 +26,17 @@ st.markdown("""
     hr {
         border-color: #cbd5e1 !important;
     }
-    /* Pastikan header dan teks standar berwarna gelap, tapi abaikan button/input */
     h1, h2, h3, h4, h5, h6, .stMarkdown p {
         color: #0f172a;
+    }
+    /* Sembunyikan margin atas biar lebih rapi */
+    .block-container {
+        padding-top: 2rem !important;
+    }
+    /* Percantik Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #e2e8f0;
+        border-right: 2px solid #cbd5e1;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -66,7 +74,7 @@ def get_shared_data():
         "shape_poly": [],      
         "nested_polys": [],    
         "duration_sec": 0.0,
-        "timestamp": "-",
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "waste_pct": 100.0,
         "logs": db_data.get("logs", []),             
         "last_log_ts": db_data.get("last_log_ts", None),
@@ -128,57 +136,128 @@ def start_mqtt():
 mqtt_client_instance = start_mqtt()
 data = shared_data
 
-col_title, col_logo = st.columns([7, 3])
-with col_title:
-    st.markdown("<h1><img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='45' style='vertical-align: bottom; margin-right: 10px;'> <span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
-with col_logo:
+
+# ==========================================
+# 1. SIDEBAR / NAVBAR KIRI (Sesuai Sketsa)
+# ==========================================
+with st.sidebar:
+    # --- LOGO & NAMA APP ---
+    col_log1, col_log2 = st.columns([2, 8])
+    with col_log1:
+        st.markdown("<img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='50'>", unsafe_allow_html=True)
+    with col_log2:
+        st.markdown("<h3 style='color: #d4af37; margin:0; padding:0;'>VISIONEST</h3><p style='color: #1e3a8a; margin:0; font-weight:bold;'>by DEMIURGEN</p>", unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # --- NAVIGASI ---
+    page = st.radio("Navigation Menu", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
+    
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("---")
+    
+    # --- SERIAL LOG / PING CHAT ---
+    st.markdown("### 📡 Serial Log")
+    if "ping_input" not in st.session_state:
+        st.session_state.ping_input = ""
+
+    def send_web_ping():
+        msg = st.session_state.ping_input_widget
+        if msg:
+            payload = {"sender": "WEB", "message": msg, "timestamp": time.strftime("%H:%M:%S")}
+            mqtt_client_instance.publish("advantech/wise/visionest/ping", json.dumps(payload), qos=1)
+            shared_data.setdefault("ping_msgs", []).append(payload)
+            st.session_state.ping_input_widget = "" 
+
+    chat_box = st.container(height=250)
+    with chat_box:
+        if not data.get("ping_msgs"):
+            st.caption("No messages. Send ping to GUI.")
+        for p in data.get("ping_msgs", []):
+            if p["sender"] == "WEB":
+                st.markdown(f"<div style='text-align: right; color: #0ea5e9; font-size:14px;'><b>[WEB]</b> {p['message']} <br><small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div style='text-align: left; color: #10b981; font-size:14px;'><b>[GUI]</b> {p['message']} <br><small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+
+    st.text_input("Msg box:", key="ping_input_widget", on_change=send_web_ping, label_visibility="collapsed", placeholder="Type message...")
+    st.button("🚀 Send", type="primary", on_click=send_web_ping, use_container_width=True)
+
+
+# ==========================================
+# 2. HEADER ATAS (Online, Time, Logo PENS)
+# ==========================================
+c_stat, c_time, c_logo = st.columns([3, 4, 3])
+with c_stat:
+    if MQTT_AVAILABLE:
+        st.markdown("<h4 style='color:#10b981; margin-top:15px;'>📶 ONLINE</h4>", unsafe_allow_html=True)
+    else:
+        st.markdown("<h4 style='color:#ef4444; margin-top:15px;'>📶 OFFLINE</h4>", unsafe_allow_html=True)
+
+with c_time:
+    # Waktu Realtime
+    waktu_skrg = time.strftime('%d %B %Y - %H:%M:%S')
+    st.markdown(f"<h4 style='text-align:center; color:#475569; margin-top:15px;'>{waktu_skrg}</h4>", unsafe_allow_html=True)
+
+with c_logo:
     if os.path.exists("logo_pens_kanan.png"): 
         st.image("logo_pens_kanan.png", use_container_width=True)
     else:
-        st.write("[EFORTECH - ADVANTECH - PENS]")
-st.markdown("---")
-
-col1, col2, col3 = st.columns(3)
-with col1: st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
-with col2: st.info(f"**👷 Active Operator:**\n### {data['operator']} | {data['shift']}")
-with col3:
-    stat = data['status']
-    if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS", "CYCLE_COMPLETE", "SYSTEM_READY"]:
-        st.success(f"**🔄 Status:**\n### {stat}")
-    elif stat == "EMERGENCY_STOP_TRIGGERED":
-        st.error(f"**🚨 Status:**\n### {stat}")
-    elif stat == "OFFLINE":
-        st.error(f"**⏸ Status:**\n### {stat}")
-    else:
-        st.warning(f"**⏸ Status:**\n### {stat}")
-
-st.markdown("### 📊 Live Telemetry")
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("🎯 Target Qty", f"{data['target_qty']} Pcs")
-m2.metric("⏱ Duration", f"{data['duration_sec']} Sec")
-m3.metric("📏 Material (P x L)", f"{data['mat_p']} x {data['mat_l']} mm") 
-m4.metric("📈 Progress", f"{data['progress_pct']} %")
-st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
-
-if data["shape_poly"] and data["status"] not in ["SYSTEM_READY", "OFFLINE"]:
-    col_v1, col_v2, col_v3 = st.columns([1, 2, 1]) 
-    with col_v2:
-        st.markdown(f"<p style='text-align: center; color: #64748b;'><b>Workpiece Preview:</b> {data['shape_name']}</p>", unsafe_allow_html=True)
-        xs = [p[0] for p in data["shape_poly"]] + [data["shape_poly"][0][0]]
-        ys = [p[1] for p in data["shape_poly"]] + [data["shape_poly"][0][1]]
-        fig_shape = go.Figure()
-        fig_shape.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#0ea5e9', width=3), fillcolor='rgba(14, 165, 233, 0.3)'))
-        fig_shape.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=10, b=10, l=10, r=10), height=200, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
-        st.plotly_chart(fig_shape, use_container_width=True)
+        st.markdown("<h4 style='text-align:right; color:#1e3a8a; margin-top:15px;'>[LOGO PENS]</h4>", unsafe_allow_html=True)
 
 st.markdown("---")
 
-st.markdown("### 📈 Executive Analytics")
-if data["logs"]:
-    df = pd.DataFrame(data["logs"])
-    df = df.sort_values(by="waktu") 
-    col_kiri, col_tengah, col_kanan = st.columns([1, 2, 1])
-    with col_tengah:
+
+# ==========================================
+# 3. KONTEN BERDASARKAN NAVIGASI
+# ==========================================
+
+if page == "🏠 HOME":
+    # Baris 1: 3D Preview vs Info Box
+    col_prev, col_info = st.columns([6, 4])
+    
+    with col_prev:
+        st.markdown("#### 👁️ Preview 3D")
+        if data["shape_poly"] and data["status"] not in ["SYSTEM_READY", "OFFLINE"]:
+            xs = [p[0] for p in data["shape_poly"]] + [data["shape_poly"][0][0]]
+            ys = [p[1] for p in data["shape_poly"]] + [data["shape_poly"][0][1]]
+            fig_shape = go.Figure()
+            fig_shape.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#0ea5e9', width=3), fillcolor='rgba(14, 165, 233, 0.3)'))
+            fig_shape.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=0, b=0, l=0, r=0), height=300, paper_bgcolor='rgba(255,255,255,1)', plot_bgcolor='rgba(255,255,255,1)', showlegend=False)
+            st.plotly_chart(fig_shape, use_container_width=True)
+        else:
+            st.info("NO PATTERN LOADED. Menunggu komputasi dari GUI.")
+            
+    with col_info:
+        st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
+        st.info(f"**👷 Operator:**\n### {data['operator']} ({data['shift']})")
+        
+        stat = data['status']
+        if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS"]:
+            st.success(f"**🔄 Status:**\n### {stat}")
+        elif stat == "EMERGENCY_STOP_TRIGGERED":
+            st.error(f"**🚨 Status:**\n### {stat}")
+        else:
+            st.warning(f"**⏸ Status:**\n### {stat}")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Baris 2: Kotak-kotak Metrik
+    m1, m2, m3, m4, m5 = st.columns(5)
+    m1.metric("⏱ Duration", f"{data['duration_sec']} s")
+    m2.metric("🎯 Target / Qty", f"{data['target_qty']} Pcs")
+    m3.metric("📏 Dimension", f"{data['mat_p']} x {data['mat_l']}")
+    m4.metric("📊 Presentase", f"{data['progress_pct']} %")
+    m5.metric("💠 Bentuk Kerja", f"{data['shape_name']}")
+    
+    st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
+
+
+elif page == "📈 ANALYSIS":
+    st.markdown("### 📈 Executive Analytics")
+    if data["logs"]:
+        df = pd.DataFrame(data["logs"])
+        df = df.sort_values(by="waktu") 
+        
         st.markdown("**1. Material Usage Efficiency (Historical Trend)**")
         df['Terpakai'] = 100.0 - df['waste']
         df['Waste'] = df['waste']
@@ -186,132 +265,92 @@ if data["logs"]:
             go.Bar(name='Used (Effective)', x=df['waktu'], y=df['Terpakai'], marker_color='#10b981'),
             go.Bar(name='Fabric Waste (Scrap)', x=df['waktu'], y=df['Waste'], marker_color='#ef4444')
         ])
-        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#0f172a'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#0f172a'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_group, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True) 
 
         st.markdown("**2. Production History (Pieces per Cycle)**")
         fig_bar = px.bar(df, x="waktu", y="pcs", color="shift", text="pcs", color_discrete_sequence=px.colors.qualitative.Set2)
-        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#0f172a'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#0f172a'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_bar, use_container_width=True)
-else:
-    st.info("No completed production data (CYCLE_COMPLETE) to display analytical graphs yet.")
+    else:
+        st.info("No completed production data (CYCLE_COMPLETE) to display analytical graphs yet.")
 
-st.markdown("---")
 
-col_log_1, col_log_2 = st.columns([8, 2])
-with col_log_1:
-    st.markdown("### 📝 Daily Production Logs Data")
-with col_log_2:
-    # ---> PERBAIKAN TOMBOL RESET: Memakai type="primary" agar tidak tertelan CSS <---
-    if st.button("🗑 Reset Web Data", type="primary", use_container_width=True):
-        data["logs"] = []
-        data["last_log_ts"] = None
-        save_db([], None)
-        st.rerun()
+elif page == "📝 PRODUCTION LOG":
+    col_log_1, col_log_2 = st.columns([8, 2])
+    with col_log_1:
+        st.markdown("### 📝 Daily Production Logs Data")
+    with col_log_2:
+        if st.button("🗑 Reset Web Data", type="primary", use_container_width=True):
+            data["logs"] = []
+            data["last_log_ts"] = None
+            save_db([], None)
+            st.rerun()
 
-if not data["logs"]:
-    st.info("No cutting history yet. Please run the machine first.")
-else:
-    for i, log in enumerate(data["logs"]):
-        with st.expander(f"✅ Cutting Completed - {log['waktu']} (By: {log['operator']} | {log['shift']})"):
-            
-            c_text, c_img = st.columns([6, 4])
-            show_layout = False
-            
-            with c_text:
-                st.markdown(f"""
-                - **Total Patterns (Qty):** {log['pcs']} Pcs
-                - **Material Dimensions:** `{log['ukuran']} mm`
-                - **Pattern Shape:** `{log.get('bentuk', '-')}`
-                - **Wasted Fabric (Scrap):** `{log['waste']:.1f}%`
-                """)
-                st.write("")
+    if not data["logs"]:
+        st.info("No cutting history yet. Please run the machine first.")
+    else:
+        for i, log in enumerate(data["logs"]):
+            with st.expander(f"✅ Cutting Completed - {log['waktu']} (By: {log['operator']} | {log['shift']})"):
                 
-                if log.get('nested_polys'):
-                    show_layout = st.toggle("👁️ Show Full Layout (Digital Twin)", key=f"tgl_modal_{i}")
-            
-            with c_img:
-                poly_data = log.get('shape_poly', [])
-                if poly_data:
-                    xs = [p[0] for p in poly_data] + [poly_data[0][0]]
-                    ys = [p[1] for p in poly_data] + [poly_data[0][1]]
-                    fig_hist = go.Figure()
-                    fig_hist.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#10b981', width=3), fillcolor='rgba(16, 185, 129, 0.3)'))
-                    fig_hist.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=0, b=0, l=0, r=0), height=120, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
-                    st.plotly_chart(fig_hist, use_container_width=True, key=f"hist_{i}")
-
-            if log.get('nested_polys') and show_layout:
-                st.markdown("---")
-                st.markdown(f"<p style='text-align: center; color: #d97706;'><b>Full Layout Simulation (Material: {log['ukuran']})</b></p>", unsafe_allow_html=True)
+                c_text, c_img = st.columns([6, 4])
+                show_layout = False
                 
-                mat_p, mat_l = 0, 0
-                try:
-                    parts = log['ukuran'].split('x')
-                    mat_p = float(parts[0].replace('mm', '').strip())
-                    mat_l = float(parts[1].replace('mm', '').strip())
-                except: pass
+                with c_text:
+                    st.markdown(f"""
+                    - **Total Patterns (Qty):** {log['pcs']} Pcs
+                    - **Material Dimensions:** `{log['ukuran']} mm`
+                    - **Pattern Shape:** `{log.get('bentuk', '-')}`
+                    - **Wasted Fabric (Scrap):** `{log['waste']:.1f}%`
+                    """)
+                    st.write("")
                     
-                fig_nest = go.Figure()
+                    if log.get('nested_polys'):
+                        show_layout = st.toggle("👁️ Show Full Layout Simulation", key=f"tgl_modal_{i}")
                 
-                if mat_p > 0 and mat_l > 0:
-                    fig_nest.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode='lines', line=dict(color='#ef4444', width=2), hoverinfo='skip'))
+                with c_img:
+                    poly_data = log.get('shape_poly', [])
+                    if poly_data:
+                        xs = [p[0] for p in poly_data] + [poly_data[0][0]]
+                        ys = [p[1] for p in poly_data] + [poly_data[0][1]]
+                        fig_hist = go.Figure()
+                        fig_hist.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#10b981', width=3), fillcolor='rgba(16, 185, 129, 0.3)'))
+                        fig_hist.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=0, b=0, l=0, r=0), height=120, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+                        st.plotly_chart(fig_hist, use_container_width=True, key=f"hist_{i}")
+
+                if log.get('nested_polys') and show_layout:
+                    st.markdown("---")
+                    st.markdown(f"<p style='text-align: center; color: #d97706;'><b>Full Layout Simulation (Material: {log['ukuran']})</b></p>", unsafe_allow_html=True)
                     
-                for idx, poly in enumerate(log['nested_polys']):
-                    xs = [p[0] for p in poly] + [poly[0][0]]
-                    ys = [p[1] for p in poly] + [poly[0][1]]
-                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#eab308', width=1.5), fillcolor='rgba(234, 179, 8, 0.4)', name=f'Pcs {idx+1}'))
+                    mat_p, mat_l = 0, 0
+                    try:
+                        parts = log['ukuran'].split('x')
+                        mat_p = float(parts[0].replace('mm', '').strip())
+                        mat_l = float(parts[1].replace('mm', '').strip())
+                    except: pass
+                        
+                    fig_nest = go.Figure()
                     
-                fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=10, b=10, l=10, r=10), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
-                
-                c_kiri, c_tengah, c_kanan = st.columns([1, 4, 1])
-                with c_tengah:
+                    if mat_p > 0 and mat_l > 0:
+                        fig_nest.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode='lines', line=dict(color='#ef4444', width=2), hoverinfo='skip'))
+                        
+                    for idx, poly in enumerate(log['nested_polys']):
+                        xs = [p[0] for p in poly] + [poly[0][0]]
+                        ys = [p[1] for p in poly] + [poly[0][1]]
+                        fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#eab308', width=1.5), fillcolor='rgba(234, 179, 8, 0.4)', name=f'Pcs {idx+1}'))
+                        
+                    fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=10, b=10, l=10, r=10), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+                    
                     st.plotly_chart(fig_nest, use_container_width=True, key=f"full_layout_{i}")
 
+
+# ==========================================
+# FOOTER & AUTO REFRESH
+# ==========================================
 st.markdown("---")
-
-st.markdown("### 📡 Communication Test (Web ↔ GUI)")
-
-if "ping_input" not in st.session_state:
-    st.session_state.ping_input = ""
-
-def send_web_ping():
-    msg = st.session_state.ping_input_widget
-    if msg:
-        payload = {
-            "sender": "WEB", 
-            "message": msg, 
-            "timestamp": time.strftime("%H:%M:%S")
-        }
-        mqtt_client_instance.publish("advantech/wise/visionest/ping", json.dumps(payload), qos=1)
-        shared_data.setdefault("ping_msgs", []).append(payload)
-        st.session_state.ping_input_widget = "" 
-
-c_chat, c_input = st.columns([7, 3])
-with c_chat:
-    chat_box = st.container(height=180)
-    with chat_box:
-        if not data.get("ping_msgs"):
-            st.caption("No messages yet. Try sending a ping to the GUI!")
-        for p in data.get("ping_msgs", []):
-            if p["sender"] == "WEB":
-                st.markdown(f"<div style='text-align: right; color: #0ea5e9;'><b>[WEB]</b> {p['message']} <small style='color: #64748b;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<div style='text-align: left; color: #10b981;'><b>[GUI]</b> {p['message']} <small style='color: #64748b;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
-
-with c_input:
-    st.text_input("Message to GUI Desktop:", key="ping_input_widget", on_change=send_web_ping)
-    # ---> PERBAIKAN TOMBOL SEND: Memakai type="primary" <---
-    st.button("🚀 Send Message", type="primary", on_click=send_web_ping, use_container_width=True)
-
-st.markdown("---")
-
-col_foot1, col_foot2 = st.columns([8, 2])
-with col_foot1:
-    st.caption(f"⏱ Last updated: **{data['timestamp']}**")
-with col_foot2:
-    is_auto_refresh = st.toggle("🔄 Live Auto-Refresh", value=True, help="Disable this to prevent the web from auto-refreshing while analyzing graphs.")
+is_auto_refresh = st.sidebar.toggle("🔄 Auto-Refresh", value=True, help="Disable this to analyze graphs without reloading.")
 
 if is_auto_refresh:
     st_autorefresh(interval=2000, limit=None, key="auto_refresh_dasbor")
