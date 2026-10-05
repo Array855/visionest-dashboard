@@ -7,6 +7,7 @@ import random
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from streamlit_autorefresh import st_autorefresh
 
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
 
@@ -309,6 +310,7 @@ with col_foot1:
 with col_foot2:
     is_auto_refresh = st.toggle("🔄 Live Auto-Refresh", value=True, help="Disable this to prevent the web from auto-refreshing while analyzing graphs.")
 
+# --- SOLUSI PRO: AUTO REFRESH AMAN ANTI BLANK ---
 if is_auto_refresh:
-    time.sleep(2)
-    st.rerun()
+    # Refresh halaman tiap 2000 milidetik (2 detik) secara halus via JavaScript
+    st_autorefresh(interval=2000, limit=None, key="auto_refresh_dasbor")
