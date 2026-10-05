@@ -44,7 +44,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ───────────────────────── CSS (DIOPTIMALKAN UKURAN FONT-NYA) ─────────────────────────
+# ───────────────────────── CSS ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -65,20 +65,22 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
 /* Sidebar */
-[data-testid="stSidebar"]{background:#fff;border-right:1px solid var(--line);}
+[data-testid="stSidebar"]{background:#fff;border-right:1px solid var(--line);min-width:250px !important;max-width:250px !important;}
+[data-testid="stSidebarResizer"] {display: none !important;}
+[data-testid="stSidebarCollapseButton"], button[kind="headerNoPadding"] {display: none !important;}
 [data-testid="stSidebar"] div[role="radiogroup"]{gap:4px;}
 [data-testid="stSidebar"] div[role="radiogroup"] label{padding:10px 14px;border-radius:10px;width:100%;}
 [data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child{display:none;}
 [data-testid="stSidebar"] div[role="radiogroup"] label p{font-size:16px;font-weight:700;color:var(--navy);}
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked){background:#eaf0ff;}
 
-/* Kartu & Typography Baru (Makin Jumbo & Tegas) */
+/* Kartu & Typography */
 .card,[class*="st-key-card"]{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;}
-.card-title{font-size:15px;font-weight:700;color:var(--muted);margin-bottom:6px;} /* Diperbesar dari 13px -> 15px */
-.card-value{font-size:36px;font-weight:800;color:var(--ink);line-height:1.15;}   /* Diperbesar dari 28px -> 36px */
-.card-value.sm{font-size:22px;}                                                   /* Diperbesar dari 19px -> 22px */
-.unit{font-size:17px;font-weight:700;color:var(--muted);margin-left:5px;}         /* Diperbesar dari 14px -> 17px */
-.card-sub{font-size:13.5px;font-weight:600;color:var(--muted);margin-top:4px;}    /* Diperbesar dari 12.5px -> 13.5px */
+.card-title{font-size:15px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+.card-value{font-size:36px;font-weight:800;color:var(--ink);line-height:1.15;}
+.card-value.sm{font-size:22px;}
+.unit{font-size:17px;font-weight:700;color:var(--muted);margin-left:5px;}
+.card-sub{font-size:13.5px;font-weight:600;color:var(--muted);margin-top:4px;}
 .row{display:flex;justify-content:space-between;align-items:baseline;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
 .stack{display:grid;gap:12px;}
@@ -87,14 +89,14 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 .bar > span{display:block;height:100%;border-radius:99px;background:var(--ok); transition: width 0.5s ease;}
 .empty{display:flex;align-items:center;justify-content:center;min-height:120px;color:var(--muted);font-weight:700;}
 
-/* Header Title (Makin Besar) */
-.brand{font-size:30px;font-weight:800;color:var(--ink);} /* Diperbesar dari 26px -> 30px */
+/* Header */
+.brand{font-size:30px;font-weight:800;color:var(--ink);}
 .brand .gold{color:var(--gold);}
-.status{text-align:center;font-size:16px;font-weight:700;color:var(--muted);} /* Diperbesar ke 16px */
+.status{text-align:center;font-size:16px;font-weight:700;color:var(--muted);}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;}
 .sep{display:inline-block;width:1px;height:14px;background:var(--line);margin:0 14px;vertical-align:middle;}
 
-/* Chat Log */
+/* Chat */
 .msg{font-size:14px;font-weight:600;margin:4px 0;}
 .msg small{color:var(--muted);font-weight:500;}
 .msg.web{text-align:right;color:var(--accent);}
@@ -111,7 +113,6 @@ st.markdown(CSS, unsafe_allow_html=True)
 
 # ───────────────────────── Helper ─────────────────────────
 def esc(value):
-    """Escape semua teks dari MQTT sebelum masuk HTML (broker publik = input tidak tepercaya)."""
     return html.escape(str(value))
 
 def num(value, default=None):
@@ -129,7 +130,6 @@ def fmt(value, digits=1):
     return f"{v:.{digits}f}".rstrip("0").rstrip(".")
 
 def outline(poly):
-    """Daftar titik [x, y] -> (xs, ys) dengan polygon tertutup."""
     pts = [(float(p[0]), float(p[1])) for p in poly]
     return [p[0] for p in pts] + [pts[0][0]], [p[1] for p in pts] + [pts[0][1]]
 
@@ -165,7 +165,7 @@ def save_db(logs, last_ts):
         log.exception("Gagal menyimpan log")
 
 
-# ───────────────────────── State bersama (thread MQTT <-> Streamlit) ─────────────────────────
+# ───────────────────────── State bersama ─────────────────────────
 class Store:
     def __init__(self):
         self._lock = threading.Lock()
@@ -314,8 +314,8 @@ def send_ping(text):
     store.add_ping(ping)
 
 
-# ───────────────────────── Sidebar ─────────────────────────
-HOME, ANALYSIS, LOGS = "🏠 Home", "📈 Analysis", "📝 Production log"
+# ───────────────────────── Sidebar (Ditambah Executive Summary) ─────────────────────────
+HOME, SUMMARY, ANALYSIS, LOGS = "🏠 Home", "📋 Executive Summary", "📈 Analysis", "📝 Production log"
 
 with st.sidebar:
     c_logo, c_name = st.columns([3, 7], vertical_alignment="center")
@@ -326,7 +326,7 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
     st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-    page = st.radio("Menu", [HOME, ANALYSIS, LOGS], label_visibility="collapsed")
+    page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS], label_visibility="collapsed")
     st.divider()
     live = st.toggle("Live refresh", value=True)
 
@@ -388,7 +388,6 @@ def machine_cards(s):
     return f'<div class="stack">{machine}{progress}{pattern_size}</div>'
 
 def metric_grid(s):
-    # Logika Cerdas Menghitung Current Item Progress
     target = int(num(s.get("target_qty"), 0))
     pct = float(num(s.get("progress_pct"), 0.0))
     
@@ -397,7 +396,6 @@ def metric_grid(s):
     elif pct <= 0:
         curr = 0
     else:
-        # Estimasi barang ke-berapa yang sedang dikerjakan berdasarkan persenan
         curr = math.ceil((pct / 100.0) * target)
         if curr == 0 and target > 0:
             curr = 1
@@ -416,23 +414,16 @@ def nest_figure(s, mat_p, mat_l):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode="lines",
                              line=dict(color=BAD, width=2), hoverinfo="skip"))
-                             
     for i, poly in enumerate(s["nested_polys"], 1):
         xs, ys = outline(poly)
         fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Piece {i}", hoverinfo="name",
                                  line=dict(color=WARN, width=2), fillcolor="rgba(245,158,11,0.25)"))
-        
-        # NOMOR POLA DI TENGAH GAMBAR
         if len(xs) > 1:
             avg_x = sum(xs[:-1]) / len(xs[:-1])
             avg_y = sum(ys[:-1]) / len(ys[:-1])
             fig.add_annotation(
-                x=avg_x, y=avg_y,
-                text=f"<b>{i}</b>",
-                showarrow=False,
-                font=dict(color=INK, size=15)
+                x=avg_x, y=avg_y, text=f"<b>{i}</b>", showarrow=False, font=dict(color=INK, size=15)
             )
-                                 
     fig.add_trace(go.Scatter(x=[num(s["pos_x"], 0.0)], y=[abs(num(s["pos_y"], 0.0))], mode="markers",
                              marker=dict(color=BAD, size=12), name="Laser tool"))
     fig.update_layout(**plot_layout(
@@ -521,6 +512,78 @@ def style_chart(fig):
     fig.update_yaxes(gridcolor=GRID)
     return fig
 
+
+# ─── HALAMAN BARU: EXECUTIVE SUMMARY / LOG RESUME ───
+def page_summary():
+    logs = store.logs_copy()
+    st.markdown('<div class="card-title" style="font-size:20px; margin-bottom:15px;">📋 Executive Summary & Production Resume</div>', unsafe_allow_html=True)
+    
+    if not logs:
+        st.markdown(card("Resume", "No data available", "", "General summary will appear once production logs are recorded."), unsafe_allow_html=True)
+        return
+
+    # Kalkulasi General Resume Data
+    total_cycles = len(logs)
+    total_pieces = sum(int(num(e.get("pcs"), 0)) for e in logs)
+    
+    wastes = [num(e.get("waste")) for e in logs if num(e.get("waste")) is not None]
+    avg_waste = (sum(wastes) / len(wastes)) if wastes else 0.0
+    avg_used = 100.0 - avg_waste
+
+    # Cari Operator Terproduktif
+    op_counts = {}
+    for e in logs:
+        op = e.get("operator", "Unknown")
+        op_counts[op] = op_counts.get(op, 0) + int(num(e.get("pcs"), 0))
+    top_operator = max(op_counts, key=op_counts.get) if op_counts else "-"
+    top_operator_val = op_counts.get(top_operator, 0)
+
+    # Cari Shift Paling Aktif
+    shift_counts = {}
+    for e in logs:
+        sh = e.get("shift", "Shift 1")
+        shift_counts[sh] = shift_counts.get(sh, 0) + 1
+    top_shift = max(shift_counts, key=shift_counts.get) if shift_counts else "-"
+
+    # Grid Resume Utama
+    st.markdown(
+        '<div class="grid">'
+        + card("Material Used (Avg)", f"{avg_used:.1f}", "%", "Effective fabric utilized")
+        + card("Material Waste (Avg)", f"{avg_waste:.1f}", "%", "Average scrap fabric")
+        + card("Total Production", total_pieces, "pcs", f"From {total_cycles} completed cycles")
+        + card("Top Operator", top_operator, "", f"Most productive ({top_operator_val} pcs)")
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+    
+    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+    
+    # Detail Tambahan Resume
+    c_left, c_right = st.columns(2)
+    with c_left:
+        with st.container(key="summary_shift_card"):
+            st.markdown(f"""
+            <div class="card">
+                <div class="card-title">Operational Shift Analysis</div>
+                <div class="card-value sm" style="margin-top:10px;">Most Active: <span style="color:var(--accent);">{top_shift}</span></div>
+                <div class="card-sub" style="margin-top:8px;">Total Completed Cycles: <b>{total_cycles}</b></div>
+                <div class="card-sub">Total Output Generated: <b>{total_pieces} Pieces</b></div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+    with c_right:
+        with st.container(key="summary_efficiency_card"):
+            efficiency_status = "Optimal (Above 50%)" if avg_used >= 50 else "Needs Optimization"
+            st.markdown(f"""
+            <div class="card">
+                <div class="card-title">Material Efficiency Health</div>
+                <div class="card-value sm" style="margin-top:10px; color:var(--ok);">{efficiency_status}</div>
+                <div class="card-sub" style="margin-top:8px;">Average Effective Fabric: <b>{avg_used:.1f}%</b></div>
+                <div class="card-sub">Average Scrap Material: <b>{avg_waste:.1f}%</b></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+
 def page_analysis():
     logs = store.logs_copy()
     if not logs:
@@ -550,7 +613,6 @@ def page_analysis():
             go.Bar(name="Used", x=df["waktu"], y=100 - df["waste"], marker_color=OK),
             go.Bar(name="Waste", x=df["waktu"], y=df["waste"], marker_color=BAD),
         ])
-        
         style_chart(fig).update_layout(barmode="group", bargroupgap=0.1)
         fig.update_yaxes(range=[0, 100], ticksuffix="%")
         st.plotly_chart(fig, key="usage_chart", config=PLOT_CONFIG)
@@ -562,6 +624,7 @@ def page_analysis():
         style_chart(fig).update_traces(cliponaxis=False)
         fig.update_layout(legend_title_text="")
         st.plotly_chart(fig, key="qty_chart", config=PLOT_CONFIG)
+
 
 def page_logs():
     logs = store.logs_copy()
@@ -598,7 +661,6 @@ def page_logs():
             except: pass
                 
             fig_nest = go.Figure()
-            
             if mat_p > 0 and mat_l > 0:
                 fig_nest.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode='lines', line=dict(color=BAD, width=2), hoverinfo='skip'))
                 
@@ -607,15 +669,11 @@ def page_logs():
                 try:
                     xs, ys = outline(poly)
                     fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx}", hoverinfo="name", line=dict(color=WARN, width=1.5), fillcolor="rgba(245,158,11,0.25)"))
-                    
                     if len(xs) > 1:
                         avg_x = sum(xs[:-1]) / len(xs[:-1])
                         avg_y = sum(ys[:-1]) / len(ys[:-1])
                         fig_nest.add_annotation(
-                            x=avg_x, y=avg_y,
-                            text=f"<b>{idx}</b>",
-                            showarrow=False,
-                            font=dict(color=INK, size=12)
+                            x=avg_x, y=avg_y, text=f"<b>{idx}</b>", showarrow=False, font=dict(color=INK, size=12)
                         )
                 except (TypeError, ValueError, IndexError):
                     continue
@@ -639,6 +697,8 @@ st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 if page == HOME:
     live_panel()
     chat_card()
+elif page == SUMMARY:
+    page_summary()
 elif page == ANALYSIS:
     page_analysis()
 else:
