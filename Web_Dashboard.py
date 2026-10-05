@@ -17,100 +17,100 @@ st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.p
 # ==========================================
 st.markdown("""
 <style>
-    /* Reset & Font */
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-    
-    html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
-    
-    /* Background Utama Abu-Abu Sangat Muda */
-    .stApp {
-        background-color: #f4f7fe;
-    }
-    
-    /* Hilangkan padding default Streamlit yang mengganggu */
-    .block-container {
-        padding-top: 1rem !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-        max-width: 100% !important;
-    }
+/* Reset & Font */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 
-    /* Sidebar Putih Bersih */
-    [data-testid="stSidebar"] {
-        background-color: #ffffff;
-        border-right: none;
-        box-shadow: 2px 0px 20px rgba(0, 0, 0, 0.03);
-    }
+html, body, [class*="css"] {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
 
-    /* CUSTOM ENTERPRISE CARD */
-    .nexus-card {
-        background-color: #ffffff;
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: 0px 10px 30px rgba(17, 38, 146, 0.05);
-        margin-bottom: 20px;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-    
-    /* Header Card */
-    .nexus-card-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #a3aed0;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
-    }
+/* Background Utama Abu-Abu Sangat Muda */
+.stApp {
+    background-color: #f4f7fe;
+}
 
-    /* Nilai Utama Metrik */
-    .nexus-card-value {
-        font-size: 38px;
-        font-weight: 800;
-        color: #1b254b;
-        line-height: 1.2;
-    }
-    
-    .nexus-card-value-small {
-        font-size: 24px;
-        font-weight: 800;
-        color: #1b254b;
-        line-height: 1.2;
-    }
+/* Hilangkan padding default Streamlit yang mengganggu */
+.block-container {
+    padding-top: 1rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 100% !important;
+}
 
-    .nexus-card-sub {
-        font-size: 14px;
-        font-weight: 600;
-        color: #a3aed0;
-        margin-top: 4px;
-    }
-    
-    /* Tombol Navigasi Radio Streamlit diakali biar mirip menu aplikasi */
-    div.row-widget.stRadio > div {
-        background: transparent;
-    }
-    div.row-widget.stRadio > div label {
-        background-color: transparent !important;
-        border: none !important;
-        padding: 10px 15px !important;
-        font-weight: 700 !important;
-        color: #a3aed0 !important;
-        font-size: 15px !important;
-    }
-    div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
-        display: none; /* Sembunyikan bulatannya */
-    }
-    
-    /* Paksa teks jadi hitam pekat/navy kalau masih tertelan CSS */
-    [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
-        color: #0f172a !important;
-    }
-    hr {
-        border-color: #cbd5e1 !important;
-    }
+/* Sidebar Putih Bersih */
+[data-testid="stSidebar"] {
+    background-color: #ffffff;
+    border-right: none;
+    box-shadow: 2px 0px 20px rgba(0, 0, 0, 0.03);
+}
+
+/* CUSTOM ENTERPRISE CARD */
+.nexus-card {
+    background-color: #ffffff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0px 10px 30px rgba(17, 38, 146, 0.05);
+    margin-bottom: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Card */
+.nexus-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #a3aed0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+/* Nilai Utama Metrik */
+.nexus-card-value {
+    font-size: 38px;
+    font-weight: 800;
+    color: #1b254b;
+    line-height: 1.2;
+}
+
+.nexus-card-value-small {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1b254b;
+    line-height: 1.2;
+}
+
+.nexus-card-sub {
+    font-size: 14px;
+    font-weight: 600;
+    color: #a3aed0;
+    margin-top: 4px;
+}
+
+/* Tombol Navigasi Radio Streamlit diakali biar mirip menu aplikasi */
+div.row-widget.stRadio > div {
+    background: transparent;
+}
+div.row-widget.stRadio > div label {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 10px 15px !important;
+    font-weight: 700 !important;
+    color: #a3aed0 !important;
+    font-size: 15px !important;
+}
+div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
+    display: none;
+}
+
+/* Paksa teks jadi hitam pekat/navy kalau masih tertelan CSS */
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
+    color: #0f172a !important;
+}
+hr {
+    border-color: #cbd5e1 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -211,13 +211,12 @@ mqtt_client = start_mqtt()
 
 
 # ==========================================
-# 1. SIDEBAR / NAVBAR KIRI
+# 1. SIDEBAR (Putih Bersih)
 # ==========================================
 with st.sidebar:
     st.markdown("<br>", unsafe_allow_html=True)
     col_log1, col_log2 = st.columns([3, 7])
     with col_log1:
-        # ---> AMBIL GAMBAR DARI LOKAL LAPTOP (Anti Hilang) <---
         if os.path.exists("visionest_logo.png"):
             st.image("visionest_logo.png", use_container_width=True)
     with col_log2:
@@ -228,27 +227,18 @@ with st.sidebar:
     
 
 # ==========================================
-# 2. HEADER ATAS (Dikembalikan ke Desain Lama)
+# 2. HEADER ATAS (Satu Baris Saja)
 # ==========================================
-col_title, col_logo = st.columns([7, 3])
-with col_title:
-    st.markdown("<h1><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
-with col_logo:
-    if os.path.exists("logo_pens_kanan.png"): 
-        st.image("logo_pens_kanan.png", use_container_width=True)
-    else:
-        st.write("[EFORTECH - ADVANTECH - PENS]")
-st.markdown("---")
+waktu_skrg = time.strftime('%d %B %Y - %H:%M:%S')
 
-c_stat, c_time, c_logo2 = st.columns([3, 4, 3])
-with c_stat:
-    st.markdown("<h4 style='color:#10b981; margin-top:15px;'>📶 ONLINE</h4>", unsafe_allow_html=True)
+col_kiri, col_tengah, col_kanan = st.columns([4, 4, 3])
+with col_kiri:
+    st.markdown("<h1 style='margin-top:0px;'><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
 
-with c_time:
-    waktu_skrg = time.strftime('%d %B %Y - %H:%M:%S')
-    st.markdown(f"<h4 style='text-align:center; color:#475569; margin-top:15px;'>{waktu_skrg}</h4>", unsafe_allow_html=True)
+with col_tengah:
+    st.markdown(f"<h4 style='color:#10b981; margin-top:15px; text-align:center;'>📶 ONLINE &nbsp;&nbsp;|&nbsp;&nbsp; <span style='color:#475569;'>{waktu_skrg}</span></h4>", unsafe_allow_html=True)
 
-with c_logo2:
+with col_kanan:
     if os.path.exists("logo_pens_kanan.png"): 
         st.image("logo_pens_kanan.png", use_container_width=True)
     else:
@@ -266,39 +256,38 @@ if page == "🏠 HOME":
     col_kiri, col_kanan = st.columns([7, 3])
     
     with col_kanan:
-        # Card Device ID & Operator
+        # Card Device ID & Operator (Tanpa spasi indentasi biar gak bocor HTML)
         st.markdown(f"""
-        <div class="nexus-card">
-            <div class="nexus-card-title">Machine Identity</div>
-            <div class="nexus-card-value-small" style="margin-bottom: 15px;">{data['device_id']}</div>
-            <div class="nexus-card-title">Active Operator</div>
-            <div class="nexus-card-value-small">{data['operator']}</div>
-            <div class="nexus-card-sub">Shift: {data['shift']}</div>
-            
-            <div style="margin-top: 20px;">
-                <div class="nexus-card-title">Machine Status</div>
-                <div class="nexus-card-value-small" style="color: #4318ff; font-size: 16px;">{str(data['status']).replace('_', ' ')}</div>
-            </div>
-        </div>
+<div class="nexus-card">
+    <div class="nexus-card-title">Machine Identity</div>
+    <div class="nexus-card-value-small" style="margin-bottom: 15px;">{data['device_id']}</div>
+    <div class="nexus-card-title">Active Operator</div>
+    <div class="nexus-card-value-small">{data['operator']}</div>
+    <div class="nexus-card-sub">Shift: {data['shift']}</div>
+    <div style="margin-top: 20px;">
+        <div class="nexus-card-title">Machine Status</div>
+        <div class="nexus-card-value-small" style="color: #4318ff; font-size: 16px;">{str(data['status']).replace('_', ' ')}</div>
+    </div>
+</div>
         """, unsafe_allow_html=True)
         
         # Card Progress
         st.markdown(f"""
-        <div class="nexus-card">
-            <div class="nexus-card-title">Cutting Progress</div>
-            <div class="nexus-card-value" style="color: #05cd99;">{data['progress_pct']}<span style="font-size:20px;">%</span></div>
-        </div>
+<div class="nexus-card">
+    <div class="nexus-card-title">Cutting Progress</div>
+    <div class="nexus-card-value" style="color: #05cd99;">{data['progress_pct']}<span style="font-size:20px;">%</span></div>
+</div>
         """, unsafe_allow_html=True)
         st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
         
     with col_kiri:
         # Card 2D Preview Nesting (Top-Down Flat)
         st.markdown(f"""
-        <div class="nexus-card" style="padding-bottom: 0px;">
-            <div style="display: flex; justify-content: space-between;">
-                <div class="nexus-card-title">Live Production Layout</div>
-                <div class="nexus-card-sub" style="margin-top:0;">{data.get('mat_p', 0)} x {data.get('mat_l', 0)} mm</div>
-            </div>
+<div class="nexus-card" style="padding-bottom: 0px;">
+    <div style="display: flex; justify-content: space-between;">
+        <div class="nexus-card-title">Live Production Layout</div>
+        <div class="nexus-card-sub" style="margin-top:0;">{data.get('mat_p', 0)} x {data.get('mat_l', 0)} mm</div>
+    </div>
         """, unsafe_allow_html=True)
         
         mat_p = data.get('mat_p', 0.0)
@@ -326,7 +315,7 @@ if page == "🏠 HOME":
 
     # BARIS 2: METRIK BAWAH (Berjejer 4 Kolom)
     st.markdown("""
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
     """, unsafe_allow_html=True)
     
     metrics_data = [
@@ -340,21 +329,21 @@ if page == "🏠 HOME":
     for i, col in enumerate(cols):
         with col:
             st.markdown(f"""
-            <div class="nexus-card" style="margin-bottom: 0;">
-                <div class="nexus-card-title">{metrics_data[i][0]}</div>
-                <div style="display:flex; align-items:baseline; gap:5px;">
-                    <div class="nexus-card-value">{metrics_data[i][1]}</div>
-                    <div style="font-size: 16px; font-weight:700; color:#a3aed0;">{metrics_data[i][2]}</div>
-                </div>
-                <div class="nexus-card-sub">{metrics_data[i][3]}</div>
-            </div>
+<div class="nexus-card" style="margin-bottom: 0;">
+    <div class="nexus-card-title">{metrics_data[i][0]}</div>
+    <div style="display:flex; align-items:baseline; gap:5px;">
+        <div class="nexus-card-value">{metrics_data[i][1]}</div>
+        <div style="font-size: 16px; font-weight:700; color:#a3aed0;">{metrics_data[i][2]}</div>
+    </div>
+    <div class="nexus-card-sub">{metrics_data[i][3]}</div>
+</div>
             """, unsafe_allow_html=True)
 
     # BARIS 3: SERIAL LOG CHAT
     st.markdown("""
-    <div class="nexus-card" style="margin-top: 20px;">
-        <div class="nexus-card-title">Communication Log (Web ↔ GUI)</div>
-    </div>
+<div class="nexus-card" style="margin-top: 20px;">
+    <div class="nexus-card-title">Communication Log (Web ↔ GUI)</div>
+</div>
     """, unsafe_allow_html=True)
     
     if "ping_input" not in st.session_state:
