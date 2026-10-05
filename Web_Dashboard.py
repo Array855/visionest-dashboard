@@ -34,15 +34,16 @@ STALE_AFTER_S = 60
 MAX_LOGS, MAX_PINGS, PAGE_SIZE = 500, 20, 25
 DEMO = os.getenv("VISIONEST_DEMO") == "1"
 
-# ---> WARNA THEME HYBRID (LIGHT BACKGROUND + POSTER COLORS) <---
-INK = "#0a1f54"         # Teks Utama (Deep Space Blue dari Poster)
-MUTED = "#64748b"       # Teks Sekunder (Abu-abu biru)
-GOLD = "#38bdf8"        # Aksen Biru Muda
-ACCENT = "#1e3a8a"      # Royal Blue (Untuk elemen penegas)
-OK = "#00d2ff"          # Neon Cyan dari Poster (Warna nyawa utama)
-WARN = "#f59e0b"        # Orange (Untuk Pola 2D)
+# ---> WARNA THEME CLEAN ANALYTICS (LIGHT MODE) <---
+INK = "#1e293b"         # Teks Utama (Dark Slate pekat)
+MUTED = "#64748b"       # Teks Redup (Slate abu-abu)
+GOLD = "#f59e0b"        # Orange Accent
+ACCENT = "#3b82f6"      # Bright Blue (Warna utama khas dashboard SaaS)
+PURPLE = "#8b5cf6"      # Vibrant Purple (Untuk grafik Donut/Area)
+OK = "#0ea5e9"          # Sky Blue / Cyan
+WARN = "#f97316"        # Bright Orange
 BAD = "#ef4444"         # Merah
-GRID = "#e2e8f0"        # Garis Grid terang
+GRID = "#f1f5f9"        # Garis Grid sangat halus
 
 st.set_page_config(
     page_title="VISIONEST Dashboard",
@@ -51,20 +52,20 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ───────────────────────── CSS HYBRID CORPORATE ─────────────────────────
+# ───────────────────────── CSS CLEAN ANALYTICS ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 :root {
-    --bg: #f4f7fe;         /* Background utama Light Grey */
-    --card: #ffffff;       /* Background kartu Putih Bersih */
-    --ink: #0a1f54;        /* Deep Space Blue (Warna Teks Utama) */
-    --muted: #64748b;      /* Teks Abu */
-    --line: #e2e8f0;       /* Border halus */
-    --gold: #38bdf8;       
-    --navy: #1e3a8a;       
-    --accent: #0a1f54;     /* Deep Blue Action */
-    --ok: #00d2ff;         /* Neon Cyan! */
+    --bg: #f8fafc;         
+    --card: #ffffff;       
+    --ink: #1e293b;        
+    --muted: #64748b;      
+    --line: #e2e8f0;       
+    --gold: #f59e0b;       
+    --navy: #0f172a;       
+    --accent: #3b82f6;     
+    --ok: #0ea5e9;         
 }
 
 html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
@@ -98,7 +99,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 [data-testid="stSidebarResizer"] { display: none !important; }
 [data-testid="stSidebarCollapseButton"], button[kind="headerNoPadding"] { display: none !important; }
 
-/* Navigasi Sidebar - Pill Shape Halus dengan Highlight Neon Cyan */
+/* Navigasi Sidebar - Pill Shape Halus */
 [data-testid="stSidebar"] div[role="radiogroup"] { gap: 8px; }
 [data-testid="stSidebar"] div[role="radiogroup"] label {
     padding: 12px 16px;
@@ -113,12 +114,12 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     color: var(--muted) !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
-    background: #f4f7fe !important; 
-    border-left: 4px solid var(--ok); /* Garis Samping Neon Cyan */
-    border-radius: 0 8px 8px 0;
+    background: #f1f5f9 !important; 
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) p {
-    color: var(--ink) !important; /* Teks Deep Blue */
+    color: var(--accent) !important; 
     font-weight: 800 !important;
 }
 
@@ -128,7 +129,8 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     border: 1px solid #f1f5f9 !important;
     border-radius: 12px;
     padding: 20px 24px;
-    box-shadow: 0 4px 15px rgba(10, 31, 84, 0.05); /* Shadow biru sangat halus */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02); 
+    height: 100%;
 }
 .card-title { font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
 .card-value { font-size: 34px; font-weight: 800; color: var(--ink); line-height: 1.15; }
@@ -141,17 +143,17 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
 .stack { display: grid; gap: 16px; }
 
-/* Badges & Bars (Aksen Biru & Cyan) */
-.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #e0f2fe; color: #0284c7; }
-.bar { height: 8px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 12px; }
-.bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #1e3a8a, var(--ok)); transition: width 0.5s ease; } /* Gradasi Biru ke Neon Cyan */
+/* Badges & Bars */
+.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #eff6ff; color: var(--accent); }
+.bar { height: 6px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 12px; }
+.bar > span { display: block; height: 100%; border-radius: 99px; background: var(--ok); transition: width 0.5s ease; }
 .empty { display: flex; align-items: center; justify-content: center; min-height: 120px; color: var(--muted); font-weight: 600; }
 
 /* Header & Text Globals */
 .brand { font-size: 28px; font-weight: 800; color: var(--ink); }
-.brand .gold { color: #0284c7; font-weight: 400; } 
+.brand .gold { color: var(--accent); font-weight:400; } 
 .status { text-align: center; font-size: 14px; font-weight: 600; color: var(--muted); }
-.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--ok); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--muted); }
 .sep { display: inline-block; width: 1px; height: 14px; background: var(--line); margin: 0 16px; vertical-align: middle; }
 
 [data-testid="stWidgetLabel"] p, [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
@@ -170,8 +172,8 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 /* Chat */
 .msg { font-size: 14px; font-weight: 500; margin: 6px 0; }
 .msg small { color: var(--muted); font-weight: 400; }
-.msg.web { text-align: right; color: var(--navy); font-weight:700;}
-.msg.gui { text-align: left; color: #0284c7; font-weight:700;}
+.msg.web { text-align: right; color: var(--accent); }
+.msg.gui { text-align: left; color: var(--ok); }
 
 /* Expander/Logs */
 [data-testid="stExpander"] details { background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
@@ -371,7 +373,7 @@ def link_status():
         return "Broker offline", BAD
     age = store.seconds_since_data()
     if age is not None and age < STALE_AFTER_S:
-        return "Machine online", OK
+        return "Machine online", ACCENT
     return "Waiting for machine", MUTED
 
 def send_ping(text):
@@ -391,12 +393,12 @@ with st.sidebar:
     c_logo, c_name = st.columns([3, 7], vertical_alignment="center")
     c_logo.image(LOGO if os.path.exists(LOGO) else LOGO_REMOTE, width=48)
     c_name.markdown(
-        "<div style='font-size:18px;font-weight:800;color:#0a1f54;line-height:1.2'>VISIONEST</div>"
-        "<div style='font-size:12px;font-weight:600;color:#38bdf8'>by DEMIURGEN</div>",
+        "<div style='font-size:18px;font-weight:800;color:#1e293b;line-height:1.2'>VISIONEST</div>"
+        "<div style='font-size:11px;font-weight:700;color:#3b82f6;text-transform:uppercase;'>by DEMIURGEN</div>",
         unsafe_allow_html=True,
     )
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase;'>Directories</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;'>Directories</p>", unsafe_allow_html=True)
     page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS], label_visibility="collapsed")
     st.divider()
     live = st.toggle("Live refresh", value=True)
@@ -483,14 +485,12 @@ def metric_grid(s):
 
 def nest_figure(s, mat_p, mat_l):
     fig = go.Figure()
-    # Garis Batas Material (Abu-abu terang)
     fig.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode="lines",
                              line=dict(color="#cbd5e1", width=2), hoverinfo="skip"))
     for i, poly in enumerate(s["nested_polys"], 1):
         xs, ys = outline(poly)
-        # Pola Kain Biru Elektrik Transparan khas Visionest
         fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Piece {i}", hoverinfo="name",
-                                 line=dict(color=ACCENT, width=2), fillcolor="rgba(30, 58, 138, 0.15)"))
+                                 line=dict(color=ACCENT, width=2), fillcolor="rgba(59, 130, 246, 0.1)"))
         if len(xs) > 1:
             avg_x = sum(xs[:-1]) / len(xs[:-1])
             avg_y = sum(ys[:-1]) / len(ys[:-1])
@@ -527,17 +527,18 @@ def layout_card(s):
 def header():
     label, color = link_status()
     now = datetime.now(WIB).strftime("%d %B %Y, %H:%M:%S")
-    c_brand, c_status, c_logo = st.columns([3, 5, 2.5], vertical_alignment="center")
+    # ----> FIX: LOGO PARTNER KANAN DIPERBESAR BIAR SEIMBANG SAMA JUDUL <----
+    c_brand, c_status, c_logo = st.columns([3, 4.5, 3], vertical_alignment="center")
     c_brand.markdown('<div class="brand">VISIONEST <span class="gold" style="font-weight:400;">Dashboard</span></div>', unsafe_allow_html=True)
     c_status.markdown(
-        f'<div class="status"><span class="dot" style="background:{color}; box-shadow:0 0 8px {color};"></span><span style="color:var(--muted); font-weight:600;">{esc(label)}</span>'
-        f'<span class="sep"></span><span style="color:var(--muted); font-weight:600;">{now}</span></div>',
+        f'<div class="status"><span class="dot" style="background:{color};"></span><span style="color:var(--muted); font-weight:500;">{esc(label)}</span>'
+        f'<span class="sep"></span><span style="color:var(--muted); font-weight:500;">{now}</span></div>',
         unsafe_allow_html=True,
     )
     if os.path.exists(LOGO_PARTNER):
-        c_logo.image(LOGO_PARTNER, width=200)
+        c_logo.image(LOGO_PARTNER, width=280) # Logo diperbesar ke 280px
     else:
-        c_logo.image(LOGO_PARTNER_REMOTE, width=200)
+        c_logo.image(LOGO_PARTNER_REMOTE, width=280)
 
 @st.fragment(run_every=REFRESH)
 def live_panel():
@@ -586,7 +587,7 @@ def style_chart(fig):
     return fig
 
 
-# ─── HALAMAN STATS (HYBRID LIGHT & NEON BLUE) ───
+# ─── HALAMAN STATS (YANG DI-UPGRADE JADI SUPER INFORMATIF) ───
 def page_summary():
     logs = store.logs_copy()
     
@@ -602,14 +603,19 @@ def page_summary():
     wastes = [num(e.get("waste")) for e in logs if num(e.get("waste")) is not None]
     avg_waste = (sum(wastes) / len(wastes)) if wastes else 0.0
     avg_used = 100.0 - avg_waste
+    
+    avg_pcs_cycle = total_pieces / total_cycles if total_cycles > 0 else 0
 
     op_counts = {}
     shift_counts = {}
+    shape_counts = {}
     for e in logs:
         op = e.get("operator", "Unknown")
         sh = e.get("shift", "Shift 1")
+        shp = e.get("bentuk", "Undefined")
         op_counts[op] = op_counts.get(op, 0) + int(num(e.get("pcs"), 0))
         shift_counts[sh] = shift_counts.get(sh, 0) + 1
+        shape_counts[shp] = shape_counts.get(shp, 0) + 1
         
     top_operator = max(op_counts, key=op_counts.get) if op_counts else "-"
     top_operator_val = op_counts.get(top_operator, 0)
@@ -618,36 +624,34 @@ def page_summary():
     c_head1.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">Stats Overview</div>', unsafe_allow_html=True)
     c_head2.markdown(f'<div style="text-align:right;"><span style="font-size:12px; font-weight:600; background:#f1f5f9; padding:6px 12px; border-radius:6px; color:var(--muted); border:1px solid #e2e8f0;">Data per: {datetime.now(WIB).strftime("%d %b %Y")}</span></div>', unsafe_allow_html=True)
 
-    # 1. KARTU BARIS ATAS 
-    c1, c2, c3 = st.columns(3)
+    # 1. KARTU BARIS ATAS (DIPECAH JADI 4 BIAR INFORMATIF MAKSIMAL)
+    c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.markdown(card("Avg Utilization", f"{avg_used:.1f}", "%", f"↑ Material efficiency", val_color=INK), unsafe_allow_html=True)
+        st.markdown(card("Avg Utilization", f"{avg_used:.1f}", "%", f"Overall material efficiency", val_color=INK), unsafe_allow_html=True)
     with c2:
-        st.markdown(card("Total Pieces", f"{total_pieces}", "", f"From {total_cycles} complete cycles", val_color=INK), unsafe_allow_html=True)
+        st.markdown(card("Total Pieces", f"{total_pieces}", "pcs", f"From {total_cycles} complete cycles", val_color=INK), unsafe_allow_html=True)
     with c3:
-        st.markdown(card("Top Operator", top_operator, "", f"Most productive: {top_operator_val} pcs", val_color=ACCENT), unsafe_allow_html=True)
+        st.markdown(card("Avg Pcs / Cycle", f"{avg_pcs_cycle:.1f}", "pcs", f"Machine productivity rate", val_color=INK), unsafe_allow_html=True)
+    with c4:
+        st.markdown(card("Top Operator", top_operator, "", f"Highest yield ({top_operator_val} pcs)", val_color=ACCENT), unsafe_allow_html=True)
 
     st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
 
-    # 2. BARIS BAWAH: TREN & PIE
+    # 2. BARIS KEDUA: TREN & SHIFT SHARE
     c_a, c_d = st.columns([7, 3])
     
     with c_a:
         st.markdown('<div class="card" style="height:100%;"><div class="row"><span class="card-title" style="font-size:18px; color:var(--ink);">Production Trend</span><span style="font-size:12px; color:var(--muted); border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px;">Last 7 Cycles</span></div>', unsafe_allow_html=True)
-        
         df_trend = pd.DataFrame(logs[:7][::-1])
         if not df_trend.empty:
             df_trend["waktu_short"] = df_trend["waktu"].str.split(" ").str[-1] 
             fig_trend = go.Figure()
-            # Area Chart Biru khas Visionest Poster
             fig_trend.add_trace(go.Scatter(
                 x=df_trend["waktu_short"], y=df_trend["pcs"],
-                fill='tozeroy',
-                mode='lines+markers',
-                name='Pieces Cut',
-                line=dict(color="#00d2ff", width=3, shape='spline'), # Neon Cyan Line
-                marker=dict(size=6, color="#0a1f54"), # Deep Blue Dots
-                fillcolor='rgba(0, 210, 255, 0.15)' # Soft Cyan Transparent
+                fill='tozeroy', mode='lines+markers', name='Pieces Cut',
+                line=dict(color=OK, width=3, shape='spline'),
+                marker=dict(size=6, color=OK),
+                fillcolor='rgba(14, 165, 233, 0.15)' 
             ))
             fig_trend.update_layout(**plot_layout(height=260, margin=dict(t=10, b=30, l=10, r=10)))
             fig_trend.update_xaxes(showgrid=False, tickfont=dict(color=MUTED))
@@ -659,19 +663,40 @@ def page_summary():
 
     with c_d:
         st.markdown('<div class="card" style="height:100%;"><div class="row"><span class="card-title" style="font-size:18px; color:var(--ink);">Shift Share</span></div>', unsafe_allow_html=True)
-        # DONUT CHART WARNA BIRU TUA & NEON CYAN
         fig_shift = px.pie(
             names=list(shift_counts.keys()), 
             values=list(shift_counts.values()), 
             hole=0.65,
-            color_discrete_sequence=["#1e3a8a", "#00d2ff", "#38bdf8"] # Royal Blue, Neon Cyan, Light Blue
+            color_discrete_sequence=[ACCENT, OK, PURPLE]
         )
         fig_shift.update_layout(**plot_layout(height=260, margin=dict(t=10, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1)))
         fig_shift.update_traces(textinfo='none') 
-        
-        fig_shift.add_annotation(text=f"Total<br><span style='font-size:24px; font-weight:bold; color:#0a1f54;'>{total_cycles}</span><br><span style='font-size:12px; color:#64748b;'>Cycles</span>", x=0.5, y=0.5, font_size=14, font_color=MUTED, showarrow=False)
-
+        fig_shift.add_annotation(text=f"Total<br><span style='font-size:24px; font-weight:bold; color:#1e293b;'>{total_cycles}</span><br><span style='font-size:12px; color:#64748b;'>Cycles</span>", x=0.5, y=0.5, font_size=14, font_color=MUTED, showarrow=False)
         st.plotly_chart(fig_shift, key="summary_shift_pie", config=PLOT_CONFIG, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+
+    # 3. BARIS KETIGA: OPERATOR PERFORMANCE & SHAPE DISTRIBUTION
+    c_op, c_sh = st.columns(2)
+    with c_op:
+        st.markdown('<div class="card" style="height:100%;"><div class="row"><span class="card-title" style="font-size:18px; color:var(--ink);">Operator Performance</span><span style="font-size:12px; color:var(--muted); border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px;">Total Pieces</span></div>', unsafe_allow_html=True)
+        df_op = pd.DataFrame(list(op_counts.items()), columns=['Operator', 'Pieces']).sort_values('Pieces', ascending=True)
+        fig_op = px.bar(df_op, x='Pieces', y='Operator', orientation='h', text='Pieces', color_discrete_sequence=[ACCENT])
+        fig_op.update_layout(**plot_layout(height=240, margin=dict(t=20, b=10, l=10, r=10)))
+        fig_op.update_traces(textposition='outside', cliponaxis=False)
+        fig_op.update_xaxes(showgrid=True, gridcolor=GRID, title="")
+        fig_op.update_yaxes(title="")
+        st.plotly_chart(fig_op, key="op_perf_bar", config=PLOT_CONFIG, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with c_sh:
+        st.markdown('<div class="card" style="height:100%;"><div class="row"><span class="card-title" style="font-size:18px; color:var(--ink);">Shape Class Breakdown</span><span style="font-size:12px; color:var(--muted); border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px;">Frequency</span></div>', unsafe_allow_html=True)
+        df_sh = pd.DataFrame(list(shape_counts.items()), columns=['Shape', 'Count'])
+        fig_sh = px.pie(df_sh, names='Shape', values='Count', hole=0.4, color_discrete_sequence=[PURPLE, OK, ACCENT, GOLD])
+        fig_sh.update_layout(**plot_layout(height=240, margin=dict(t=20, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1)))
+        fig_sh.update_traces(textinfo='percent', textposition='inside')
+        st.plotly_chart(fig_sh, key="shape_dist_pie", config=PLOT_CONFIG, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
 
@@ -700,7 +725,7 @@ def page_analysis():
     with st.container(key="card_qty"):
         st.markdown('<div class="card-title">Output Volume (Last 30)</div>', unsafe_allow_html=True)
         fig = px.bar(df, x="waktu", y="pcs", color="shift", text="pcs",
-                     color_discrete_sequence=[ACCENT, OK, GOLD])
+                     color_discrete_sequence=[ACCENT, PURPLE, WARN])
         style_chart(fig).update_traces(cliponaxis=False)
         fig.update_layout(legend_title_text="")
         st.plotly_chart(fig, key="qty_chart", config=PLOT_CONFIG)
@@ -749,7 +774,7 @@ def page_logs():
             for idx, poly in enumerate(polys, 1):
                 try:
                     xs, ys = outline(poly)
-                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx}", hoverinfo="name", line=dict(color=ACCENT, width=1.5), fillcolor="rgba(30, 58, 138, 0.15)"))
+                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx}", hoverinfo="name", line=dict(color=ACCENT, width=1.5), fillcolor="rgba(59, 130, 246, 0.1)"))
                     if len(xs) > 1:
                         avg_x = sum(xs[:-1]) / len(xs[:-1])
                         avg_y = sum(ys[:-1]) / len(ys[:-1])
