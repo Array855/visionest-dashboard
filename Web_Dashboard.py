@@ -13,7 +13,7 @@ from streamlit_autorefresh import st_autorefresh
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
-# SUNTIKAN CSS "SYNAPSE" ENTERPRISE THEME
+# SUNTIKAN CSS "SYNAPSE" ENTERPRISE THEME (High Contrast)
 # ==========================================
 st.markdown("""
 <style>
@@ -56,11 +56,11 @@ html, body, [class*="css"] {
     flex-direction: column;
 }
 
-/* Header Card */
+/* Header Card (Warna Ditebalkan jadi #475569) */
 .nexus-card-title {
     font-size: 14px;
-    font-weight: 700;
-    color: #a3aed0;
+    font-weight: 800;
+    color: #475569;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 8px;
@@ -81,14 +81,15 @@ html, body, [class*="css"] {
     line-height: 1.2;
 }
 
+/* Sub-teks (Warna Ditebalkan jadi #475569) */
 .nexus-card-sub {
     font-size: 14px;
-    font-weight: 600;
-    color: #a3aed0;
+    font-weight: 700;
+    color: #475569;
     margin-top: 4px;
 }
 
-/* Tombol Navigasi Radio Streamlit */
+/* Tombol Navigasi Radio Streamlit di Sidebar (Warna Navy Blue) */
 div.row-widget.stRadio > div {
     background: transparent;
 }
@@ -96,16 +97,16 @@ div.row-widget.stRadio > div label {
     background-color: transparent !important;
     border: none !important;
     padding: 10px 15px !important;
-    font-weight: 700 !important;
-    color: #a3aed0 !important;
+    font-weight: 800 !important;
+    color: #1e3a8a !important;
     font-size: 15px !important;
 }
 div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
     display: none;
 }
 
-/* Paksa teks jadi hitam pekat/navy */
-[data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
+/* Paksa teks metrik, toggle label, jadi hitam pekat/navy */
+[data-testid="stWidgetLabel"] p, [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
     color: #0f172a !important;
 }
 
@@ -213,23 +214,22 @@ mqtt_client = start_mqtt()
 
 
 # ==========================================
-# 1. SIDEBAR (Dikembalikan Pake URL Biar Gak Ilang)
+# 1. SIDEBAR (Bersih Tanpa Gambar Rusak)
 # ==========================================
 with st.sidebar:
-    st.markdown("<br>", unsafe_allow_html=True)
-    col_log1, col_log2 = st.columns([3, 7])
-    with col_log1:
-        # ---> PAKAI URL URL GITHUB LAGI BIAR PASTI MUNCUL <---
-        st.markdown("<img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='55' style='margin-left: 10px;'>", unsafe_allow_html=True)
-    with col_log2:
-        st.markdown("<h3 style='color: #d4af37; margin:0; padding:0; font-size:18px;'>VISIONEST</h3><p style='color: #1e3a8a; margin:0; font-weight:bold; font-size:12px;'>by DEMIURGEN</p>", unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    
+    # Hanya Text Saja, Gambar Pecah Dihapus
+    st.markdown("<h3 style='color: #d4af37; margin:0; padding:0; font-size:24px; text-align:center;'>VISIONEST</h3><p style='color: #1e3a8a; margin:0; font-weight:800; font-size:14px; text-align:center;'>by DEMIURGEN</p>", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
-    page = st.radio("Navigation Menu", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
+    st.markdown("<p style='color: #475569; font-weight: 800; font-size: 13px; margin-left: 15px; margin-bottom: 5px; text-transform: uppercase;'>Main Menu</p>", unsafe_allow_html=True)
+    
+    page = st.radio("", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
     
 
 # ==========================================
-# 2. HEADER ATAS (Rapi & Tanpa Garis-Garis Aneh)
+# 2. HEADER ATAS (Satu Baris Saja)
 # ==========================================
 waktu_skrg = time.strftime('%d %B %Y - %H:%M:%S')
 
@@ -238,20 +238,19 @@ with col_kiri:
     st.markdown("<h1 style='margin-top:0px; font-weight:800;'><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
 
 with col_tengah:
-    st.markdown(f"<h4 style='color:#10b981; margin-top:20px; text-align:center; font-weight:800;'>📶 ONLINE &nbsp;&nbsp;<span style='color:#cbd5e1;'>|</span>&nbsp;&nbsp; <span style='color:#475569; font-weight:600;'>{waktu_skrg}</span></h4>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='color:#10b981; margin-top:20px; text-align:center; font-weight:800;'>📶 ONLINE &nbsp;&nbsp;<span style='color:#cbd5e1;'>|</span>&nbsp;&nbsp; <span style='color:#475569; font-weight:700;'>{waktu_skrg}</span></h4>", unsafe_allow_html=True)
 
 with col_kanan:
     if os.path.exists("logo_pens_kanan.png"): 
         st.image("logo_pens_kanan.png", use_container_width=True)
     else:
-        st.markdown("<h4 style='text-align:right; color:#1e3a8a; margin-top:20px;'>[LOGO PENS & EFORTECH]</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='text-align:right; color:#1e3a8a; margin-top:20px; font-weight:800;'>[LOGO PENS & EFORTECH]</h4>", unsafe_allow_html=True)
 
-# ---> Garis pembatas dihapus biar UI keliatan lebih plong <---
 st.markdown("<br>", unsafe_allow_html=True)
 
 
 # ==========================================
-# 3. KONTEN HALAMAN (Tetap Elegan & Enterprise)
+# 3. KONTEN HALAMAN (Tetap Elegan & High Contrast)
 # ==========================================
 if page == "🏠 HOME":
     
@@ -274,7 +273,7 @@ if page == "🏠 HOME":
 </div>
         """, unsafe_allow_html=True)
         
-        # ---> FIX UTAMA: PROGRESS BAR DIHILANGKAN TOTAL 100% (Sisa Angka Aja) <---
+        # Card Progress (Tanpa Progress Bar)
         st.markdown(f"""
 <div class="nexus-card">
     <div class="nexus-card-title">Cutting Progress</div>
@@ -312,7 +311,8 @@ if page == "🏠 HOME":
             fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=10, b=10, l=10, r=10), height=340, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
             st.plotly_chart(fig_nest, use_container_width=True)
         else:
-            st.markdown("<div style='height: 340px; display:flex; align-items:center; justify-content:center; color:#a3aed0; font-weight:600;'>NO PATTERN LOADED</div>", unsafe_allow_html=True)
+            # Warna Ditebalkan
+            st.markdown("<div style='height: 340px; display:flex; align-items:center; justify-content:center; color:#475569; font-weight:800;'>NO PATTERN LOADED</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # BARIS 2: METRIK BAWAH (Berjejer 4 Kolom)
@@ -335,7 +335,7 @@ if page == "🏠 HOME":
     <div class="nexus-card-title">{metrics_data[i][0]}</div>
     <div style="display:flex; align-items:baseline; gap:5px;">
         <div class="nexus-card-value">{metrics_data[i][1]}</div>
-        <div style="font-size: 16px; font-weight:700; color:#a3aed0;">{metrics_data[i][2]}</div>
+        <div style="font-size: 16px; font-weight:800; color:#475569;">{metrics_data[i][2]}</div>
     </div>
     <div class="nexus-card-sub">{metrics_data[i][3]}</div>
 </div>
@@ -364,12 +364,12 @@ if page == "🏠 HOME":
         chat_box = st.container(height=180)
         with chat_box:
             if not data.get("ping_msgs"):
-                st.markdown("<p style='color:#a3aed0; font-weight:600;'>No messages yet.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#475569; font-weight:700;'>No messages yet.</p>", unsafe_allow_html=True)
             for p in data.get("ping_msgs", []):
                 if p["sender"] == "WEB":
-                    st.markdown(f"<div style='text-align: right; color: #4318ff; font-weight:700; font-size:15px;'>[WEB] {p['message']} <br><small style='color: #a3aed0;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='text-align: right; color: #4318ff; font-weight:800; font-size:15px;'>[WEB] {p['message']} <br><small style='color: #475569;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
                 else:
-                    st.markdown(f"<div style='text-align: left; color: #05cd99; font-weight:700; font-size:15px;'>[GUI] {p['message']} <br><small style='color: #a3aed0;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='text-align: left; color: #05cd99; font-weight:800; font-size:15px;'>[GUI] {p['message']} <br><small style='color: #475569;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
 
     with c_input:
         st.text_input("Msg:", key="ping_input_widget", on_change=send_web_ping, label_visibility="collapsed", placeholder="Type message...")
@@ -386,15 +386,15 @@ elif page == "📈 ANALYSIS":
             go.Bar(name='Used (Effective)', x=df['waktu'], y=df['Terpakai'], marker_color='#05cd99'),
             go.Bar(name='Fabric Waste (Scrap)', x=df['waktu'], y=df['Waste'], marker_color='#ff5b5b')
         ])
-        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#1b254b'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#1b254b', weight=700), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_group, use_container_width=True)
 
         st.markdown("""<div class="nexus-card"><div class="nexus-card-value-small">Production History (Qty)</div></div>""", unsafe_allow_html=True)
         fig_bar = px.bar(df, x="waktu", y="pcs", color="shift", text="pcs", color_discrete_sequence=['#4318ff', '#39b8ff'])
-        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#1b254b'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#1b254b', weight=700), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_bar, use_container_width=True)
     else:
-        st.info("No data available for analytics yet.")
+        st.markdown("<p style='color:#475569; font-weight:700;'>No data available for analytics yet.</p>", unsafe_allow_html=True)
 
 elif page == "📝 PRODUCTION LOG":
     c_title, c_btn = st.columns([8, 2])
@@ -408,7 +408,7 @@ elif page == "📝 PRODUCTION LOG":
             st.rerun()
 
     if not data["logs"]:
-        st.info("No cutting history yet.")
+        st.markdown("<p style='color:#475569; font-weight:700;'>No cutting history yet.</p>", unsafe_allow_html=True)
     else:
         for i, log in enumerate(data["logs"]):
             with st.expander(f"✅ Finished at {log['waktu']} (Op: {log['operator']})"):
