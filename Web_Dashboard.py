@@ -154,7 +154,7 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # --- NAVIGASI ---
+    # --- NAVIGASI UTAMA ---
     page = st.radio("Navigation Menu", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
     
 
@@ -184,48 +184,102 @@ st.markdown("---")
 # ==========================================
 
 if page == "🏠 HOME":
-    # Baris 1: 3D Preview vs Info Box
-    col_prev, col_info = st.columns([6, 4])
     
-    with col_prev:
-        st.markdown("#### 👁️ Preview 3D")
-        if data["shape_poly"] and data["status"] not in ["SYSTEM_READY", "OFFLINE"]:
-            xs = [p[0] for p in data["shape_poly"]] + [data["shape_poly"][0][0]]
-            ys = [p[1] for p in data["shape_poly"]] + [data["shape_poly"][0][1]]
-            fig_shape = go.Figure()
-            fig_shape.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#0ea5e9', width=3), fillcolor='rgba(14, 165, 233, 0.3)'))
-            fig_shape.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=0, b=0, l=0, r=0), height=300, paper_bgcolor='rgba(255,255,255,1)', plot_bgcolor='rgba(255,255,255,1)', showlegend=False)
-            st.plotly_chart(fig_shape, use_container_width=True)
-        else:
-            st.info("NO PATTERN LOADED. Menunggu komputasi dari GUI.")
-            
-    with col_info:
+    # ---> BARIS 1: DEVICE ID, OPERATOR, STATUS (Sesuai Sketsa: Pindah ke Atas Preview) <---
+    info1, info2, info3 = st.columns(3)
+    with info1:
         st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
+    with info2:
         st.info(f"**👷 Operator:**\n### {data['operator']} ({data['shift']})")
-        
+    with info3:
         stat = data['status']
-        if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS"]:
+        if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS", "CYCLE_COMPLETE", "SYSTEM_READY"]:
             st.success(f"**🔄 Status:**\n### {stat}")
         elif stat == "EMERGENCY_STOP_TRIGGERED":
             st.error(f"**🚨 Status:**\n### {stat}")
+        elif stat == "OFFLINE":
+            st.error(f"**⏸ Status:**\n### {stat}")
         else:
             st.warning(f"**⏸ Status:**\n### {stat}")
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("---")
     
-    # Baris 2: Kotak-kotak Metrik
+    # ---> BARIS 2: 3D PREVIEW (INTERAKTIF ISOMETRIC) <---
+    st.markdown(f"#### 👁️ VISIONEST 3D Viewer - Material: {data.get('mat_p', 0)} x {data.get('mat_l', 0)} mm")
+    
+    mat_p = data.get('mat_p', 0.0)
+    mat_l = data.get('mat_l', 0.0)
+    
+    if mat_p > 0 and mat_l > 0 and data.get('status') not in ["SYSTEM_READY", "OFFLINE"] and data.get('nested_polys'):
+        fig3d = go.Figure()
+        
+        # 1. Gambar Grid Meja (Abu-abu Terang)
+        for gx in range(0, int(mat_p) + 1, 25):
+            fig3d.add_trace(go.Scatter3d(x=[gx, gx], y=[0, mat_l], z=[0, 0], mode='lines', line=dict(color='#cbd5e1', width=2), hoverinfo='skip'))
+        for gy in range(0, int(mat_l) + 1, 25):
+            fig3d.add_trace(go.Scatter3d(x=[0, mat_p], y=[gy, gy], z=[0, 0], mode='lines', line=dict(color='#cbd5e1', width=2), hoverinfo='skip'))
+            
+        # 2. Gambar Batas Material (Warna Kuning Emas)
+        fig3d.add_trace(go.Scatter3d(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], z=[0, 0, 0, 0, 0], mode='lines', line=dict(color='#eab308', width=5), hoverinfo='skip'))
+        
+        # 3. Gambar Axis Titik Nol (Merah X, Hijau Y, Biru Z)
+        fig3d.add_trace(go.Scatter3d(x=[0, 40], y=[0, 0], z=[0, 0], mode='lines', line=dict(color='red', width=7), hoverinfo='skip'))
+        fig3d.add_trace(go.Scatter3d(x=[0, 0], y=[0, 40], z=[0, 0], mode='lines', line=dict(color='green', width=7), hoverinfo='skip'))
+        fig3d.add_trace(go.Scatter3d(x=[0, 0], y=[0, 0], z=[0, 40], mode='lines', line=dict(color='blue', width=7), hoverinfo='skip'))
+        
+        # 4. Gambar Pola Potong (Garis Biru Cerah) & Nomor
+        for idx, poly in enumerate(data['nested_polys']):
+            xs = [p[0] for p in poly] + [poly[0][0]]
+            ys = [p[1] for p in poly] + [poly[0][1]]
+            zs = [0] * len(xs)
+            fig3d.add_trace(go.Scatter3d(x=xs, y=ys, z=zs, mode='lines', line=dict(color='#0ea5e9', width=4), hoverinfo='skip'))
+            
+            # Label Nomor di tengah pola
+            cx = sum([p[0] for p in poly]) / len(poly)
+            cy = sum([p[1] for p in poly]) / len(poly)
+            fig3d.add_trace(go.Scatter3d(x=[cx], y=[cy], z=[0.5], mode='text', text=[str(idx+1)], textfont=dict(color='black', size=16), hoverinfo='skip'))
+            
+        # 5. Gambar Titik Laser Mesin (Merah)
+        curr_x = data.get('pos_x', 0.0)
+        curr_y = data.get('pos_y', 0.0)
+        # Mesin mengirim nilai Y negatif, jadi kita jadikan positif biar akurat numpang di grid web
+        fig3d.add_trace(go.Scatter3d(x=[curr_x], y=[abs(curr_y)], z=[2], mode='markers', marker=dict(color='red', size=8), name='Laser Pos'))
+        
+        # Setting Sudut Pandang Kamera Isometrik (Mirip GUI)
+        camera = dict(
+            eye=dict(x=-1.5, y=-1.5, z=1.2),
+            up=dict(x=0, y=0, z=1),
+            center=dict(x=0, y=0, z=0)
+        )
+        
+        fig3d.update_layout(
+            scene=dict(
+                xaxis=dict(visible=False, range=[-10, mat_p+10]), 
+                yaxis=dict(visible=False, range=[-10, mat_l+10]), 
+                zaxis=dict(visible=False, range=[-5, 30]),
+                aspectmode='data', camera=camera
+            ),
+            margin=dict(l=0, r=0, b=0, t=0), height=450, showlegend=False, paper_bgcolor='rgba(0,0,0,0)'
+        )
+        st.plotly_chart(fig3d, use_container_width=True)
+    else:
+        st.info("NO PATTERN LOADED. Menunggu komputasi dari GUI / Mesin belum berjalan.")
+
+
+    # ---> BARIS 3: METRIK DATA (Sesuai Sketsa: Di Bawah Preview) <---
+    st.markdown("---")
     m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric("⏱ Duration", f"{data['duration_sec']} s")
     m2.metric("🎯 Target / Qty", f"{data['target_qty']} Pcs")
-    m3.metric("📏 Dimension", f"{data['mat_p']} x {data['mat_l']}")
+    m3.metric("📏 Dimension", f"{data['mat_p']} x {data['mat_l']} mm")
     m4.metric("📊 Presentase", f"{data['progress_pct']} %")
     m5.metric("💠 Bentuk Kerja", f"{data['shape_name']}")
     
     st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
-    
     st.markdown("---")
     
-    # ---> PERBAIKAN: SERIAL LOG DIPINDAH KE BAWAH 3D PREVIEW <---
+    
+    # ---> BARIS 4: SERIAL LOG / CHAT (Sesuai Sketsa: Di Bawah Metrik) <---
     st.markdown("### 📡 Serial Log (Web ↔ GUI)")
     if "ping_input" not in st.session_state:
         st.session_state.ping_input = ""
@@ -314,6 +368,7 @@ elif page == "📝 PRODUCTION LOG":
                         show_layout = st.toggle("👁️ Show Full Layout Simulation", key=f"tgl_modal_{i}")
                 
                 with c_img:
+                    # View Log dibiarkan 2D agar ringan dan jelas bentuk datarnya
                     poly_data = log.get('shape_poly', [])
                     if poly_data:
                         xs = [p[0] for p in poly_data] + [poly_data[0][0]]
