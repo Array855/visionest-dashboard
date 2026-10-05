@@ -1,5 +1,5 @@
-streamlit
-paho-mqtt
-pandas
-plotly
+streamlit>=1.50
+paho-mqtt>=2.0
+plotly>=5.24
+pandas>=2.0
 streamlit-autorefresh
