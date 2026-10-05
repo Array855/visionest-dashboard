@@ -73,7 +73,7 @@ def translate_shape(shape_name):
     clean_name = str(shape_name).strip()
     return SHAPE_TRANSLATOR.get(clean_name, clean_name)
 
-# ───────────────────────── CSS CLEAN ANALYTICS (ULTRA COMPACT & DYNAMIC) ─────────────────────────
+# ───────────────────────── CSS CLEAN ANALYTICS (FULLY RESPONSIVE & FIXED SIDEBAR) ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -102,24 +102,18 @@ footer { display: none !important; }
 a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
-/* Padding Layout Pres 1 Layar */
+/* Padding Layout Pres 1 Layar untuk Desktop */
 .block-container, [data-testid="stMainBlockContainer"] {
     padding: 1rem 1rem 0rem !important;
     max-width: 100% !important;
 }
 
-/* Sidebar Putih Bersih (min-width dicabut biar bisa nutup mulus) */
+/* Sidebar Putih Bersih */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: 1px solid var(--line) !important;
 }
-/* Hanya sembunyikan garis penarik ukurannya aja, biar ukurannya statis tapi bisa diclose */
 [data-testid="stSidebarResizer"] { display: none !important; }
-
-/* Narik Logo Sidebar ke atas */
-[data-testid="stSidebar"] [data-testid="stImage"] {
-    margin-top: -25px !important;
-}
 
 div[data-testid="stToggle"] {
     margin-top: -10px;
@@ -201,6 +195,61 @@ hr { border-color: var(--line) !important; margin: 8px 0 !important; }
 .specs-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 10px; }
 .specs-table th { padding: 12px 0; color: var(--muted); font-weight: 600; font-size: 14px; border-bottom: 1px solid var(--line); }
 .specs-table td { padding: 12px 0; color: var(--ink); font-weight: 800; font-size: 14px; border-bottom: 1px solid var(--line); text-align: right; }
+
+
+/* ==================== MEDIA QUERIES (RESPONSIVE HP & DESKTOP) ==================== */
+
+/* Tampilan khusus HP (Layar Kecil) */
+@media (max-width: 768px) {
+    .block-container, [data-testid="stMainBlockContainer"] {
+        padding: 0.5rem 0.5rem 1rem !important; 
+    }
+    
+    .brand { font-size: 22px; text-align: left; margin-bottom: 5px; }
+    .status { font-size: 12px; text-align: left; }
+    .sep { margin: 0 8px; }
+    
+    .card { padding: 12px 14px; }
+    .card-value { font-size: 26px !important; }
+    .card-value.sm { font-size: 16px !important; }
+    .card-title { font-size: 12px; }
+    
+    [data-testid="stSidebar"] [data-testid="stImage"] {
+        margin-top: 20px !important;
+    }
+    
+    .demiurgen-text {
+        margin-top: 5px !important;
+        text-align: center !important;
+        padding-right: 0px !important;
+    }
+}
+
+/* Tampilan khusus Desktop / Laptop (FIXED SIDEBAR) */
+@media (min-width: 769px) {
+    /* Kunci lebar sidebar secara absolut di Desktop */
+    [data-testid="stSidebar"] {
+        min-width: 250px !important;
+        max-width: 250px !important;
+    }
+    
+    /* Hilangkan tombol '>' buat nutup sidebar khusus di Desktop */
+    [data-testid="stSidebarCollapseButton"] { 
+        display: none !important; 
+    }
+
+    /* Narik Logo Sidebar ke atas biar sejajar sama Header */
+    [data-testid="stSidebar"] [data-testid="stImage"] {
+        margin-top: -25px !important;
+    }
+    
+    /* Tulisan "By Demiurgen" masuk nyelip ke bawah logo */
+    .demiurgen-text {
+        margin-top: -28px !important;
+        text-align: right !important;
+        padding-right: 15px !important;
+    }
+}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -240,7 +289,6 @@ def plot_layout(**kw):
 
 PLOT_CONFIG = {"displayModeBar": False}
 
-# FORMATTING WAKTU ESTETIK (05 Oct, 18:09)
 def format_time_aesthetic(t_str):
     try:
         dt = pd.to_datetime(t_str)
@@ -419,7 +467,7 @@ with st.sidebar:
     else:
         st.image(LOGO_REMOTE, use_container_width=True)
         
-    st.markdown("<div style='text-align:right; font-size:11px; font-weight:800; color:#eab308; margin-top:-28px; padding-right:15px; text-transform:uppercase; letter-spacing:1px; position:relative; z-index:10;'>BY DEMIURGEN</div>", unsafe_allow_html=True)
+    st.markdown("<div class='demiurgen-text' style='font-size:11px; font-weight:800; color:#eab308; text-transform:uppercase; letter-spacing:1px; position:relative; z-index:10;'>BY DEMIURGEN</div>", unsafe_allow_html=True)
     
     st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;'>Directories</p>", unsafe_allow_html=True)
@@ -674,7 +722,7 @@ def page_summary():
                 fillcolor='rgba(14, 165, 233, 0.15)' 
             ))
             fig_trend.update_layout(**plot_layout(height=260, margin=dict(t=10, b=30, l=10, r=10)))
-            fig_trend.update_xaxes(showgrid=False, tickfont=dict(color=MUTED), title_text="") # Hapus judul X Axis
+            fig_trend.update_xaxes(showgrid=False, tickfont=dict(color=MUTED), title_text="")
             fig_trend.update_yaxes(showgrid=True, gridcolor=GRID, tickfont=dict(color=MUTED))
             st.plotly_chart(fig_trend, key="summary_trend", config=PLOT_CONFIG, use_container_width=True)
         else:
@@ -732,7 +780,6 @@ def page_analysis():
     df["pcs"] = pd.to_numeric(df["pcs"], errors="coerce")
     df["shift"] = df["shift"].fillna("-")
     
-    # Format waktu jadi estetik
     df["waktu_fmt"] = df["waktu"].apply(format_time_aesthetic)
 
     with st.container(key="card_usage"):
@@ -742,7 +789,7 @@ def page_analysis():
             go.Bar(name="Waste", x=df["waktu_fmt"], y=df["waste"], marker_color=BAD),
         ])
         style_chart(fig).update_layout(barmode="group", bargroupgap=0.1)
-        fig.update_xaxes(title_text="") # Hapus judul Axis X
+        fig.update_xaxes(title_text="") 
         fig.update_yaxes(range=[0, 100], ticksuffix="%")
         st.plotly_chart(fig, key="usage_chart", config=PLOT_CONFIG)
 
@@ -752,10 +799,11 @@ def page_analysis():
                      color_discrete_sequence=[ACCENT, PURPLE, WARN])
         style_chart(fig).update_traces(cliponaxis=False)
         fig.update_layout(legend_title_text="")
-        fig.update_xaxes(title_text="") # Hapus judul Axis X
+        fig.update_xaxes(title_text="") 
         st.plotly_chart(fig, key="qty_chart", config=PLOT_CONFIG)
 
 
+# ─── HALAMAN LOG FILES ───
 def page_logs():
     logs = store.logs_copy()
     st.markdown(card("Log Files", f"{len(logs)} records", "", "Newest first"), unsafe_allow_html=True)
@@ -815,6 +863,7 @@ def page_logs():
         st.rerun()
 
 
+# ─── HALAMAN BARU: HARDWARE INFO ───
 def page_hardware():
     s = store.snapshot()
     st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">Hardware Info</div>', unsafe_allow_html=True)
@@ -843,6 +892,8 @@ def page_hardware():
         </div>
         """, unsafe_allow_html=True)
 
+
+# ─── HALAMAN BARU: SYSTEM SETTINGS ───
 def page_settings():
     st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">System Settings</div>', unsafe_allow_html=True)
     
