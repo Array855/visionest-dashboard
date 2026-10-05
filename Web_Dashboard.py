@@ -89,7 +89,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     max-width: 100% !important;
 }
 
-/* Sidebar Putih Bersih */
+/* Sidebar Putih Bersih (Fixed Resize Tapi Bisa Collapse) */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: 1px solid var(--line) !important;
@@ -97,7 +97,11 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     max-width: 250px !important;
 }
 [data-testid="stSidebarResizer"] { display: none !important; }
-[data-testid="stSidebarCollapseButton"], button[kind="headerNoPadding"] { display: none !important; }
+
+/* Narik Logo Sidebar ke atas biar sejajar sama Header */
+[data-testid="stSidebar"] [data-testid="stImage"] {
+    margin-top: -25px !important;
+}
 
 /* Navigasi Sidebar - Pill Shape Halus */
 [data-testid="stSidebar"] div[role="radiogroup"] { gap: 8px; }
@@ -391,7 +395,7 @@ def send_ping(text):
     store.add_ping(ping)
 
 
-# ───────────────────────── Sidebar (Penyelarasan Menu Tambahan) ─────────────────────────
+# ───────────────────────── Sidebar ─────────────────────────
 HOME, SUMMARY, ANALYSIS, LOGS, HARDWARE, SETTINGS = "Dashboard", "Stats", "Reports", "Log Files", "Hardware Monitor", "System Settings"
 
 with st.sidebar:
@@ -400,12 +404,11 @@ with st.sidebar:
     else:
         st.image(LOGO_REMOTE, use_container_width=True)
         
-    st.markdown("<div style='text-align:right; font-size:11px; font-weight:800; color:#eab308; margin-top:-28px; padding-right:15px; text-transform:uppercase; letter-spacing:1px; position:relative; z-index:10;'>BY DEMIURGEN</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:right; font-size:11px; font-weight:800; color:#eab308; margin-top:-25px; padding-right:15px; text-transform:uppercase; letter-spacing:1px; position:relative; z-index:10;'>BY DEMIURGEN</div>", unsafe_allow_html=True)
     
     st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;'>Directories</p>", unsafe_allow_html=True)
     
-    # ─── MENU BARU DIMASUKAN KESINI ───
     page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS, HARDWARE, SETTINGS], label_visibility="collapsed")
     
     st.divider()
@@ -571,7 +574,7 @@ def chat_messages():
             )
 
 
-# ───────────────────────── Halaman Routing ─────────────────────────
+# ───────────────────────── Halaman ─────────────────────────
 def chat_card():
     with st.container(key="card_chat"):
         st.markdown('<div class="card-title">Communication Log</div>', unsafe_allow_html=True)
@@ -594,6 +597,7 @@ def style_chart(fig):
     return fig
 
 
+# ─── HALAMAN STATS ───
 def page_summary():
     logs = store.logs_copy()
     
@@ -739,14 +743,8 @@ def page_analysis():
 
 def page_logs():
     logs = store.logs_copy()
-    c_title, c_btn = st.columns([8, 2], vertical_alignment="center")
-    c_title.markdown(card("Log Files", f"{len(logs)} records", "", "Newest first"), unsafe_allow_html=True)
-    with c_btn.popover("Reset data"):
-        st.write("Delete all production logs? This can't be undone.")
-        if st.button("Delete all logs", type="primary"):
-            store.reset_logs()
-            st.session_state.pop("log_limit", None)
-            st.rerun()
+    # FITUR RESET LOGS HANYA ADA DI SETTINGS, HAPUS TOMBOL DI SINI
+    st.markdown(card("Log Files", f"{len(logs)} records", "", "Newest first"), unsafe_allow_html=True)
 
     if not logs:
         st.markdown('<div class="empty">No history yet.</div>', unsafe_allow_html=True)
@@ -831,7 +829,7 @@ def page_hardware():
         </div>
         """, unsafe_allow_html=True)
 
-# ─── HALAMAN BARU: SYSTEM SETTINGS ───
+# ─── HALAMAN BARU: SYSTEM SETTINGS (DENGAN EXPORT CSV YANG RAPI) ───
 def page_settings():
     st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">System Settings</div>', unsafe_allow_html=True)
     
@@ -839,8 +837,28 @@ def page_settings():
     
     logs = store.logs_copy()
     if logs:
-        df = pd.DataFrame(logs)
-        csv_data = df.to_csv(index=False).encode('utf-8')
+        # Bikin salinan DataFrame biar log aslinya ga rusak
+        df_export = pd.DataFrame(logs)
+        
+        # HAPUS KOLOM KOORDINAT ALIEN YANG BIKIN RUSAK EXCEL
+        if 'shape_poly' in df_export.columns:
+            df_export = df_export.drop(columns=['shape_poly'])
+        if 'nested_polys' in df_export.columns:
+            df_export = df_export.drop(columns=['nested_polys'])
+            
+        # GANTI NAMA KOLOM BIAR BAHASA INGGRIS DAN RAPI
+        df_export.rename(columns={
+            'waktu': 'Timestamp',
+            'operator': 'Operator Name',
+            'shift': 'Shift',
+            'pcs': 'Pieces Cut',
+            'ukuran': 'Material Size (mm)',
+            'bentuk': 'Shape Class',
+            'waste': 'Waste (%)'
+        }, inplace=True)
+        
+        csv_data = df_export.to_csv(index=False).encode('utf-8')
+        
         st.markdown("<p style='color:var(--muted); font-size:14px;'>Download all recorded production cycles to your local machine for external analysis.</p>", unsafe_allow_html=True)
         st.download_button(
             label="📥 Download Logs as CSV",
