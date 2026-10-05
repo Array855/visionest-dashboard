@@ -63,8 +63,25 @@ footer{display:none !important;}
 a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
-/* Sidebar */
-[data-testid="stSidebar"]{background:#fff;border-right:1px solid var(--line);}
+/* ========================================== */
+/* SIDEBAR FIX (ANTI-RESIZE & ANTI-COLLAPSE)  */
+/* ========================================== */
+[data-testid="stSidebar"] {
+    background: #fff;
+    border-right: 1px solid var(--line);
+    min-width: 250px !important;  /* Kunci Lebar Minimum */
+    max-width: 250px !important;  /* Kunci Lebar Maksimum */
+}
+/* Membasmi garis pembatas yang bisa digeser-geser */
+[data-testid="stSidebarResizer"] {
+    display: none !important;
+}
+/* Membasmi tombol panah tutup (<<) di pojok kiri atas */
+[data-testid="stSidebarCollapseButton"], button[kind="headerNoPadding"] {
+    display: none !important;
+}
+
+/* Navigasi Sidebar Content */
 [data-testid="stSidebar"] div[role="radiogroup"]{gap:4px;}
 [data-testid="stSidebar"] div[role="radiogroup"] label{padding:10px 14px;border-radius:10px;width:100%;}
 [data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child{display:none;}
@@ -491,7 +508,6 @@ def page_analysis():
             go.Bar(name="Waste", x=df["waktu"], y=df["waste"], marker_color=BAD),
         ])
         
-        # ---> FIX 1: GRAFIK DIBUAT BERDAMPINGAN (GROUP), BUKAN NUMPUK (STACK) <---
         style_chart(fig).update_layout(barmode="group", bargroupgap=0.1)
         fig.update_yaxes(range=[0, 100], ticksuffix="%")
         st.plotly_chart(fig, key="usage_chart", config=PLOT_CONFIG)
@@ -531,7 +547,6 @@ def page_logs():
                 f'**Waste:** {fmt(entry.get("waste"))}%'
             )
             
-            # ---> FIX 2: LOGIKA FULL LAYOUT (KOTAK BATAS MATERIAL + SEMUA POLA) DIKEMBALIKAN <---
             mat_p, mat_l = 0, 0
             try:
                 parts = entry.get('ukuran', '').split('x')
@@ -541,11 +556,9 @@ def page_logs():
                 
             fig_nest = go.Figure()
             
-            # Gambar Kotak Merah Batas Material (Kalau datanya ada)
             if mat_p > 0 and mat_l > 0:
                 fig_nest.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode='lines', line=dict(color=BAD, width=2), hoverinfo='skip'))
                 
-            # Gambar Semua Pola Nested di dalamnya
             polys = entry.get("nested_polys") or []
             for idx, poly in enumerate(polys):
                 try:
