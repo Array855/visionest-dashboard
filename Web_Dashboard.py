@@ -44,11 +44,6 @@ st.markdown("""
         box-shadow: 2px 0px 20px rgba(0, 0, 0, 0.03);
     }
 
-    /* Sembunyikan Header bawaan Streamlit (Garis atas dan hamburger menu) */
-    header[data-testid="stHeader"] {
-        display: none;
-    }
-
     /* CUSTOM ENTERPRISE CARD */
     .nexus-card {
         background-color: #ffffff;
@@ -92,35 +87,6 @@ st.markdown("""
         color: #a3aed0;
         margin-top: 4px;
     }
-
-    /* Badge Status */
-    .badge-online {
-        background-color: #e0f8e9;
-        color: #05cd99;
-        padding: 6px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 700;
-        display: inline-block;
-    }
-    .badge-offline {
-        background-color: #ffe5d3;
-        color: #ff5b5b;
-        padding: 6px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 700;
-        display: inline-block;
-    }
-    .badge-running {
-        background-color: #e2e8f0;
-        color: #4318ff;
-        padding: 6px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 700;
-        display: inline-block;
-    }
     
     /* Tombol Navigasi Radio Streamlit diakali biar mirip menu aplikasi */
     div.row-widget.stRadio > div {
@@ -137,11 +103,13 @@ st.markdown("""
     div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
         display: none; /* Sembunyikan bulatannya */
     }
-    /* Sembunyikan divider bawaan */
+    
+    /* Paksa teks jadi hitam pekat/navy kalau masih tertelan CSS */
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
+        color: #0f172a !important;
+    }
     hr {
-        border-color: #e2e8f0 !important;
-        margin-top: 10px !important;
-        margin-bottom: 10px !important;
+        border-color: #cbd5e1 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -243,69 +211,56 @@ mqtt_client = start_mqtt()
 
 
 # ==========================================
-# 1. SIDEBAR (Putih Bersih)
+# 1. SIDEBAR / NAVBAR KIRI
 # ==========================================
 with st.sidebar:
     st.markdown("<br>", unsafe_allow_html=True)
-    c1, c2 = st.columns([3, 7])
-    with c1:
-        st.markdown("<img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='55' style='margin-left: 10px;'>", unsafe_allow_html=True)
-    with c2:
-        st.markdown("<h3 style='color:#1b254b; margin:0; font-size: 20px; font-weight:800; padding-top:5px;'>VISIONEST</h3><p style='color:#a3aed0; margin:0; font-size:12px; font-weight:700;'>BY DEMIURGEN ✦</p>", unsafe_allow_html=True)
+    col_log1, col_log2 = st.columns([3, 7])
+    with col_log1:
+        # ---> AMBIL GAMBAR DARI LOKAL LAPTOP (Anti Hilang) <---
+        if os.path.exists("visionest_logo.png"):
+            st.image("visionest_logo.png", use_container_width=True)
+    with col_log2:
+        st.markdown("<h3 style='color: #d4af37; margin:0; padding:0; font-size:18px;'>VISIONEST</h3><p style='color: #1e3a8a; margin:0; font-weight:bold; font-size:12px;'>by DEMIURGEN</p>", unsafe_allow_html=True)
     
-    st.markdown("<br><p style='color:#a3aed0; font-size:12px; font-weight:700; margin-left: 15px; margin-bottom: 5px;'>NAVIGATION</p>", unsafe_allow_html=True)
+    st.markdown("---")
+    page = st.radio("Navigation Menu", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
     
-    page = st.radio("", ["📱 Live Dashboard", "📊 Analytics AI", "📝 Activity Log"], label_visibility="collapsed")
-    
-    st.markdown("<br><br><br>", unsafe_allow_html=True)
-    
-    # Card Kecil Biru di bawah Sidebar (Mirip referensi WISE-IoT)
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, #4318ff 0%, #3f08a6 100%); border-radius: 20px; padding: 20px; text-align: center; margin: 15px;">
-        <p style="color: white; font-weight: 700; font-size: 14px; margin: 0;">VISIONEST - Advantech</p>
-        <p style="color: #e2e8f0; font-weight: 500; font-size: 11px; margin-bottom: 15px;">by PENS & Efortech</p>
-        <div style="background-color: white; color: #4318ff; border-radius: 10px; padding: 8px; font-weight: 800; font-size: 12px;">
-            ● WISE-IoT Cloud
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+
+# ==========================================
+# 2. HEADER ATAS (Dikembalikan ke Desain Lama)
+# ==========================================
+col_title, col_logo = st.columns([7, 3])
+with col_title:
+    st.markdown("<h1><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
+with col_logo:
+    if os.path.exists("logo_pens_kanan.png"): 
+        st.image("logo_pens_kanan.png", use_container_width=True)
+    else:
+        st.write("[EFORTECH - ADVANTECH - PENS]")
+st.markdown("---")
+
+c_stat, c_time, c_logo2 = st.columns([3, 4, 3])
+with c_stat:
+    st.markdown("<h4 style='color:#10b981; margin-top:15px;'>📶 ONLINE</h4>", unsafe_allow_html=True)
+
+with c_time:
+    waktu_skrg = time.strftime('%d %B %Y - %H:%M:%S')
+    st.markdown(f"<h4 style='text-align:center; color:#475569; margin-top:15px;'>{waktu_skrg}</h4>", unsafe_allow_html=True)
+
+with c_logo2:
+    if os.path.exists("logo_pens_kanan.png"): 
+        st.image("logo_pens_kanan.png", use_container_width=True)
+    else:
+        st.markdown("<h4 style='text-align:right; color:#1e3a8a; margin-top:15px;'>[LOGO PENS]</h4>", unsafe_allow_html=True)
+
+st.markdown("---")
 
 
 # ==========================================
-# 2. HEADER TOP BAR (Card Memanjang)
+# 3. KONTEN HALAMAN (Tetap Elegan & Enterprise)
 # ==========================================
-waktu_skrg = time.strftime('%H:%M:%S')
-status_badge = ""
-stat = data['status']
-if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS"]:
-    status_badge = f"<span class='badge-online'>● {stat.replace('_', ' ')}</span>"
-elif stat == "EMERGENCY_STOP_TRIGGERED":
-    status_badge = f"<span class='badge-offline'>● E-STOP TRIGGERED!</span>"
-elif stat == "OFFLINE":
-    status_badge = "<span class='badge-offline'>● NO CONNECTION</span>"
-else:
-    status_badge = f"<span class='badge-running'>● {stat.replace('_', ' ')}</span>"
-
-st.markdown(f"""
-<div class="nexus-card" style="flex-direction: row; justify-content: space-between; align-items: center; padding: 15px 25px; margin-bottom: 25px; border-radius: 100px;">
-    <div style="display: flex; align-items: center; gap: 20px;">
-        <span style="font-weight: 800; color: #1b254b; font-size: 15px;">VISIONEST Dashboard</span>
-        <span style="color: #e2e8f0;">|</span>
-        <span style="font-weight: 700; color: #a3aed0; font-size: 13px;">PARTNERS</span>
-        <span style="color: #1b254b; font-weight: 800; font-size: 14px;">ADVANTECH <span style="color:#a3aed0; font-weight:500;">x</span> EFORTECH <span style="color:#a3aed0; font-weight:500;">x</span> PENS</span>
-    </div>
-    <div style="display: flex; align-items: center; gap: 15px;">
-        {status_badge}
-        <span style="background-color: #f4f7fe; padding: 8px 15px; border-radius: 12px; font-weight: 700; color: #1b254b; font-size: 14px;">⏱ {waktu_skrg}</span>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-
-# ==========================================
-# 3. KONTEN HALAMAN
-# ==========================================
-if page == "📱 Live Dashboard":
+if page == "🏠 HOME":
     
     # BARIS 1: PREVIEW (Kiri Besar) + DEVICE INFO (Kanan Kecil)
     col_kiri, col_kanan = st.columns([7, 3])
@@ -319,6 +274,11 @@ if page == "📱 Live Dashboard":
             <div class="nexus-card-title">Active Operator</div>
             <div class="nexus-card-value-small">{data['operator']}</div>
             <div class="nexus-card-sub">Shift: {data['shift']}</div>
+            
+            <div style="margin-top: 20px;">
+                <div class="nexus-card-title">Machine Status</div>
+                <div class="nexus-card-value-small" style="color: #4318ff; font-size: 16px;">{str(data['status']).replace('_', ' ')}</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -326,13 +286,13 @@ if page == "📱 Live Dashboard":
         st.markdown(f"""
         <div class="nexus-card">
             <div class="nexus-card-title">Cutting Progress</div>
-            <div class="nexus-card-value" style="color: #4318ff;">{data['progress_pct']}<span style="font-size:20px;">%</span></div>
+            <div class="nexus-card-value" style="color: #05cd99;">{data['progress_pct']}<span style="font-size:20px;">%</span></div>
         </div>
         """, unsafe_allow_html=True)
         st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
         
     with col_kiri:
-        # Card 2D Preview Nesting
+        # Card 2D Preview Nesting (Top-Down Flat)
         st.markdown(f"""
         <div class="nexus-card" style="padding-bottom: 0px;">
             <div style="display: flex; justify-content: space-between;">
@@ -364,12 +324,11 @@ if page == "📱 Live Dashboard":
             st.markdown("<div style='height: 340px; display:flex; align-items:center; justify-content:center; color:#a3aed0; font-weight:600;'>NO PATTERN LOADED</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # BARIS 2: METRIK BAWAH (Berjejer)
+    # BARIS 2: METRIK BAWAH (Berjejer 4 Kolom)
     st.markdown("""
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
     """, unsafe_allow_html=True)
     
-    # Custom HTML Metric Cards
     metrics_data = [
         ("TARGET OUTPUT", f"{data['target_qty']}", "Pieces", "Total items layout"),
         ("CYCLE DURATION", f"{data['duration_sec']}", "Sec", "Current execution time"),
@@ -425,7 +384,7 @@ if page == "📱 Live Dashboard":
         st.text_input("Msg:", key="ping_input_widget", on_change=send_web_ping, label_visibility="collapsed", placeholder="Type message...")
         st.button("🚀 Send Ping", type="primary", on_click=send_web_ping, use_container_width=True)
 
-elif page == "📊 Analytics AI":
+elif page == "📈 ANALYSIS":
     st.markdown("""<div class="nexus-card"><div class="nexus-card-value-small">Material Usage Trends</div></div>""", unsafe_allow_html=True)
     if data["logs"]:
         df = pd.DataFrame(data["logs"]).sort_values(by="waktu") 
@@ -446,7 +405,7 @@ elif page == "📊 Analytics AI":
     else:
         st.info("No data available for analytics yet.")
 
-elif page == "📝 Activity Log":
+elif page == "📝 PRODUCTION LOG":
     c_title, c_btn = st.columns([8, 2])
     with c_title:
         st.markdown("""<div class="nexus-card"><div class="nexus-card-value-small">Historical Production Logs</div></div>""", unsafe_allow_html=True)
