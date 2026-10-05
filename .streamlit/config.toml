@@ -1,0 +1,10 @@
+# Simpan sebagai .streamlit/config.toml di root repo (sejajar dengan app.py)
+[theme]
+base = "light"
+primaryColor = "#4318ff"
+backgroundColor = "#f4f7fe"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#1b254b"
+
+[client]
+toolbarMode = "minimal"   # sembunyikan menu/Deploy tanpa hack CSS
