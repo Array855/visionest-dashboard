@@ -256,7 +256,7 @@ if page == "🏠 HOME":
     col_kiri, col_kanan = st.columns([7, 3])
     
     with col_kanan:
-        # Card Device ID & Operator (Tanpa spasi indentasi biar gak bocor HTML)
+        # Card Device ID & Operator 
         st.markdown(f"""
 <div class="nexus-card">
     <div class="nexus-card-title">Machine Identity</div>
@@ -271,14 +271,17 @@ if page == "🏠 HOME":
 </div>
         """, unsafe_allow_html=True)
         
-        # Card Progress
+        # ---> FIX GARIS HITAM DIHILANGKAN: Menggunakan Custom HTML Progress Bar yang rapi <---
         st.markdown(f"""
 <div class="nexus-card">
     <div class="nexus-card-title">Cutting Progress</div>
     <div class="nexus-card-value" style="color: #05cd99;">{data['progress_pct']}<span style="font-size:20px;">%</span></div>
+    <div style="width: 100%; background-color: #e2e8f0; border-radius: 10px; height: 8px; margin-top: 15px;">
+        <div style="width: {data['progress_pct']}%; background-color: #05cd99; height: 8px; border-radius: 10px; transition: width 0.5s ease;"></div>
+    </div>
 </div>
         """, unsafe_allow_html=True)
-        st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
+        # st.progress SUDAH DIHAPUS ❌
         
     with col_kiri:
         # Card 2D Preview Nesting (Top-Down Flat)
@@ -426,6 +429,7 @@ elif page == "📝 PRODUCTION LOG":
 # ==========================================
 # AUTO REFRESH FOOTER
 # ==========================================
+st.sidebar.markdown("---")
 is_auto_refresh = st.sidebar.toggle("🔄 Live Auto-Refresh", value=True)
 if is_auto_refresh:
     st_autorefresh(interval=2000, limit=None, key="auto_refresh")
