@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
-# SUNTIKAN CSS "ANTI DARK-MODE" (SAFE MODE)
+# SUNTIKAN CSS "HACKER MODE" (PEMBASMI MENU BAWAAN STREAMLIT)
 # ==========================================
 st.markdown("""
 <style>
@@ -39,7 +39,7 @@ html, body, [class*="css"] {
     max-width: 100% !important;
 }
 
-/* Sidebar Putih Bersih Anti Dark Mode */
+/* Sidebar Putih Bersih */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: none !important;
@@ -58,7 +58,7 @@ html, body, [class*="css"] {
     flex-direction: column;
 }
 
-/* Teks dan Label Anti Tembus Dark Mode (Warna dipaksa !important) */
+/* Teks dan Label Anti Tembus Dark Mode (Warna dipaksa Hitam/Navy) */
 .nexus-card-title {
     font-size: 13px !important;
     font-weight: 800 !important;
@@ -90,7 +90,7 @@ html, body, [class*="css"] {
 }
 
 /* ========================================= */
-/* NAVIGASI SIDEBAR - FONT DIGEDEIN (17px)   */
+/* NAVIGASI SIDEBAR - FONT DIGEDEIN & ANTI DARK MODE */
 /* ========================================= */
 div.row-widget.stRadio > div {
     background: transparent;
@@ -100,28 +100,30 @@ div.row-widget.stRadio > div label {
     border: none !important;
     padding: 12px 15px !important; 
     font-weight: 800 !important;
-    color: #1e3a8a !important; 
     font-size: 17px !important; 
     cursor: pointer;
+}
+/* PAKSA TULISAN MENU TETAP NAVY WALAUPUN CACHE DARK MODE NYANGKUT */
+div.row-widget.stRadio > div label p, div.row-widget.stRadio > div label span {
+    color: #1e3a8a !important;
+    font-weight: 800 !important;
 }
 div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
     display: none !important;
 }
 
 /* ========================================= */
-/* JURUS ANTI DARK-MODE TEXT INVISIBILITY    */
+/* JURUS ANTI TEKS PUTIH (GLOBAL OVERRIDE)   */
 /* ========================================= */
-/* Paksa warna label Streamlit jadi biru navy pekat */
 [data-testid="stWidgetLabel"] p {
     color: #1e3a8a !important; 
     font-weight: 800 !important;
     font-size: 14px !important;
 }
-/* Paksa warna teks biasa, heading, & markdown jadi Slate-900 (Hitam Pekat) */
-.stMarkdown p, h1, h2, h3, h4, h5, h6 {
+/* Paksa warna SEMUA elemen teks jadi gelap biar gak ilang di Dark Mode */
+.stMarkdown p, h1, h2, h3, h4, h5, h6, span {
     color: #0f172a !important; 
 }
-/* Paksa warna input box & teks ketikan di chat box */
 .stTextInput input {
     background-color: #ffffff !important;
     color: #0f172a !important;
@@ -129,10 +131,31 @@ div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
     font-weight: 600 !important;
 }
 
-/* Pembasmi Header Atas Streamlit */
-header[data-testid="stHeader"] { background: transparent !important; }
+/* ========================================= */
+/* PEMBASMI MENU STREAMLIT & MANAGE APP      */
+/* ========================================= */
+/* 1. Hilangkan Header Atas (Menu titik tiga, logo Streamlit, dll) */
+header[data-testid="stHeader"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0px !important;
+}
+/* 2. Hilangkan Tombol Manage App Streamlit Cloud (Sembunyiin semua elemen popup) */
+.viewerBadge_container__1QSob,
+.viewerBadge_link__1S137,
+.viewerBadge_text__1JaDK,
+#Manage\ app {
+    display: none !important;
+    visibility: hidden !important;
+}
+/* 3. Trik sapu jagat sembunyiin iframe footer bawaan Streamlit Cloud */
+div[data-testid="stAppViewContainer"] > div:last-child {
+    display: none !important;
+    opacity: 0 !important;
+}
+/* 4. Footer & Deploy Button */
+footer { display: none !important; }
 .stDeployButton { display: none !important; }
-footer { visibility: hidden !important; }
 
 hr {
     border-color: #cbd5e1 !important;
@@ -265,10 +288,10 @@ wifi_svg = """<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke
 
 col_kiri, col_tengah, col_kanan = st.columns([3, 5, 2.5])
 with col_kiri:
-    st.markdown("<h1 style='margin-top:0px; font-weight:800; font-size:26px; color:#0f172a !important;'><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='margin-top:0px; font-weight:800; font-size:26px; color:#0f172a !important;'><span style='color: #d4af37 !important;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
 
 with col_tengah:
-    st.markdown(f"<h5 style='margin-top:8px; text-align:center; font-weight:800; font-size:16px;'>{wifi_svg}<span style='color:#10b981;'>ONLINE</span> &nbsp;&nbsp;<span style='color:#cbd5e1;'>|</span>&nbsp;&nbsp; <span style='color:#475569 !important; font-weight:700;'>{waktu_skrg}</span></h5>", unsafe_allow_html=True)
+    st.markdown(f"<h5 style='margin-top:8px; text-align:center; font-weight:800; font-size:16px;'><span style='color:#10b981 !important;'>{wifi_svg}ONLINE</span> &nbsp;&nbsp;<span style='color:#cbd5e1 !important;'>|</span>&nbsp;&nbsp; <span style='color:#475569 !important; font-weight:700;'>{waktu_skrg}</span></h5>", unsafe_allow_html=True)
 
 with col_kanan:
     if os.path.exists("logo_pens_kanan.png"): 
@@ -305,7 +328,7 @@ if page == "🏠 HOME":
         st.markdown(f"""
 <div class="nexus-card" style="margin-bottom:0;">
     <div class="nexus-card-title">Cutting Progress</div>
-    <div class="nexus-card-value" style="color: #05cd99 !important;">{data['progress_pct']}<span style="font-size:18px;">%</span></div>
+    <div class="nexus-card-value" style="color: #05cd99 !important;">{data['progress_pct']}<span style="font-size:18px; color: #05cd99 !important;">%</span></div>
 </div>
         """, unsafe_allow_html=True)
         
@@ -390,9 +413,9 @@ if page == "🏠 HOME":
                 st.markdown("<p style='color:#475569 !important; font-weight:700;'>No messages yet.</p>", unsafe_allow_html=True)
             for p in data.get("ping_msgs", []):
                 if p["sender"] == "WEB":
-                    st.markdown(f"<div style='text-align: right; color: #4318ff !important; font-weight:800; font-size:14px;'>[WEB] {p['message']} <small style='color: #475569 !important;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='text-align: right; color: #4318ff !important; font-weight:800; font-size:14px;'>[WEB] <span style='color: #4318ff !important;'>{p['message']}</span> <small style='color: #475569 !important;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
                 else:
-                    st.markdown(f"<div style='text-align: left; color: #05cd99 !important; font-weight:800; font-size:14px;'>[GUI] {p['message']} <small style='color: #475569 !important;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='text-align: left; color: #05cd99 !important; font-weight:800; font-size:14px;'>[GUI] <span style='color: #05cd99 !important;'>{p['message']}</span> <small style='color: #475569 !important;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
 
     with c_input:
         st.text_input("Msg:", key="ping_input_widget", on_change=send_web_ping, label_visibility="collapsed", placeholder="Type message...")
@@ -438,7 +461,7 @@ elif page == "📝 PRODUCTION LOG":
             with st.expander(f"✅ Finished at {log['waktu']} (Op: {log['operator']})"):
                 c_text, c_img = st.columns([6, 4])
                 with c_text:
-                    st.markdown(f"**Target Qty:** {log['pcs']} Pcs <br>**Dimensions:** {log['ukuran']} mm<br>**Waste:** {log['waste']:.1f}%", unsafe_allow_html=True)
+                    st.markdown(f"<span style='color:#0f172a !important;'>**Target Qty:** {log['pcs']} Pcs <br>**Dimensions:** {log['ukuran']} mm<br>**Waste:** {log['waste']:.1f}%</span>", unsafe_allow_html=True)
                 with c_img:
                     poly_data = log.get('shape_poly', [])
                     if poly_data:
