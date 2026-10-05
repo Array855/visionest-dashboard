@@ -43,6 +43,7 @@ OK = "#00d2ff"          # Neon Cyan dari Poster (Warna nyawa utama)
 WARN = "#f59e0b"        # Orange (Untuk Pola 2D)
 BAD = "#ef4444"         # Merah
 GRID = "#e2e8f0"        # Garis Grid terang
+PURPLE = "#8b5cf6"      # Ungu (Ditambahkan buat fix grafik error)
 
 st.set_page_config(
     page_title="VISIONEST Dashboard",
@@ -56,15 +57,15 @@ CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 :root {
-    --bg: #f4f7fe;         /* Background utama Light Grey */
-    --card: #ffffff;       /* Background kartu Putih Bersih */
-    --ink: #0a1f54;        /* Deep Space Blue (Warna Teks Utama) */
-    --muted: #64748b;      /* Teks Abu */
-    --line: #e2e8f0;       /* Border halus */
+    --bg: #f4f7fe;         
+    --card: #ffffff;       
+    --ink: #0a1f54;        
+    --muted: #64748b;      
+    --line: #e2e8f0;       
     --gold: #38bdf8;       
     --navy: #1e3a8a;       
-    --accent: #0a1f54;     /* Deep Blue Action */
-    --ok: #00d2ff;         /* Neon Cyan! */
+    --accent: #0a1f54;     
+    --ok: #00d2ff;         
 }
 
 html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
@@ -114,11 +115,11 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
     background: #f4f7fe !important; 
-    border-left: 4px solid var(--ok); /* Garis Samping Neon Cyan */
+    border-left: 4px solid var(--ok); 
     border-radius: 0 8px 8px 0;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) p {
-    color: var(--ink) !important; /* Teks Deep Blue */
+    color: var(--ink) !important; 
     font-weight: 800 !important;
 }
 
@@ -128,7 +129,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     border: 1px solid #f1f5f9 !important;
     border-radius: 12px;
     padding: 20px 24px;
-    box-shadow: 0 4px 15px rgba(10, 31, 84, 0.05); /* Shadow biru sangat halus */
+    box-shadow: 0 4px 15px rgba(10, 31, 84, 0.05); 
 }
 .card-title { font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
 .card-value { font-size: 34px; font-weight: 800; color: var(--ink); line-height: 1.15; }
@@ -144,7 +145,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 /* Badges & Bars (Aksen Biru & Cyan) */
 .pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #e0f2fe; color: #0284c7; }
 .bar { height: 8px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 12px; }
-.bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #1e3a8a, var(--ok)); transition: width 0.5s ease; } /* Gradasi Biru ke Neon Cyan */
+.bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #1e3a8a, var(--ok)); transition: width 0.5s ease; } 
 .empty { display: flex; align-items: center; justify-content: center; min-height: 120px; color: var(--muted); font-weight: 600; }
 
 /* Header & Text Globals */
@@ -584,7 +585,7 @@ def style_chart(fig):
     return fig
 
 
-# ─── HALAMAN STATS (DIKEMBALIKAN LABEL PERSENNYA) ───
+# ─── HALAMAN STATS (FIXED PURPLE ERROR) ───
 def page_summary():
     logs = store.logs_copy()
     
@@ -665,7 +666,6 @@ def page_summary():
         )
         fig_shift.update_layout(**plot_layout(height=260, margin=dict(t=10, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1)))
         
-        # ---> FIX: LABEL PERSENTASE DITAMPILKAN DI DALAM DONUT CHART <---
         fig_shift.update_traces(textinfo='percent', textposition='inside', textfont=dict(color='#ffffff', size=12))
         
         fig_shift.add_annotation(text=f"Total<br><span style='font-size:24px; font-weight:bold; color:#1e293b;'>{total_cycles}</span><br><span style='font-size:12px; color:#64748b;'>Cycles</span>", x=0.5, y=0.5, font_size=14, font_color=MUTED, showarrow=False)
@@ -692,7 +692,6 @@ def page_summary():
         fig_sh = px.pie(df_sh, names='Shape', values='Count', hole=0.4, color_discrete_sequence=[PURPLE, OK, ACCENT, GOLD])
         fig_sh.update_layout(**plot_layout(height=240, margin=dict(t=20, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1)))
         
-        # ---> FIX: LABEL PERSENTASE DITAMPILKAN DI DALAM DONUT CHART <---
         fig_sh.update_traces(textinfo='percent', textposition='inside', textfont=dict(color='#ffffff', size=12))
         
         st.plotly_chart(fig_sh, key="shape_dist_pie", config=PLOT_CONFIG, use_container_width=True)
