@@ -89,8 +89,10 @@ def start_mqtt():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id, transport="websockets")
     client.on_connect = on_connect
     client.on_message = on_message
-    client.tls_set() 
-    client.connect("broker.hivemq.com", 8884, 60)
+    
+    # --- PERBAIKAN MQTT WEBSOCKETS ---
+    client.tls_set() # WAJIB ADA untuk WSS Streamlit
+    client.connect("broker.hivemq.com", 8884, 60) # WAJIB PORT 8884
     client.loop_start()
     return client
 
@@ -122,6 +124,8 @@ with col3:
         st.success(f"**🔄 Status:**\n### {stat}")
     elif stat == "EMERGENCY_STOP_TRIGGERED":
         st.error(f"**🚨 Status:**\n### {stat}")
+    elif stat == "OFFLINE":
+        st.error(f"**⏸ Status:**\n### {stat}")
     else:
         st.warning(f"**⏸ Status:**\n### {stat}")
 
@@ -133,7 +137,7 @@ m3.metric("📏 Material (P x L)", f"{data['mat_p']} x {data['mat_l']} mm")
 m4.metric("📈 Progress", f"{data['progress_pct']} %")
 st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
 
-if data["shape_poly"] and data["status"] != "SYSTEM_READY":
+if data["shape_poly"] and data["status"] not in ["SYSTEM_READY", "OFFLINE"]:
     col_v1, col_v2, col_v3 = st.columns([1, 2, 1]) 
     with col_v2:
         st.markdown(f"<p style='text-align: center; color: #94a3b8;'><b>Workpiece Preview:</b> {data['shape_name']}</p>", unsafe_allow_html=True)
