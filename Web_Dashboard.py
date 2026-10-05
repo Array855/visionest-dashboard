@@ -34,16 +34,15 @@ STALE_AFTER_S = 60
 MAX_LOGS, MAX_PINGS, PAGE_SIZE = 500, 20, 25
 DEMO = os.getenv("VISIONEST_DEMO") == "1"
 
-# ---> WARNA THEME CLEAN ANALYTICS (LIGHT MODE) <---
-INK = "#1e293b"         # Teks Utama (Dark Slate pekat)
-MUTED = "#64748b"       # Teks Redup (Slate abu-abu)
-GOLD = "#f59e0b"        # Orange Accent
-ACCENT = "#3b82f6"      # Bright Blue (Warna utama khas dashboard SaaS)
-PURPLE = "#8b5cf6"      # Vibrant Purple (Untuk grafik Donut/Area)
-OK = "#0ea5e9"          # Sky Blue / Cyan
-WARN = "#f97316"        # Bright Orange
+# ---> WARNA THEME HYBRID (LIGHT BACKGROUND + POSTER COLORS) <---
+INK = "#0a1f54"         # Teks Utama (Deep Space Blue dari Poster)
+MUTED = "#64748b"       # Teks Sekunder (Abu-abu biru)
+GOLD = "#38bdf8"        # Aksen Biru Muda
+ACCENT = "#1e3a8a"      # Royal Blue (Untuk elemen penegas)
+OK = "#00d2ff"          # Neon Cyan dari Poster (Warna nyawa utama)
+WARN = "#f59e0b"        # Orange (Untuk Pola 2D)
 BAD = "#ef4444"         # Merah
-GRID = "#f1f5f9"        # Garis Grid sangat halus
+GRID = "#e2e8f0"        # Garis Grid terang
 
 st.set_page_config(
     page_title="VISIONEST Dashboard",
@@ -52,20 +51,20 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ───────────────────────── CSS CLEAN ANALYTICS ─────────────────────────
+# ───────────────────────── CSS HYBRID CORPORATE ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 :root {
-    --bg: #f8fafc;         
-    --card: #ffffff;       
-    --ink: #1e293b;        
-    --muted: #64748b;      
-    --line: #e2e8f0;       
-    --gold: #f59e0b;       
-    --navy: #0f172a;       
-    --accent: #3b82f6;     
-    --ok: #0ea5e9;         
+    --bg: #f4f7fe;         /* Background utama Light Grey */
+    --card: #ffffff;       /* Background kartu Putih Bersih */
+    --ink: #0a1f54;        /* Deep Space Blue (Warna Teks Utama) */
+    --muted: #64748b;      /* Teks Abu */
+    --line: #e2e8f0;       /* Border halus */
+    --gold: #38bdf8;       
+    --navy: #1e3a8a;       
+    --accent: #0a1f54;     /* Deep Blue Action */
+    --ok: #00d2ff;         /* Neon Cyan! */
 }
 
 html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
@@ -99,7 +98,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 [data-testid="stSidebarResizer"] { display: none !important; }
 [data-testid="stSidebarCollapseButton"], button[kind="headerNoPadding"] { display: none !important; }
 
-/* Navigasi Sidebar - Pill Shape Halus */
+/* Navigasi Sidebar - Pill Shape Halus dengan Highlight Neon Cyan */
 [data-testid="stSidebar"] div[role="radiogroup"] { gap: 8px; }
 [data-testid="stSidebar"] div[role="radiogroup"] label {
     padding: 12px 16px;
@@ -114,12 +113,12 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     color: var(--muted) !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
-    background: #f1f5f9 !important; 
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    background: #f4f7fe !important; 
+    border-left: 4px solid var(--ok); /* Garis Samping Neon Cyan */
+    border-radius: 0 8px 8px 0;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) p {
-    color: var(--accent) !important; 
+    color: var(--ink) !important; /* Teks Deep Blue */
     font-weight: 800 !important;
 }
 
@@ -129,8 +128,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     border: 1px solid #f1f5f9 !important;
     border-radius: 12px;
     padding: 20px 24px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02); 
-    height: 100%;
+    box-shadow: 0 4px 15px rgba(10, 31, 84, 0.05); /* Shadow biru sangat halus */
 }
 .card-title { font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
 .card-value { font-size: 34px; font-weight: 800; color: var(--ink); line-height: 1.15; }
@@ -143,17 +141,17 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
 .stack { display: grid; gap: 16px; }
 
-/* Badges & Bars */
-.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #eff6ff; color: var(--accent); }
-.bar { height: 6px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 12px; }
-.bar > span { display: block; height: 100%; border-radius: 99px; background: var(--ok); transition: width 0.5s ease; }
+/* Badges & Bars (Aksen Biru & Cyan) */
+.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #e0f2fe; color: #0284c7; }
+.bar { height: 8px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 12px; }
+.bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #1e3a8a, var(--ok)); transition: width 0.5s ease; } /* Gradasi Biru ke Neon Cyan */
 .empty { display: flex; align-items: center; justify-content: center; min-height: 120px; color: var(--muted); font-weight: 600; }
 
 /* Header & Text Globals */
 .brand { font-size: 28px; font-weight: 800; color: var(--ink); }
-.brand .gold { color: var(--accent); font-weight:400; } 
+.brand .gold { color: #0284c7; font-weight: 400; } 
 .status { text-align: center; font-size: 14px; font-weight: 600; color: var(--muted); }
-.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--muted); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--ok); }
 .sep { display: inline-block; width: 1px; height: 14px; background: var(--line); margin: 0 16px; vertical-align: middle; }
 
 [data-testid="stWidgetLabel"] p, [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
@@ -172,8 +170,8 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 /* Chat */
 .msg { font-size: 14px; font-weight: 500; margin: 6px 0; }
 .msg small { color: var(--muted); font-weight: 400; }
-.msg.web { text-align: right; color: var(--accent); }
-.msg.gui { text-align: left; color: var(--ok); }
+.msg.web { text-align: right; color: var(--navy); font-weight:700;}
+.msg.gui { text-align: left; color: #0284c7; font-weight:700;}
 
 /* Expander/Logs */
 [data-testid="stExpander"] details { background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
@@ -373,7 +371,7 @@ def link_status():
         return "Broker offline", BAD
     age = store.seconds_since_data()
     if age is not None and age < STALE_AFTER_S:
-        return "Machine online", ACCENT
+        return "Machine online", OK
     return "Waiting for machine", MUTED
 
 def send_ping(text):
@@ -393,8 +391,8 @@ with st.sidebar:
     c_logo, c_name = st.columns([3, 7], vertical_alignment="center")
     c_logo.image(LOGO if os.path.exists(LOGO) else LOGO_REMOTE, width=48)
     c_name.markdown(
-        "<div style='font-size:18px;font-weight:800;color:#1e293b;line-height:1.2'>VISIONEST</div>"
-        "<div style='font-size:11px;font-weight:700;color:#3b82f6;text-transform:uppercase;'>by DEMIURGEN</div>",
+        "<div style='font-size:18px;font-weight:800;color:#0a1f54;line-height:1.2'>VISIONEST</div>"
+        "<div style='font-size:12px;font-weight:600;color:#38bdf8'>by DEMIURGEN</div>",
         unsafe_allow_html=True,
     )
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
@@ -527,7 +525,6 @@ def layout_card(s):
 def header():
     label, color = link_status()
     now = datetime.now(WIB).strftime("%d %B %Y, %H:%M:%S")
-    # ----> FIX: LOGO PARTNER KANAN DIPERBESAR BIAR SEIMBANG SAMA JUDUL <----
     c_brand, c_status, c_logo = st.columns([3, 4.5, 3], vertical_alignment="center")
     c_brand.markdown('<div class="brand">VISIONEST <span class="gold" style="font-weight:400;">Dashboard</span></div>', unsafe_allow_html=True)
     c_status.markdown(
@@ -536,7 +533,7 @@ def header():
         unsafe_allow_html=True,
     )
     if os.path.exists(LOGO_PARTNER):
-        c_logo.image(LOGO_PARTNER, width=280) # Logo diperbesar ke 280px
+        c_logo.image(LOGO_PARTNER, width=280)
     else:
         c_logo.image(LOGO_PARTNER_REMOTE, width=280)
 
@@ -587,7 +584,7 @@ def style_chart(fig):
     return fig
 
 
-# ─── HALAMAN STATS (YANG DI-UPGRADE JADI SUPER INFORMATIF) ───
+# ─── HALAMAN STATS (DIKEMBALIKAN LABEL PERSENNYA) ───
 def page_summary():
     logs = store.logs_copy()
     
@@ -596,7 +593,6 @@ def page_summary():
         st.markdown(card("Overview", "No data available", "", "Data will appear once production logs are recorded."), unsafe_allow_html=True)
         return
 
-    # Kalkulasi Metrik Utama
     total_cycles = len(logs)
     total_pieces = sum(int(num(e.get("pcs"), 0)) for e in logs)
     
@@ -624,7 +620,6 @@ def page_summary():
     c_head1.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">Stats Overview</div>', unsafe_allow_html=True)
     c_head2.markdown(f'<div style="text-align:right;"><span style="font-size:12px; font-weight:600; background:#f1f5f9; padding:6px 12px; border-radius:6px; color:var(--muted); border:1px solid #e2e8f0;">Data per: {datetime.now(WIB).strftime("%d %b %Y")}</span></div>', unsafe_allow_html=True)
 
-    # 1. KARTU BARIS ATAS (DIPECAH JADI 4 BIAR INFORMATIF MAKSIMAL)
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown(card("Avg Utilization", f"{avg_used:.1f}", "%", f"Overall material efficiency", val_color=INK), unsafe_allow_html=True)
@@ -637,7 +632,6 @@ def page_summary():
 
     st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
 
-    # 2. BARIS KEDUA: TREN & SHIFT SHARE
     c_a, c_d = st.columns([7, 3])
     
     with c_a:
@@ -670,14 +664,16 @@ def page_summary():
             color_discrete_sequence=[ACCENT, OK, PURPLE]
         )
         fig_shift.update_layout(**plot_layout(height=260, margin=dict(t=10, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1)))
-        fig_shift.update_traces(textinfo='none') 
+        
+        # ---> FIX: LABEL PERSENTASE DITAMPILKAN DI DALAM DONUT CHART <---
+        fig_shift.update_traces(textinfo='percent', textposition='inside', textfont=dict(color='#ffffff', size=12))
+        
         fig_shift.add_annotation(text=f"Total<br><span style='font-size:24px; font-weight:bold; color:#1e293b;'>{total_cycles}</span><br><span style='font-size:12px; color:#64748b;'>Cycles</span>", x=0.5, y=0.5, font_size=14, font_color=MUTED, showarrow=False)
         st.plotly_chart(fig_shift, key="summary_shift_pie", config=PLOT_CONFIG, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
 
-    # 3. BARIS KETIGA: OPERATOR PERFORMANCE & SHAPE DISTRIBUTION
     c_op, c_sh = st.columns(2)
     with c_op:
         st.markdown('<div class="card" style="height:100%;"><div class="row"><span class="card-title" style="font-size:18px; color:var(--ink);">Operator Performance</span><span style="font-size:12px; color:var(--muted); border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px;">Total Pieces</span></div>', unsafe_allow_html=True)
@@ -695,7 +691,10 @@ def page_summary():
         df_sh = pd.DataFrame(list(shape_counts.items()), columns=['Shape', 'Count'])
         fig_sh = px.pie(df_sh, names='Shape', values='Count', hole=0.4, color_discrete_sequence=[PURPLE, OK, ACCENT, GOLD])
         fig_sh.update_layout(**plot_layout(height=240, margin=dict(t=20, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1)))
-        fig_sh.update_traces(textinfo='percent', textposition='inside')
+        
+        # ---> FIX: LABEL PERSENTASE DITAMPILKAN DI DALAM DONUT CHART <---
+        fig_sh.update_traces(textinfo='percent', textposition='inside', textfont=dict(color='#ffffff', size=12))
+        
         st.plotly_chart(fig_sh, key="shape_dist_pie", config=PLOT_CONFIG, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
