@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
-# SUNTIKAN CSS "HACKER MODE" (PEMBASMI MENU BAWAAN STREAMLIT)
+# SUNTIKAN CSS "ENTERPRISE" (VERSI SANGAT AMAN)
 # ==========================================
 st.markdown("""
 <style>
@@ -25,12 +25,12 @@ html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* PAKSA BACKGROUND TERANG ANTI DARK MODE */
+/* PAKSA BACKGROUND TERANG (ANTI DARK MODE BASE) */
 .stApp, [data-testid="stAppViewContainer"], .main {
     background-color: #f4f7fe !important;
 }
 
-/* Padding diatur: DITINGGIKAN BAWAHNYA BIAR GAK MENTOK KE BAWAH */
+/* Padding diatur: Bawah ditebelin biar log chat gak mentok */
 .block-container {
     padding-top: 1rem !important;
     padding-left: 1.5rem !important;
@@ -46,7 +46,7 @@ html, body, [class*="css"] {
     box-shadow: 2px 0px 20px rgba(0, 0, 0, 0.03) !important;
 }
 
-/* CUSTOM ENTERPRISE CARD (Compact) */
+/* CUSTOM ENTERPRISE CARD */
 .nexus-card {
     background-color: #ffffff !important;
     border-radius: 16px !important;
@@ -58,7 +58,7 @@ html, body, [class*="css"] {
     flex-direction: column;
 }
 
-/* Teks dan Label Anti Tembus Dark Mode (Warna dipaksa Hitam/Navy) */
+/* Teks dan Label di dalam Card */
 .nexus-card-title {
     font-size: 13px !important;
     font-weight: 800 !important;
@@ -89,9 +89,7 @@ html, body, [class*="css"] {
     margin-top: 2px;
 }
 
-/* ========================================= */
-/* NAVIGASI SIDEBAR - FONT DIGEDEIN & ANTI DARK MODE */
-/* ========================================= */
+/* NAVIGASI SIDEBAR */
 div.row-widget.stRadio > div {
     background: transparent;
 }
@@ -103,7 +101,6 @@ div.row-widget.stRadio > div label {
     font-size: 17px !important; 
     cursor: pointer;
 }
-/* PAKSA TULISAN MENU TETAP NAVY WALAUPUN CACHE DARK MODE NYANGKUT */
 div.row-widget.stRadio > div label p, div.row-widget.stRadio > div label span {
     color: #1e3a8a !important;
     font-weight: 800 !important;
@@ -112,18 +109,19 @@ div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
     display: none !important;
 }
 
-/* ========================================= */
-/* JURUS ANTI TEKS PUTIH (GLOBAL OVERRIDE)   */
-/* ========================================= */
-[data-testid="stWidgetLabel"] p {
+/* PERBAIKAN WARNA TEKS STREAMLIT DI DARK MODE */
+[data-testid="stWidgetLabel"] p, [data-testid="stWidgetLabel"] span {
     color: #1e3a8a !important; 
     font-weight: 800 !important;
     font-size: 14px !important;
 }
-/* Paksa warna SEMUA elemen teks jadi gelap biar gak ilang di Dark Mode */
-.stMarkdown p, h1, h2, h3, h4, h5, h6, span {
+
+/* Mengamankan Teks Markdown Biasa */
+.stMarkdown p, .stMarkdown span, h1, h2, h3, h4, h5, h6 {
     color: #0f172a !important; 
 }
+
+/* Warna Input Box */
 .stTextInput input {
     background-color: #ffffff !important;
     color: #0f172a !important;
@@ -131,32 +129,13 @@ div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
     font-weight: 600 !important;
 }
 
-/* ========================================= */
-/* PEMBASMI MENU STREAMLIT & MANAGE APP      */
-/* ========================================= */
-/* 1. Hilangkan Header Atas (Menu titik tiga, logo Streamlit, dll) */
-header[data-testid="stHeader"] {
-    display: none !important;
-    visibility: hidden !important;
-    height: 0px !important;
+/* Pembersihan Elemen Standar (Hanya yg Aman!) */
+header[data-testid="stHeader"] { 
+    background: transparent !important; 
 }
-/* 2. Hilangkan Tombol Manage App Streamlit Cloud (Sembunyiin semua elemen popup) */
-.viewerBadge_container__1QSob,
-.viewerBadge_link__1S137,
-.viewerBadge_text__1JaDK,
-#Manage\ app {
-    display: none !important;
-    visibility: hidden !important;
+footer { 
+    visibility: hidden !important; 
 }
-/* 3. Trik sapu jagat sembunyiin iframe footer bawaan Streamlit Cloud */
-div[data-testid="stAppViewContainer"] > div:last-child {
-    display: none !important;
-    opacity: 0 !important;
-}
-/* 4. Footer & Deploy Button */
-footer { display: none !important; }
-.stDeployButton { display: none !important; }
-
 hr {
     border-color: #cbd5e1 !important;
     margin: 8px 0 !important;
@@ -358,7 +337,7 @@ if page == "🏠 HOME":
             fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=5, b=5, l=5, r=5), height=260, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
             st.plotly_chart(fig_nest, use_container_width=True)
         else:
-            st.markdown("<div style='height: 260px; display:flex; align-items:center; justify-content:center; color:#475569 !important; font-weight:800;'>NO PATTERN LOADED</div>", unsafe_allow_html=True)
+            st.markdown("<div style='height: 260px; display:flex; align-items:center; justify-content:center;'><span style='color:#475569 !important; font-weight:800;'>NO PATTERN LOADED</span></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     # BARIS 2: METRIK BAWAH 
