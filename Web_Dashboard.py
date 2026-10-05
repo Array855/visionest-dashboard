@@ -73,7 +73,7 @@ def translate_shape(shape_name):
     clean_name = str(shape_name).strip()
     return SHAPE_TRANSLATOR.get(clean_name, clean_name)
 
-# ───────────────────────── CSS CLEAN ANALYTICS (FULLY RESPONSIVE & FIXED SIDEBAR) ─────────────────────────
+# ───────────────────────── CSS CLEAN ANALYTICS ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -102,7 +102,7 @@ footer { display: none !important; }
 a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
-/* Padding Layout Pres 1 Layar untuk Desktop */
+/* Padding Layout Pres 1 Layar */
 .block-container, [data-testid="stMainBlockContainer"] {
     padding: 1rem 1rem 0rem !important;
     max-width: 100% !important;
@@ -113,6 +113,8 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     background-color: #ffffff !important;
     border-right: 1px solid var(--line) !important;
 }
+
+/* Sembunyikan pembatas tarik biar ukurannya statis tapi tetep bisa collapse */
 [data-testid="stSidebarResizer"] { display: none !important; }
 
 div[data-testid="stToggle"] {
@@ -225,25 +227,14 @@ hr { border-color: var(--line) !important; margin: 8px 0 !important; }
     }
 }
 
-/* Tampilan khusus Desktop / Laptop (FIXED SIDEBAR) */
+/* Tampilan khusus Desktop / Laptop */
 @media (min-width: 769px) {
-    /* Kunci lebar sidebar secara absolut di Desktop */
-    [data-testid="stSidebar"] {
-        min-width: 250px !important;
-        max-width: 250px !important;
-    }
-    
-    /* Hilangkan tombol '>' buat nutup sidebar khusus di Desktop */
-    [data-testid="stSidebarCollapseButton"] { 
-        display: none !important; 
-    }
-
-    /* Narik Logo Sidebar ke atas biar sejajar sama Header */
+    /* Narik Logo Sidebar ke atas biar sejajar sama Header (Cuma di Desktop) */
     [data-testid="stSidebar"] [data-testid="stImage"] {
         margin-top: -25px !important;
     }
     
-    /* Tulisan "By Demiurgen" masuk nyelip ke bawah logo */
+    /* Tulisan "By Demiurgen" masuk nyelip ke bawah logo (Cuma di Desktop) */
     .demiurgen-text {
         margin-top: -28px !important;
         text-align: right !important;
