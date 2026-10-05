@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
-# SUNTIKAN CSS "ANTI DARK-MODE" & HIDE MANAGE APP
+# SUNTIKAN CSS "ANTI DARK-MODE" (SAFE MODE)
 # ==========================================
 st.markdown("""
 <style>
@@ -30,12 +30,12 @@ html, body, [class*="css"] {
     background-color: #f4f7fe !important;
 }
 
-/* Padding diatur: DITINGGIKAN BAWAHNYA BIAR GAK MENTOK KE EDGE LAYAR */
+/* Padding diatur: DITINGGIKAN BAWAHNYA BIAR GAK MENTOK KE BAWAH */
 .block-container {
     padding-top: 1rem !important;
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
-    padding-bottom: 6rem !important; /* <--- INI BIAR LAYOUT NAIK KE ATAS */
+    padding-bottom: 5rem !important; 
     max-width: 100% !important;
 }
 
@@ -46,7 +46,7 @@ html, body, [class*="css"] {
     box-shadow: 2px 0px 20px rgba(0, 0, 0, 0.03) !important;
 }
 
-/* CUSTOM ENTERPRISE CARD */
+/* CUSTOM ENTERPRISE CARD (Compact) */
 .nexus-card {
     background-color: #ffffff !important;
     border-radius: 16px !important;
@@ -101,10 +101,11 @@ div.row-widget.stRadio > div label {
     padding: 12px 15px !important; 
     font-weight: 800 !important;
     color: #1e3a8a !important; 
-    font-size: 17px !important; /* <--- FONT DIGEDEIN */
+    font-size: 17px !important; 
+    cursor: pointer;
 }
 div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
-    display: none;
+    display: none !important;
 }
 
 /* ========================================= */
@@ -128,15 +129,10 @@ div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
     font-weight: 600 !important;
 }
 
-/* ========================================= */
-/* PEMBASMI TOMBOL MANAGE APP & FOOTER       */
-/* ========================================= */
+/* Pembasmi Header Atas Streamlit */
+header[data-testid="stHeader"] { background: transparent !important; }
+.stDeployButton { display: none !important; }
 footer { visibility: hidden !important; }
-.viewerBadge_container__1QSob, .viewerBadge_link__1S137 { display: none !important; }
-div[data-testid="stAppViewContainer"] > div:last-child { display: none !important; opacity: 0 !important; }
-#Manage\ app, .stDeployButton { display: none !important; }
-div[style*="position: fixed"][style*="bottom: 0"] { display: none !important; }
-header[data-testid="stHeader"] { background: rgba(244, 247, 254, 0.0) !important; display: none !important; }
 
 hr {
     border-color: #cbd5e1 !important;
@@ -253,7 +249,7 @@ with st.sidebar:
         st.markdown("<h3 style='color: #d4af37 !important; margin:0; padding:0; font-size:16px;'>VISIONEST</h3><p style='color: #1e3a8a !important; margin:0; font-weight:800; font-size:11px;'>by DEMIURGEN</p>", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #475569 !important; font-weight: 800; font-size: 13px; margin-left: 15px; margin-bottom: 0px; text-transform: uppercase;'>MAIN MENU</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #475569 !important; font-weight: 800; font-size: 11px; margin-left: 15px; margin-bottom: 0px; text-transform: uppercase;'>MAIN MENU</p>", unsafe_allow_html=True)
     
     page = st.radio("", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
     
@@ -267,7 +263,6 @@ waktu_skrg = (datetime.utcnow() + timedelta(hours=7)).strftime('%d %B %Y - %H:%M
 # Logo Wi-Fi berbasis SVG (Tajam dan Profesional)
 wifi_svg = """<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-bottom: 4px; margin-right: 4px;"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>"""
 
-# Proporsi kolom dirubah biar tulisan waktu luas & nggak patah ke bawah
 col_kiri, col_tengah, col_kanan = st.columns([3, 5, 2.5])
 with col_kiri:
     st.markdown("<h1 style='margin-top:0px; font-weight:800; font-size:26px; color:#0f172a !important;'><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
@@ -328,19 +323,15 @@ if page == "🏠 HOME":
         
         if mat_p > 0 and mat_l > 0 and data.get('nested_polys'):
             fig_nest = go.Figure()
-            # Garis Batas Merah
             fig_nest.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode='lines', line=dict(color='#ff5b5b', width=3), hoverinfo='skip'))
             
-            # Pola Kuning Emas
             for idx, poly in enumerate(data['nested_polys']):
                 xs = [p[0] for p in poly] + [poly[0][0]]
                 ys = [p[1] for p in poly] + [poly[0][1]]
                 fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#ffb547', width=2), fillcolor='rgba(255, 181, 71, 0.3)', name=f'Pcs {idx+1}'))
                 
-            # Laser Merah
             fig_nest.add_trace(go.Scatter(x=[data.get('pos_x', 0.0)], y=[abs(data.get('pos_y', 0.0))], mode='markers', marker=dict(color='#ff5b5b', size=12, symbol='circle'), name='Laser Tool'))
             
-            # ---> TINGGI KANVAS DIPRESS JADI 260px BIAR GAK SCROLL <---
             fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=5, b=5, l=5, r=5), height=260, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
             st.plotly_chart(fig_nest, use_container_width=True)
         else:
@@ -393,7 +384,6 @@ if page == "🏠 HOME":
 
     c_chat, c_input = st.columns([8, 2])
     with c_chat:
-        # ---> TINGGI CHAT BOX DIPRESS JADI 120px <---
         chat_box = st.container(height=120)
         with chat_box:
             if not data.get("ping_msgs"):
