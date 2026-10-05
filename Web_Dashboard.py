@@ -9,9 +9,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from streamlit_autorefresh import st_autorefresh
 
-st.set_page_config(page_title="VISIONEST Dashboard", page_icon="⚙️", layout="wide")
+# Mode 'Light' bergantung pada konfigurasi sistem/browser
+st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide")
 
-# --- LOCAL DATABASE SYSTEM FOR WEB ---
 DB_FILE = "visionest_logs.json"
 
 def load_db():
@@ -49,7 +49,7 @@ def get_shared_data():
         "waste_pct": 100.0,
         "logs": db_data.get("logs", []),             
         "last_log_ts": db_data.get("last_log_ts", None),
-        "ping_msgs": [] # Buffer untuk menampung pesan test komunikasi
+        "ping_msgs": [] 
     }
 
 shared_data = get_shared_data()
@@ -58,17 +58,15 @@ shared_data = get_shared_data()
 def start_mqtt():
     def on_connect(client, userdata, flags, reason_code, properties):
         client.subscribe("advantech/wise/visionest/telemetry")
-        client.subscribe("advantech/wise/visionest/ping") # Subscribe ke topik chat
+        client.subscribe("advantech/wise/visionest/ping") 
 
     def on_message(client, userdata, msg):
         try:
             payload = json.loads(msg.payload.decode('utf-8'))
             
-            # Pisahkan logika untuk topik PING dan topik TELEMETRY
             if msg.topic == "advantech/wise/visionest/ping":
                 if payload.get("sender") == "GUI":
                     shared_data.setdefault("ping_msgs", []).append(payload)
-                    # Batasi riwayat pesan hanya 20 terakhir agar tidak berat
                     if len(shared_data["ping_msgs"]) > 20:
                         shared_data["ping_msgs"].pop(0)
             else:
@@ -109,12 +107,19 @@ def start_mqtt():
 mqtt_client_instance = start_mqtt()
 data = shared_data
 
-# ==========================================
-# HEADER LOGO & TITLE 
-# ==========================================
+st.markdown("""
+<style>
+    /* Paksa warna background untuk Light Theme kalau dirasa butuh, tapi Streamlit punya toggle sendiri */
+    div.block-container {
+        padding-top: 1rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 col_title, col_logo = st.columns([7, 3])
 with col_title:
-    st.title("🌐 VISIONEST - by DEMIURGEN")
+    # Logo disematkan di sebelah kiri teks judul
+    st.markdown("<h1><img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='45' style='vertical-align: bottom; margin-right: 10px;'> VISIONEST Dashboard</h1>", unsafe_allow_html=True)
 with col_logo:
     if os.path.exists("logo_pens_kanan.png"): 
         st.image("logo_pens_kanan.png", use_container_width=True)
@@ -122,9 +127,6 @@ with col_logo:
         st.write("[EFORTECH - ADVANTECH - PENS]")
 st.markdown("---")
 
-# ==========================================
-# METRICS & STATUS
-# ==========================================
 col1, col2, col3 = st.columns(3)
 with col1: st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
 with col2: st.info(f"**👷 Active Operator:**\n### {data['operator']} | {data['shift']}")
@@ -150,7 +152,7 @@ st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
 if data["shape_poly"] and data["status"] not in ["SYSTEM_READY", "OFFLINE"]:
     col_v1, col_v2, col_v3 = st.columns([1, 2, 1]) 
     with col_v2:
-        st.markdown(f"<p style='text-align: center; color: #94a3b8;'><b>Workpiece Preview:</b> {data['shape_name']}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center; color: #64748b;'><b>Workpiece Preview:</b> {data['shape_name']}</p>", unsafe_allow_html=True)
         xs = [p[0] for p in data["shape_poly"]] + [data["shape_poly"][0][0]]
         ys = [p[1] for p in data["shape_poly"]] + [data["shape_poly"][0][1]]
         fig_shape = go.Figure()
@@ -160,9 +162,6 @@ if data["shape_poly"] and data["status"] not in ["SYSTEM_READY", "OFFLINE"]:
 
 st.markdown("---")
 
-# ==========================================
-# EXECUTIVE ANALYTICS
-# ==========================================
 st.markdown("### 📈 Executive Analytics")
 if data["logs"]:
     df = pd.DataFrame(data["logs"])
@@ -176,23 +175,22 @@ if data["logs"]:
             go.Bar(name='Used (Effective)', x=df['waktu'], y=df['Terpakai'], marker_color='#10b981'),
             go.Bar(name='Fabric Waste (Scrap)', x=df['waktu'], y=df['Waste'], marker_color='#ef4444')
         ])
-        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='white'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        # TEMA TERANG: Hapus 'font=dict(color='white')' biar fontnya otomatis hitam di mode light
+        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_group, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True) 
 
         st.markdown("**2. Production History (Pieces per Cycle)**")
         fig_bar = px.bar(df, x="waktu", y="pcs", color="shift", text="pcs", color_discrete_sequence=px.colors.qualitative.Set2)
-        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='white'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        # TEMA TERANG: Hapus 'font=dict(color='white')'
+        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_bar, use_container_width=True)
 else:
     st.info("No completed production data (CYCLE_COMPLETE) to display analytical graphs yet.")
 
 st.markdown("---")
 
-# ==========================================
-# LOGGER DATA
-# ==========================================
 col_log_1, col_log_2 = st.columns([8, 2])
 with col_log_1:
     st.markdown("### 📝 Daily Production Logs Data")
@@ -236,7 +234,7 @@ else:
 
             if log.get('nested_polys') and show_layout:
                 st.markdown("---")
-                st.markdown(f"<p style='text-align: center; color: #eab308;'><b>Full Layout Simulation (Material: {log['ukuran']})</b></p>", unsafe_allow_html=True)
+                st.markdown(f"<p style='text-align: center; color: #d97706;'><b>Full Layout Simulation (Material: {log['ukuran']})</b></p>", unsafe_allow_html=True)
                 
                 mat_p, mat_l = 0, 0
                 try:
@@ -263,9 +261,6 @@ else:
 
 st.markdown("---")
 
-# ==========================================
-# COMMUNICATION TEST (WEB <-> GUI)
-# ==========================================
 st.markdown("### 📡 Communication Test (Web ↔ GUI)")
 
 if "ping_input" not in st.session_state:
@@ -279,11 +274,9 @@ def send_web_ping():
             "message": msg, 
             "timestamp": time.strftime("%H:%M:%S")
         }
-        # Publish ke broker
         mqtt_client_instance.publish("advantech/wise/visionest/ping", json.dumps(payload), qos=1)
-        # Langsung tampilkan di layar chat web
         shared_data.setdefault("ping_msgs", []).append(payload)
-        st.session_state.ping_input_widget = "" # Bersihkan inputan
+        st.session_state.ping_input_widget = "" 
 
 c_chat, c_input = st.columns([7, 3])
 with c_chat:
@@ -293,16 +286,15 @@ with c_chat:
             st.caption("No messages yet. Try sending a ping to the GUI!")
         for p in data.get("ping_msgs", []):
             if p["sender"] == "WEB":
-                st.markdown(f"<div style='text-align: right; color: #0ea5e9;'><b>[WEB]</b> {p['message']} <small style='color: #64748b;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: right; color: #0ea5e9;'><b>[WEB]</b> {p['message']} <small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<div style='text-align: left; color: #10b981;'><b>[GUI]</b> {p['message']} <small style='color: #64748b;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: left; color: #10b981;'><b>[GUI]</b> {p['message']} <small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
 
 with c_input:
     st.text_input("Message to GUI Desktop:", key="ping_input_widget", on_change=send_web_ping)
     st.button("🚀 Send Message", on_click=send_web_ping, use_container_width=True)
 
 st.markdown("---")
-# ==========================================
 
 col_foot1, col_foot2 = st.columns([8, 2])
 with col_foot1:
@@ -310,7 +302,5 @@ with col_foot1:
 with col_foot2:
     is_auto_refresh = st.toggle("🔄 Live Auto-Refresh", value=True, help="Disable this to prevent the web from auto-refreshing while analyzing graphs.")
 
-# --- SOLUSI PRO: AUTO REFRESH AMAN ANTI BLANK ---
 if is_auto_refresh:
-    # Refresh halaman tiap 2000 milidetik (2 detik) secara halus via JavaScript
     st_autorefresh(interval=2000, limit=None, key="auto_refresh_dasbor")
