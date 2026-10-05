@@ -70,7 +70,6 @@ SHAPE_TRANSLATOR = {
 }
 
 def translate_shape(shape_name):
-    # Membersihkan string dan menerjemahkan kalau ada di dictionary
     clean_name = str(shape_name).strip()
     return SHAPE_TRANSLATOR.get(clean_name, clean_name)
 
@@ -109,7 +108,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     max-width: 100% !important;
 }
 
-/* Sidebar Putih Bersih (FIX: min-width dicabut biar bisa nutup mulus) */
+/* Sidebar Putih Bersih (min-width dicabut biar bisa nutup mulus) */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: 1px solid var(--line) !important;
@@ -240,6 +239,14 @@ def plot_layout(**kw):
     return base
 
 PLOT_CONFIG = {"displayModeBar": False}
+
+# FORMATTING WAKTU ESTETIK (05 Oct, 18:09)
+def format_time_aesthetic(t_str):
+    try:
+        dt = pd.to_datetime(t_str)
+        return dt.strftime("%d %b, %H:%M")
+    except:
+        return str(t_str)[:16]
 
 
 # ───────────────────────── Penyimpanan log ─────────────────────────
@@ -657,17 +664,17 @@ def page_summary():
         st.markdown('<div class="card" style="height:100%;"><div class="row"><span class="card-title" style="font-size:18px; color:var(--ink);">Production Trend</span><span style="font-size:12px; color:var(--muted); border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px;">Last 7 Cycles</span></div>', unsafe_allow_html=True)
         df_trend = pd.DataFrame(logs[:7][::-1])
         if not df_trend.empty:
-            df_trend["waktu_short"] = df_trend["waktu"].str.split(" ").str[-1] 
+            df_trend["waktu_fmt"] = df_trend["waktu"].apply(format_time_aesthetic)
             fig_trend = go.Figure()
             fig_trend.add_trace(go.Scatter(
-                x=df_trend["waktu_short"], y=df_trend["pcs"],
+                x=df_trend["waktu_fmt"], y=df_trend["pcs"],
                 fill='tozeroy', mode='lines+markers', name='Pieces Cut',
                 line=dict(color=OK, width=3, shape='spline'),
                 marker=dict(size=6, color=OK),
                 fillcolor='rgba(14, 165, 233, 0.15)' 
             ))
             fig_trend.update_layout(**plot_layout(height=260, margin=dict(t=10, b=30, l=10, r=10)))
-            fig_trend.update_xaxes(showgrid=False, tickfont=dict(color=MUTED))
+            fig_trend.update_xaxes(showgrid=False, tickfont=dict(color=MUTED), title_text="") # Hapus judul X Axis
             fig_trend.update_yaxes(showgrid=True, gridcolor=GRID, tickfont=dict(color=MUTED))
             st.plotly_chart(fig_trend, key="summary_trend", config=PLOT_CONFIG, use_container_width=True)
         else:
@@ -712,6 +719,7 @@ def page_summary():
         st.markdown('</div>', unsafe_allow_html=True)
 
 
+# ─── HALAMAN REPORTS ───
 def page_analysis():
     logs = store.logs_copy()
     if not logs:
@@ -723,23 +731,28 @@ def page_analysis():
     df["waste"] = pd.to_numeric(df["waste"], errors="coerce")
     df["pcs"] = pd.to_numeric(df["pcs"], errors="coerce")
     df["shift"] = df["shift"].fillna("-")
+    
+    # Format waktu jadi estetik
+    df["waktu_fmt"] = df["waktu"].apply(format_time_aesthetic)
 
     with st.container(key="card_usage"):
         st.markdown('<div class="card-title">Material Usage (Last 30)</div>', unsafe_allow_html=True)
         fig = go.Figure([
-            go.Bar(name="Used", x=df["waktu"], y=100 - df["waste"], marker_color=OK),
-            go.Bar(name="Waste", x=df["waktu"], y=df["waste"], marker_color=BAD),
+            go.Bar(name="Used", x=df["waktu_fmt"], y=100 - df["waste"], marker_color=OK),
+            go.Bar(name="Waste", x=df["waktu_fmt"], y=df["waste"], marker_color=BAD),
         ])
         style_chart(fig).update_layout(barmode="group", bargroupgap=0.1)
+        fig.update_xaxes(title_text="") # Hapus judul Axis X
         fig.update_yaxes(range=[0, 100], ticksuffix="%")
         st.plotly_chart(fig, key="usage_chart", config=PLOT_CONFIG)
 
     with st.container(key="card_qty"):
         st.markdown('<div class="card-title">Output Volume (Last 30)</div>', unsafe_allow_html=True)
-        fig = px.bar(df, x="waktu", y="pcs", color="shift", text="pcs",
+        fig = px.bar(df, x="waktu_fmt", y="pcs", color="shift", text="pcs",
                      color_discrete_sequence=[ACCENT, PURPLE, WARN])
         style_chart(fig).update_traces(cliponaxis=False)
         fig.update_layout(legend_title_text="")
+        fig.update_xaxes(title_text="") # Hapus judul Axis X
         st.plotly_chart(fig, key="qty_chart", config=PLOT_CONFIG)
 
 
@@ -802,7 +815,6 @@ def page_logs():
         st.rerun()
 
 
-# ─── HALAMAN BARU: HARDWARE INFO ───
 def page_hardware():
     s = store.snapshot()
     st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">Hardware Info</div>', unsafe_allow_html=True)
@@ -831,7 +843,6 @@ def page_hardware():
         </div>
         """, unsafe_allow_html=True)
 
-# ─── HALAMAN BARU: SYSTEM SETTINGS ───
 def page_settings():
     st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">System Settings</div>', unsafe_allow_html=True)
     
@@ -846,7 +857,6 @@ def page_settings():
         if 'nested_polys' in df_export.columns:
             df_export = df_export.drop(columns=['nested_polys'])
             
-        # Terjemahkan kolom bentuk ke bahasa inggris sebelum di download
         if 'bentuk' in df_export.columns:
             df_export['bentuk'] = df_export['bentuk'].apply(translate_shape)
             
