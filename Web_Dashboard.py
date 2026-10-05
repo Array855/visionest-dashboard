@@ -34,37 +34,37 @@ STALE_AFTER_S = 60
 MAX_LOGS, MAX_PINGS, PAGE_SIZE = 500, 20, 25
 DEMO = os.getenv("VISIONEST_DEMO") == "1"
 
-# ---> WARNA CYBER DARK MODE <---
-INK = "#f8fafc"         # Teks Utama (Putih Terang)
+# ---> WARNA THEME POSTER VISIONEST (DEEP BLUE & CYAN NEON) <---
+INK = "#ffffff"         # Teks Utama (Putih Terang)
 MUTED = "#94a3b8"       # Teks Redup (Abu-abu kebiruan)
-GOLD = "#fbbf24"        # Kuning
-ACCENT = "#8b5cf6"      # Cyber Purple (Warna utama grafik tren)
-OK = "#10b981"          # Neon Green (Warna sukses/Gauge)
-WARN = "#f59e0b"        # Orange
-BAD = "#ef4444"         # Merah
-GRID = "#1e293b"        # Garis Grid Gelap
+GOLD = "#38bdf8"        # Diganti ke Light Blue/Cyan menyesuaikan poster
+ACCENT = "#3b82f6"      # Electric Blue (Warna utama grafik/border)
+OK = "#00d2ff"          # Neon Cyan (Progress Bar & Status Online)
+WARN = "#f59e0b"        # Orange (Untuk Peringatan/Pola)
+BAD = "#ef4444"         # Merah (Scrap/Waste)
+GRID = "#1e3a8a"        # Garis Grid Biru Gelap
 
 st.set_page_config(
     page_title="VISIONEST Dashboard",
-    page_icon=LOGO if os.path.exists(LOGO) else "✂️️",
+    page_icon=LOGO if os.path.exists(LOGO) else "✂",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ───────────────────────── CSS CYBER DARK MODE ─────────────────────────
+# ───────────────────────── CSS VISIONEST DEEP BLUE ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 :root {
-    --bg: #0b1121;         /* Background utama sangat gelap */
-    --card: #111827;       /* Background kartu sedikit lebih terang */
-    --ink: #f8fafc;        /* Teks Putih */
+    --bg: #020816;         /* Background utama Deep Navy dari Poster */
+    --card: #081638;       /* Background kartu Royal Blue Gelap */
+    --ink: #ffffff;        /* Teks Putih */
     --muted: #94a3b8;      /* Teks Abu */
-    --line: #1e293b;       /* Border kartu */
-    --gold: #fbbf24;
+    --line: #1e3a8a;       /* Border kartu Biru Elektrik */
+    --gold: #38bdf8;       /* Aksen Biru Muda */
     --navy: #e2e8f0;       
-    --accent: #8b5cf6;     /* Cyber Purple */
-    --ok: #10b981;         /* Neon Green */
+    --accent: #3b82f6;     /* Bright Blue */
+    --ok: #00d2ff;         /* Neon Cyan */
 }
 
 html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
@@ -73,6 +73,7 @@ html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !impor
 .stApp, [data-testid="stAppViewContainer"], .main {
     background-color: var(--bg) !important;
     color: var(--ink) !important;
+    background-image: radial-gradient(circle at 50% 0%, #0a1f54 0%, transparent 40%); /* Efek Cahaya Biru di Atas */
 }
 
 /* Membasmi elemen bawaan Streamlit */
@@ -88,9 +89,9 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     max-width: 100% !important;
 }
 
-/* Sidebar Dark Mode */
+/* Sidebar Deep Blue */
 [data-testid="stSidebar"] {
-    background-color: #0b1121 !important;
+    background-color: #01040f !important; /* Biru Sangat Gelap */
     border-right: 1px solid var(--line) !important;
     min-width: 250px !important;
     max-width: 250px !important;
@@ -113,21 +114,22 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     color: var(--muted) !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
-    background: rgba(139, 92, 246, 0.15) !important; /* Accent background */
-    border-left: 4px solid var(--accent) !important;
+    background: rgba(59, 130, 246, 0.2) !important; /* Accent background */
+    border-left: 4px solid var(--ok) !important; /* Garis Cyan */
     border-radius: 0 8px 8px 0;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) p {
-    color: var(--accent) !important; /* Accent text */
+    color: var(--ok) !important; /* Teks Cyan */
+    text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
 }
 
-/* Dark Cards dengan efek elegan */
+/* Dark Cards dengan efek elegan ala Poster */
 .card, [class*="st-key-card"] {
     background: var(--card) !important;
     border: 1px solid var(--line) !important;
     border-radius: 16px;
     padding: 20px 24px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 15px rgba(0, 68, 204, 0.1); /* Glow Biru Halus */
 }
 .card-title { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
 .card-value { font-size: 36px; font-weight: 800; color: var(--ink); line-height: 1.15; }
@@ -140,16 +142,16 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
 .stack { display: grid; gap: 16px; }
 
-/* Badges & Bars */
-.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 13px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: var(--ok); }
-.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: 12px; }
-.bar > span { display: block; height: 100%; border-radius: 99px; background: var(--ok); transition: width 0.5s ease; box-shadow: 0 0 10px var(--ok); }
+/* Badges & Bars (Gradient Neon) */
+.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 13px; font-weight: 700; background: rgba(0, 210, 255, 0.15); color: var(--ok); border: 1px solid var(--ok); }
+.bar { height: 8px; border-radius: 99px; background: #0f2454; overflow: hidden; margin-top: 12px; border: 1px solid var(--line); }
+.bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #1e3a8a, #00d2ff); transition: width 0.5s ease; box-shadow: 0 0 10px #00d2ff; }
 .empty { display: flex; align-items: center; justify-content: center; min-height: 120px; color: var(--muted); font-weight: 700; }
 
 /* Header & Text Globals */
-.brand { font-size: 28px; font-weight: 800; color: var(--ink); }
+.brand { font-size: 32px; font-weight: 800; color: var(--ink); }
 .brand .gold { color: var(--gold); }
-.status { text-align: center; font-size: 15px; font-weight: 700; color: var(--muted); }
+.status { text-align: center; font-size: 16px; font-weight: 700; color: var(--muted); }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 8px var(--ok); }
 .sep { display: inline-block; width: 1px; height: 16px; background: var(--line); margin: 0 16px; vertical-align: middle; }
 
@@ -159,7 +161,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 
 /* Warna input box */
 .stTextInput input {
-    background-color: var(--card) !important;
+    background-color: var(--bg) !important;
     color: var(--ink) !important;
     border: 1px solid var(--line) !important;
     font-weight: 600 !important;
@@ -168,7 +170,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 /* Chat */
 .msg { font-size: 14px; font-weight: 600; margin: 6px 0; }
 .msg small { color: var(--muted); font-weight: 500; }
-.msg.web { text-align: right; color: var(--accent); }
+.msg.web { text-align: right; color: var(--gold); }
 .msg.gui { text-align: left; color: var(--ok); }
 
 /* Expander/Logs */
@@ -389,8 +391,8 @@ with st.sidebar:
     c_logo, c_name = st.columns([3, 7], vertical_alignment="center")
     c_logo.image(LOGO if os.path.exists(LOGO) else LOGO_REMOTE, width=48)
     c_name.markdown(
-        "<div style='font-size:18px;font-weight:800;color:#fbbf24;line-height:1.2'>VISIONEST</div>"
-        "<div style='font-size:12px;font-weight:700;color:#94a3b8'>by DEMIURGEN</div>",
+        "<div style='font-size:18px;font-weight:800;color:#ffffff;line-height:1.2'>VISIONEST</div>"
+        "<div style='font-size:12px;font-weight:700;color:#38bdf8'>by DEMIURGEN</div>",
         unsafe_allow_html=True,
     )
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
@@ -471,27 +473,30 @@ def metric_grid(s):
     qty_text = f"{curr} / {target}" if target > 0 else "0"
 
     items = [
-        card("Target output", qty_text, "pcs", "Current / Total items"),
+        card("Target output", qty_text, "pcs", "Current / Total items", val_color=GOLD),
         card("Cycle duration", fmt(s["duration_sec"]), "s", "Current execution time"),
-        card("Material waste", fmt(s["waste_pct"]), "%", "Estimated scrap fabric"),
+        card("Material waste", fmt(s["waste_pct"]), "%", "Estimated scrap fabric", val_color=BAD),
         card("Shape class", s["shape_name"], "", "Detected pattern"),
     ]
     return f'<div class="grid">{"".join(items)}</div>'
 
 def nest_figure(s, mat_p, mat_l):
     fig = go.Figure()
+    # Garis Batas Merah (Border Material)
     fig.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode="lines",
                              line=dict(color=BAD, width=2), hoverinfo="skip"))
     for i, poly in enumerate(s["nested_polys"], 1):
         xs, ys = outline(poly)
+        # Pola Kain dengan warna Electric Blue Transparan
         fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Piece {i}", hoverinfo="name",
-                                 line=dict(color=ACCENT, width=2), fillcolor="rgba(139, 92, 246, 0.25)"))
+                                 line=dict(color=ACCENT, width=2), fillcolor="rgba(59, 130, 246, 0.25)"))
         if len(xs) > 1:
             avg_x = sum(xs[:-1]) / len(xs[:-1])
             avg_y = sum(ys[:-1]) / len(ys[:-1])
             fig.add_annotation(
                 x=avg_x, y=avg_y, text=f"<b>{i}</b>", showarrow=False, font=dict(color=INK, size=15)
             )
+    # Laser Position
     fig.add_trace(go.Scatter(x=[num(s["pos_x"], 0.0)], y=[abs(num(s["pos_y"], 0.0))], mode="markers",
                              marker=dict(color=OK, size=12), name="Laser tool"))
     fig.update_layout(**plot_layout(
@@ -505,7 +510,7 @@ def layout_card(s):
     with st.container(key="card_layout"):
         st.markdown(
             '<div class="row"><span class="card-title">Live production layout</span>'
-            f'<span class="card-sub">{fmt(mat_p)} × {fmt(mat_l)} mm</span></div>',
+            f'<span class="card-sub" style="color:var(--gold);">{fmt(mat_p)} × {fmt(mat_l)} mm</span></div>',
             unsafe_allow_html=True,
         )
         if mat_p > 0 and mat_l > 0 and s["nested_polys"]:
@@ -523,10 +528,10 @@ def header():
     label, color = link_status()
     now = datetime.now(WIB).strftime("%d %B %Y, %H:%M:%S")
     c_brand, c_status, c_logo = st.columns([3, 5, 2.5], vertical_alignment="center")
-    c_brand.markdown('<div class="brand"><span class="gold">VISIONEST</span> Dashboard</div>', unsafe_allow_html=True)
+    c_brand.markdown('<div class="brand">VISIONEST <span class="gold">Dashboard</span></div>', unsafe_allow_html=True)
     c_status.markdown(
-        f'<div class="status"><span class="dot" style="background:{color}"></span>{esc(label)}'
-        f'<span class="sep"></span>{now}</div>',
+        f'<div class="status"><span class="dot" style="background:{color}; box-shadow:0 0 10px {color};"></span><span style="color:{color};">{esc(label)}</span>'
+        f'<span class="sep"></span><span style="color:var(--muted);">{now}</span></div>',
         unsafe_allow_html=True,
     )
     if os.path.exists(LOGO_PARTNER):
@@ -574,17 +579,17 @@ def chat_card():
 def style_chart(fig):
     fig.update_layout(**plot_layout(
         height=300, margin=dict(t=30, b=10, l=10, r=10),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color=INK)),
     ))
     fig.update_xaxes(type="category", showgrid=False, tickfont=dict(color=MUTED))
     fig.update_yaxes(gridcolor=GRID, tickfont=dict(color=MUTED))
     return fig
 
 
-# ─── HALAMAN EXECUTIVE SUMMARY (DARK HACKER / ANALYTICS MODE) ───
+# ─── HALAMAN EXECUTIVE SUMMARY (CYBER DARK MODE) ───
 def page_summary():
     logs = store.logs_copy()
-    st.markdown('<div class="card-title" style="font-size:22px; margin-bottom:15px; color:#f8fafc;">Executive Dashboard <span style="font-size:12px; font-weight:600; background:#1e293b; padding:4px 10px; border-radius:12px; color:#94a3b8; margin-left:10px;">Data Overview</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="card-title" style="font-size:22px; margin-bottom:15px; color:var(--ink);">Executive Dashboard <span style="font-size:12px; font-weight:600; background:var(--line); padding:4px 10px; border-radius:12px; color:var(--gold); margin-left:10px;">Data Overview</span></div>', unsafe_allow_html=True)
     
     if not logs:
         st.markdown(card("Overview", "No data available", "", "Data will appear once production logs are recorded."), unsafe_allow_html=True)
@@ -609,12 +614,12 @@ def page_summary():
     top_operator = max(op_counts, key=op_counts.get) if op_counts else "-"
     top_operator_val = op_counts.get(top_operator, 0)
 
-    # 1. KARTU BARIS ATAS (Mirip Gambar Referensi)
+    # 1. KARTU BARIS ATAS 
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown(card("Effective Material Used", f"{avg_used:.1f}", "%", "Average material utilized", val_color=OK), unsafe_allow_html=True)
     with c2:
-        st.markdown(card("Total Pieces Cut", f"{total_pieces}", "pcs", f"Across {total_cycles} complete cycles", val_color=ACCENT), unsafe_allow_html=True)
+        st.markdown(card("Total Pieces Cut", f"{total_pieces}", "pcs", f"Across {total_cycles} complete cycles", val_color=GOLD), unsafe_allow_html=True)
     with c3:
         st.markdown(card("Top Operator", top_operator, "", f"Most productive: {top_operator_val} pcs", val_color=INK), unsafe_allow_html=True)
 
@@ -625,7 +630,7 @@ def page_summary():
     
     with c_g:
         st.markdown('<div class="card" style="height:100%;"><div class="card-title">Efisiensi Margin Material</div>', unsafe_allow_html=True)
-        # Gauge Chart ala Hacker / Dark Mode (Setengah Lingkaran)
+        # Gauge Chart ala Cyberpunk (Setengah Lingkaran)
         fig_gauge = go.Figure(go.Indicator(
             mode = "gauge+number",
             value = avg_used,
@@ -639,10 +644,10 @@ def page_summary():
         ))
         fig_gauge.update_layout(**plot_layout(height=260, margin=dict(t=20, b=0, l=10, r=10)))
         st.plotly_chart(fig_gauge, key="summary_gauge", config=PLOT_CONFIG, use_container_width=True)
-        st.markdown(f'<div style="text-align:center; color:var(--muted); font-size:13px; margin-top:-20px;">Target: 65%</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="text-align:center; color:var(--muted); font-size:13px; margin-top:-20px;">Target Minimal: 65%</div></div>', unsafe_allow_html=True)
         
     with c_a:
-        st.markdown('<div class="card" style="height:100%;"><div class="card-title">Tren Penjualan / Produksi (7 Siklus Terakhir)</div>', unsafe_allow_html=True)
+        st.markdown('<div class="card" style="height:100%;"><div class="card-title">Tren Produksi (7 Siklus Terakhir)</div>', unsafe_allow_html=True)
         
         # Ekstrak data 7 terakhir
         df_trend = pd.DataFrame(logs[:7][::-1])
@@ -654,9 +659,10 @@ def page_summary():
                 x=df_trend["waktu_short"], y=df_trend["pcs"],
                 fill='tozeroy',
                 mode='lines+markers',
+                name='Pieces Cut',
                 line=dict(color=ACCENT, width=4, shape='spline'),
                 marker=dict(size=8, color=INK),
-                fillcolor='rgba(139, 92, 246, 0.25)' # Ungu transparan
+                fillcolor='rgba(59, 130, 246, 0.25)' # Electric Blue transparan
             ))
             fig_trend.update_layout(**plot_layout(height=260, margin=dict(t=10, b=30, l=10, r=10)))
             fig_trend.update_xaxes(showgrid=False, tickfont=dict(color=MUTED))
@@ -692,7 +698,7 @@ def page_analysis():
     with st.container(key="card_qty"):
         st.markdown('<div class="card-title">Production output per cycle (last 30)</div>', unsafe_allow_html=True)
         fig = px.bar(df, x="waktu", y="pcs", color="shift", text="pcs",
-                     color_discrete_sequence=[ACCENT, "#39b8ff", GOLD])
+                     color_discrete_sequence=[ACCENT, GOLD, OK])
         style_chart(fig).update_traces(cliponaxis=False)
         fig.update_layout(legend_title_text="")
         st.plotly_chart(fig, key="qty_chart", config=PLOT_CONFIG)
@@ -701,7 +707,7 @@ def page_analysis():
 def page_logs():
     logs = store.logs_copy()
     c_title, c_btn = st.columns([8, 2], vertical_alignment="center")
-    c_title.markdown(card("Production log", f"{len(logs)} cycles", "", "Newest first"), unsafe_allow_html=True)
+    c_title.markdown(card("Production log", f"{len(logs)} cycles", "", "Newest first", val_color=GOLD), unsafe_allow_html=True)
     with c_btn.popover("Reset data"):
         st.write("Delete all production logs? This can't be undone.")
         if st.button("Delete all logs", type="primary"):
@@ -715,14 +721,15 @@ def page_logs():
 
     limit = st.session_state.setdefault("log_limit", PAGE_SIZE)
     for i, entry in enumerate(logs[:limit]):
-        title = f'{entry.get("waktu", "-")}, {entry.get("operator", "-")}, {entry.get("pcs", 0)} pcs'
+        title = f'{entry.get("waktu", "-")} | Op: {entry.get("operator", "-")} | {entry.get("pcs", 0)} pcs'
         with st.expander(title):
             c_text, c_img = st.columns([6, 4])
             c_text.markdown(
-                f'**Pieces:** {entry.get("pcs", 0)}  \n'
-                f'**Material:** {entry.get("ukuran", "-")} mm  \n'
-                f'**Shape:** {entry.get("bentuk", "-")}  \n'
-                f'**Waste:** {fmt(entry.get("waste"))}%'
+                f'<span style="color:var(--ink);">**Pieces:** {entry.get("pcs", 0)}</span>  \n'
+                f'<span style="color:var(--ink);">**Material:** {entry.get("ukuran", "-")} mm</span>  \n'
+                f'<span style="color:var(--ink);">**Shape:** {entry.get("bentuk", "-")}</span>  \n'
+                f'<span style="color:var(--bad);">**Waste:** {fmt(entry.get("waste"))}%</span>',
+                unsafe_allow_html=True
             )
             
             mat_p, mat_l = 0, 0
@@ -740,7 +747,7 @@ def page_logs():
             for idx, poly in enumerate(polys, 1):
                 try:
                     xs, ys = outline(poly)
-                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx}", hoverinfo="name", line=dict(color=ACCENT, width=1.5), fillcolor="rgba(139, 92, 246, 0.25)"))
+                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx}", hoverinfo="name", line=dict(color=ACCENT, width=1.5), fillcolor="rgba(59, 130, 246, 0.25)"))
                     if len(xs) > 1:
                         avg_x = sum(xs[:-1]) / len(xs[:-1])
                         avg_y = sum(ys[:-1]) / len(ys[:-1])
