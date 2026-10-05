@@ -314,7 +314,7 @@ def send_ping(text):
     store.add_ping(ping)
 
 
-# ───────────────────────── Sidebar (Ditambah Executive Summary) ─────────────────────────
+# ───────────────────────── Sidebar ─────────────────────────
 HOME, SUMMARY, ANALYSIS, LOGS = "🏠 Home", "📋 Executive Summary", "📈 Analysis", "📝 Production log"
 
 with st.sidebar:
@@ -513,7 +513,7 @@ def style_chart(fig):
     return fig
 
 
-# ─── HALAMAN BARU: EXECUTIVE SUMMARY / LOG RESUME ───
+# ─── HALAMAN EXECUTIVE SUMMARY DENGAN GAUGE & DONUT CHART VISUALISTIK ───
 def page_summary():
     logs = store.logs_copy()
     st.markdown('<div class="card-title" style="font-size:20px; margin-bottom:15px;">📋 Executive Summary & Production Resume</div>', unsafe_allow_html=True)
@@ -522,7 +522,6 @@ def page_summary():
         st.markdown(card("Resume", "No data available", "", "General summary will appear once production logs are recorded."), unsafe_allow_html=True)
         return
 
-    # Kalkulasi General Resume Data
     total_cycles = len(logs)
     total_pieces = sum(int(num(e.get("pcs"), 0)) for e in logs)
     
@@ -530,58 +529,70 @@ def page_summary():
     avg_waste = (sum(wastes) / len(wastes)) if wastes else 0.0
     avg_used = 100.0 - avg_waste
 
-    # Cari Operator Terproduktif
-    op_counts = {}
-    for e in logs:
-        op = e.get("operator", "Unknown")
-        op_counts[op] = op_counts.get(op, 0) + int(num(e.get("pcs"), 0))
-    top_operator = max(op_counts, key=op_counts.get) if op_counts else "-"
-    top_operator_val = op_counts.get(top_operator, 0)
+    # 1. Gauge Chart untuk Material Utilization (Diganti dari text doang)
+    fig_gauge = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = avg_used,
+        number = {'suffix': "%", 'font': {'color': INK, 'size': 32}},
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "Effective Material Used", 'font': {'color': MUTED, 'size': 14}},
+        gauge = {
+            'axis': {'range': [0, 100], 'tickcolor': INK},
+            'bar': {'color': OK},
+            'bgcolor': "rgba(0,0,0,0)",
+            'borderwidth': 0,
+            'steps': [
+                {'range': [0, 50], 'color': "#fee2e2"},
+                {'range': [50, 80], 'color': "#fef3c7"},
+                {'range': [80, 100], 'color': "#d1fae5"}
+            ],
+        }
+    ))
+    fig_gauge.update_layout(**plot_layout(height=220, margin=dict(t=30, b=10, l=20, r=20)))
 
-    # Cari Shift Paling Aktif
+    # 2. Donut Chart untuk Shift Distribution
     shift_counts = {}
     for e in logs:
         sh = e.get("shift", "Shift 1")
         shift_counts[sh] = shift_counts.get(sh, 0) + 1
-    top_shift = max(shift_counts, key=shift_counts.get) if shift_counts else "-"
-
-    # Grid Resume Utama
-    st.markdown(
-        '<div class="grid">'
-        + card("Material Used (Avg)", f"{avg_used:.1f}", "%", "Effective fabric utilized")
-        + card("Material Waste (Avg)", f"{avg_waste:.1f}", "%", "Average scrap fabric")
-        + card("Total Production", total_pieces, "pcs", f"From {total_cycles} completed cycles")
-        + card("Top Operator", top_operator, "", f"Most productive ({top_operator_val} pcs)")
-        + "</div>",
-        unsafe_allow_html=True,
+    
+    fig_shift = px.pie(
+        names=list(shift_counts.keys()), 
+        values=list(shift_counts.values()), 
+        hole=0.6,
+        color_discrete_sequence=[ACCENT, "#39b8ff", GOLD]
     )
-    
-    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-    
-    # Detail Tambahan Resume
-    c_left, c_right = st.columns(2)
-    with c_left:
-        with st.container(key="summary_shift_card"):
-            st.markdown(f"""
-            <div class="card">
-                <div class="card-title">Operational Shift Analysis</div>
-                <div class="card-value sm" style="margin-top:10px;">Most Active: <span style="color:var(--accent);">{top_shift}</span></div>
-                <div class="card-sub" style="margin-top:8px;">Total Completed Cycles: <b>{total_cycles}</b></div>
-                <div class="card-sub">Total Output Generated: <b>{total_pieces} Pieces</b></div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-    with c_right:
-        with st.container(key="summary_efficiency_card"):
-            efficiency_status = "Optimal (Above 50%)" if avg_used >= 50 else "Needs Optimization"
-            st.markdown(f"""
-            <div class="card">
-                <div class="card-title">Material Efficiency Health</div>
-                <div class="card-value sm" style="margin-top:10px; color:var(--ok);">{efficiency_status}</div>
-                <div class="card-sub" style="margin-top:8px;">Average Effective Fabric: <b>{avg_used:.1f}%</b></div>
-                <div class="card-sub">Average Scrap Material: <b>{avg_waste:.1f}%</b></div>
-            </div>
-            """, unsafe_allow_html=True)
+    fig_shift.update_layout(**plot_layout(height=220, margin=dict(t=20, b=20, l=10, r=10), showlegend=True))
+    fig_shift.update_traces(textinfo='percent+label', textfont_size=12)
+
+    # Render Baris 1: Gauge & Kartu Ringkasan
+    c_g1, c_g2, c_c1, c_c2 = st.columns([2.5, 2.5, 2.5, 2.5])
+    with c_g1:
+        with st.container(key="summary_gauge_card"):
+            st.markdown('<div class="card" style="padding:10px;">', unsafe_allow_html=True)
+            st.plotly_chart(fig_gauge, key="summary_gauge", config=PLOT_CONFIG)
+            st.markdown('</div>', unsafe_allow_html=True)
+    with c_g2:
+        with st.container(key="summary_shift_chart"):
+            st.markdown('<div class="card" style="padding:10px;"><div class="card-title" style="text-align:center;">Shift Output Share</div>', unsafe_allow_html=True)
+            st.plotly_chart(fig_shift, key="summary_shift_pie", config=PLOT_CONFIG)
+            st.markdown('</div>', unsafe_allow_html=True)
+    with c_c1:
+        st.markdown(card("Total Production", total_pieces, "pcs", f"From {total_cycles} completed cycles"), unsafe_allow_html=True)
+        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+        op_counts = {}
+        for e in logs:
+            op = e.get("operator", "Unknown")
+            op_counts[op] = op_counts.get(op, 0) + int(num(e.get("pcs"), 0))
+        top_operator = max(op_counts, key=op_counts.get) if op_counts else "-"
+        top_operator_val = op_counts.get(top_operator, 0)
+        st.markdown(card("Top Operator", top_operator, "", f"Most productive ({top_operator_val} pcs)"), unsafe_allow_html=True)
+    with c_c2:
+        top_shift = max(shift_counts, key=shift_counts.get) if shift_counts else "-"
+        st.markdown(card("Most Active Shift", top_shift, "", f"Total Cycles: {total_cycles}"), unsafe_allow_html=True)
+        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+        efficiency_status = "Optimal (Above 50%)" if avg_used >= 50 else "Needs Optimization"
+        st.markdown(card("Material Health", efficiency_status, "", f"Scrap Waste: {avg_waste:.1f}%"), unsafe_allow_html=True)
 
 
 def page_analysis():
