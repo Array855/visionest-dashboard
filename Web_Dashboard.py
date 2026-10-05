@@ -65,22 +65,20 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
 /* Sidebar */
-[data-testid="stSidebar"]{background:#fff;border-right:1px solid var(--line);min-width:250px !important;max-width:250px !important;}
-[data-testid="stSidebarResizer"] {display: none !important;}
-[data-testid="stSidebarCollapseButton"], button[kind="headerNoPadding"] {display: none !important;}
+[data-testid="stSidebar"]{background:#fff;border-right:1px solid var(--line);}
 [data-testid="stSidebar"] div[role="radiogroup"]{gap:4px;}
 [data-testid="stSidebar"] div[role="radiogroup"] label{padding:10px 14px;border-radius:10px;width:100%;}
 [data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child{display:none;}
 [data-testid="stSidebar"] div[role="radiogroup"] label p{font-size:16px;font-weight:700;color:var(--navy);}
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked){background:#eaf0ff;}
 
-/* Kartu & Typography */
+/* Kartu & Typography Baru */
 .card,[class*="st-key-card"]{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;}
-.card-title{font-size:15px;font-weight:700;color:var(--muted);margin-bottom:6px;}
-.card-value{font-size:36px;font-weight:800;color:var(--ink);line-height:1.15;}
-.card-value.sm{font-size:22px;}
-.unit{font-size:17px;font-weight:700;color:var(--muted);margin-left:5px;}
-.card-sub{font-size:13.5px;font-weight:600;color:var(--muted);margin-top:4px;}
+.card-title{font-size:15px;font-weight:700;color:var(--muted);margin-bottom:6px;} 
+.card-value{font-size:36px;font-weight:800;color:var(--ink);line-height:1.15;}   
+.card-value.sm{font-size:22px;}                                                   
+.unit{font-size:17px;font-weight:700;color:var(--muted);margin-left:5px;}         
+.card-sub{font-size:13.5px;font-weight:600;color:var(--muted);margin-top:4px;}    
 .row{display:flex;justify-content:space-between;align-items:baseline;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
 .stack{display:grid;gap:12px;}
@@ -89,14 +87,14 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 .bar > span{display:block;height:100%;border-radius:99px;background:var(--ok); transition: width 0.5s ease;}
 .empty{display:flex;align-items:center;justify-content:center;min-height:120px;color:var(--muted);font-weight:700;}
 
-/* Header */
-.brand{font-size:30px;font-weight:800;color:var(--ink);}
+/* Header Title */
+.brand{font-size:30px;font-weight:800;color:var(--ink);} 
 .brand .gold{color:var(--gold);}
-.status{text-align:center;font-size:16px;font-weight:700;color:var(--muted);}
+.status{text-align:center;font-size:16px;font-weight:700;color:var(--muted);} 
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;}
 .sep{display:inline-block;width:1px;height:14px;background:var(--line);margin:0 14px;vertical-align:middle;}
 
-/* Chat */
+/* Chat Log */
 .msg{font-size:14px;font-weight:600;margin:4px 0;}
 .msg small{color:var(--muted);font-weight:500;}
 .msg.web{text-align:right;color:var(--accent);}
@@ -314,8 +312,8 @@ def send_ping(text):
     store.add_ping(ping)
 
 
-# ───────────────────────── Sidebar ─────────────────────────
-HOME, SUMMARY, ANALYSIS, LOGS = "🏠 Home", "📋 Executive Summary", "📈 Analysis", "📝 Production log"
+# ───────────────────────── Sidebar (Summary di Paling Bawah) ─────────────────────────
+HOME, ANALYSIS, LOGS, SUMMARY = "🏠 Home", "📈 Analysis", "📝 Production log", "📋 Executive Summary"
 
 with st.sidebar:
     c_logo, c_name = st.columns([3, 7], vertical_alignment="center")
@@ -326,7 +324,7 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
     st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
-    page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS], label_visibility="collapsed")
+    page = st.radio("Menu", [HOME, ANALYSIS, LOGS, SUMMARY], label_visibility="collapsed")
     st.divider()
     live = st.toggle("Live refresh", value=True)
 
@@ -337,7 +335,7 @@ REFRESH = 2 if live else None
 def card(title, value, unit="", sub=""):
     unit_html = f'<span class="unit">{esc(unit)}</span>' if unit else ""
     sub_html = f'<div class="card-sub">{esc(sub)}</div>' if sub else ""
-    return (f'<div class="card"><div class="card-title">{esc(title)}</div>'
+    return (f'<div class="card" style="height:100%;"><div class="card-title">{esc(title)}</div>'
             f'<div class="card-value">{esc(value)}{unit_html}</div>{sub_html}</div>')
 
 def machine_cards(s):
@@ -513,15 +511,16 @@ def style_chart(fig):
     return fig
 
 
-# ─── HALAMAN EXECUTIVE SUMMARY DENGAN GAUGE & DONUT CHART VISUALISTIK ───
+# ─── HALAMAN EXECUTIVE SUMMARY (HMI STYLE) ───
 def page_summary():
     logs = store.logs_copy()
-    st.markdown('<div class="card-title" style="font-size:20px; margin-bottom:15px;">📋 Executive Summary & Production Resume</div>', unsafe_allow_html=True)
+    st.markdown('<div class="card-title" style="font-size:20px; margin-bottom:15px; color:#1b254b;">📋 Executive Summary & Production Resume</div>', unsafe_allow_html=True)
     
     if not logs:
         st.markdown(card("Resume", "No data available", "", "General summary will appear once production logs are recorded."), unsafe_allow_html=True)
         return
 
+    # Kalkulasi Metrik Utama
     total_cycles = len(logs)
     total_pieces = sum(int(num(e.get("pcs"), 0)) for e in logs)
     
@@ -529,70 +528,70 @@ def page_summary():
     avg_waste = (sum(wastes) / len(wastes)) if wastes else 0.0
     avg_used = 100.0 - avg_waste
 
-    # 1. Gauge Chart untuk Material Utilization (Diganti dari text doang)
+    op_counts = {}
+    shift_counts = {}
+    for e in logs:
+        op = e.get("operator", "Unknown")
+        sh = e.get("shift", "Shift 1")
+        op_counts[op] = op_counts.get(op, 0) + int(num(e.get("pcs"), 0))
+        shift_counts[sh] = shift_counts.get(sh, 0) + 1
+        
+    top_operator = max(op_counts, key=op_counts.get) if op_counts else "-"
+    top_operator_val = op_counts.get(top_operator, 0)
+    top_shift = max(shift_counts, key=shift_counts.get) if shift_counts else "-"
+
+    # 1. BIKIN GAUGE CHART TEBAL ALA SCADA / HMI PABRIK
     fig_gauge = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = avg_used,
-        number = {'suffix': "%", 'font': {'color': INK, 'size': 32}},
-        domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "Effective Material Used", 'font': {'color': MUTED, 'size': 14}},
+        number = {'suffix': "%", 'font': {'color': INK, 'size': 44, 'family': 'Arial Black'}},
         gauge = {
-            'axis': {'range': [0, 100], 'tickcolor': INK},
-            'bar': {'color': OK},
-            'bgcolor': "rgba(0,0,0,0)",
+            'axis': {'range': [0, 100], 'tickwidth': 2, 'tickcolor': MUTED, 'ticklen': 5},
+            'bar': {'color': OK, 'thickness': 0.4},  # Ketebalan bar dibuat super tebal 0.4
+            'bgcolor': "#e2e8f0",
             'borderwidth': 0,
             'steps': [
-                {'range': [0, 50], 'color': "#fee2e2"},
-                {'range': [50, 80], 'color': "#fef3c7"},
-                {'range': [80, 100], 'color': "#d1fae5"}
+                {'range': [0, 50], 'color': "#fca5a5"},   # Zona Merah (Boros)
+                {'range': [50, 80], 'color': "#fcd34d"},  # Zona Kuning (Lumayan)
+                {'range': [80, 100], 'color': "#86efac"}  # Zona Hijau (Efisien)
             ],
         }
     ))
-    fig_gauge.update_layout(**plot_layout(height=220, margin=dict(t=30, b=10, l=20, r=20)))
+    fig_gauge.update_layout(**plot_layout(height=280, margin=dict(t=20, b=10, l=30, r=30)))
 
-    # 2. Donut Chart untuk Shift Distribution
-    shift_counts = {}
-    for e in logs:
-        sh = e.get("shift", "Shift 1")
-        shift_counts[sh] = shift_counts.get(sh, 0) + 1
-    
+    # 2. BIKIN DONUT CHART
     fig_shift = px.pie(
         names=list(shift_counts.keys()), 
         values=list(shift_counts.values()), 
         hole=0.6,
         color_discrete_sequence=[ACCENT, "#39b8ff", GOLD]
     )
-    fig_shift.update_layout(**plot_layout(height=220, margin=dict(t=20, b=20, l=10, r=10), showlegend=True))
-    fig_shift.update_traces(textinfo='percent+label', textfont_size=12)
+    fig_shift.update_layout(**plot_layout(height=280, margin=dict(t=10, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5)))
+    fig_shift.update_traces(textinfo='percent+label', textfont_size=14, textposition='inside')
 
-    # Render Baris 1: Gauge & Kartu Ringkasan
-    c_g1, c_g2, c_c1, c_c2 = st.columns([2.5, 2.5, 2.5, 2.5])
-    with c_g1:
-        with st.container(key="summary_gauge_card"):
-            st.markdown('<div class="card" style="padding:10px;">', unsafe_allow_html=True)
-            st.plotly_chart(fig_gauge, key="summary_gauge", config=PLOT_CONFIG)
-            st.markdown('</div>', unsafe_allow_html=True)
-    with c_g2:
-        with st.container(key="summary_shift_chart"):
-            st.markdown('<div class="card" style="padding:10px;"><div class="card-title" style="text-align:center;">Shift Output Share</div>', unsafe_allow_html=True)
-            st.plotly_chart(fig_shift, key="summary_shift_pie", config=PLOT_CONFIG)
-            st.markdown('</div>', unsafe_allow_html=True)
-    with c_c1:
-        st.markdown(card("Total Production", total_pieces, "pcs", f"From {total_cycles} completed cycles"), unsafe_allow_html=True)
-        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-        op_counts = {}
-        for e in logs:
-            op = e.get("operator", "Unknown")
-            op_counts[op] = op_counts.get(op, 0) + int(num(e.get("pcs"), 0))
-        top_operator = max(op_counts, key=op_counts.get) if op_counts else "-"
-        top_operator_val = op_counts.get(top_operator, 0)
-        st.markdown(card("Top Operator", top_operator, "", f"Most productive ({top_operator_val} pcs)"), unsafe_allow_html=True)
-    with c_c2:
-        top_shift = max(shift_counts, key=shift_counts.get) if shift_counts else "-"
-        st.markdown(card("Most Active Shift", top_shift, "", f"Total Cycles: {total_cycles}"), unsafe_allow_html=True)
-        st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
-        efficiency_status = "Optimal (Above 50%)" if avg_used >= 50 else "Needs Optimization"
-        st.markdown(card("Material Health", efficiency_status, "", f"Scrap Waste: {avg_waste:.1f}%"), unsafe_allow_html=True)
+    # 3. PENATAAN LAYOUT (Gauge Kiri, Donut Tengah, Kartu Grid Kanan)
+    c_g, c_d, c_cards = st.columns([3.5, 3.5, 5])
+    
+    with c_g:
+        st.markdown('<div class="card" style="height:100%;"><div class="card-title" style="text-align:center; font-size:16px;">Effective Material Used</div>', unsafe_allow_html=True)
+        st.plotly_chart(fig_gauge, key="summary_gauge", config=PLOT_CONFIG, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    with c_d:
+        st.markdown('<div class="card" style="height:100%;"><div class="card-title" style="text-align:center; font-size:16px;">Shift Productivity Share</div>', unsafe_allow_html=True)
+        st.plotly_chart(fig_shift, key="summary_shift_pie", config=PLOT_CONFIG, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with c_cards:
+        st.markdown(
+            '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; height: 100%;">'
+            + card("Total Production", total_pieces, "pcs", f"From {total_cycles} cycles")
+            + card("Avg Material Waste", f"{avg_waste:.1f}", "%", "Estimated scrap")
+            + card("Top Operator", top_operator, "", f"{top_operator_val} pcs produced")
+            + card("Most Active Shift", top_shift, "", f"{shift_counts.get(top_shift, 0)} cycles run")
+            + '</div>',
+            unsafe_allow_html=True
+        )
 
 
 def page_analysis():
@@ -708,9 +707,9 @@ st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 if page == HOME:
     live_panel()
     chat_card()
-elif page == SUMMARY:
-    page_summary()
 elif page == ANALYSIS:
     page_analysis()
-else:
+elif page == LOGS:
     page_logs()
+else:
+    page_summary()
