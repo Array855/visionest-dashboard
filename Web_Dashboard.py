@@ -52,7 +52,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ───────────────────────── CSS CLEAN ANALYTICS ─────────────────────────
+# INIT SESSION STATE UNTUK TOGGLE REFRESH
+if "live_refresh" not in st.session_state:
+    st.session_state.live_refresh = True
+
+REFRESH = 2 if st.session_state.live_refresh else None
+
+# ───────────────────────── CSS CLEAN ANALYTICS (ULTRA COMPACT) ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -77,19 +83,19 @@ html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !impor
 }
 
 /* Membasmi elemen bawaan Streamlit */
-header[data-testid="stHeader"] { background: transparent !important; }
+header[data-testid="stHeader"] { background: transparent !important; height:0px !important; }
 footer { display: none !important; }
 .viewerBadge_container__1QSob, .viewerBadge_link__1S137, .viewerBadge_text__1JaDK, .stDeployButton { display: none !important; }
 a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
-/* Padding Layout */
+/* Padding Layout (SUPER DIPRES BIAR MUAT 1 LAYAR PENUH) */
 .block-container, [data-testid="stMainBlockContainer"] {
-    padding: 1.5rem 1.5rem 2rem !important;
+    padding: 1rem 1rem 0rem !important;
     max-width: 100% !important;
 }
 
-/* Sidebar Putih Bersih (Fixed Resize Tapi Bisa Collapse) */
+/* Sidebar Putih Bersih */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: 1px solid var(--line) !important;
@@ -101,6 +107,12 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 /* Narik Logo Sidebar ke atas biar sejajar sama Header */
 [data-testid="stSidebar"] [data-testid="stImage"] {
     margin-top: -25px !important;
+}
+
+/* Kustomisasi Toggle Switch Refresh */
+div[data-testid="stToggle"] {
+    margin-top: -10px;
+    padding-left: 5px;
 }
 
 /* Navigasi Sidebar - Pill Shape Halus */
@@ -127,34 +139,34 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     font-weight: 800 !important;
 }
 
-/* Kartu Bersih & Soft Shadow */
+/* Kartu Bersih & Soft Shadow (Ukuran Dipadatkan) */
 .card, [class*="st-key-card"] {
     background: var(--card) !important;
     border: 1px solid #f1f5f9 !important;
     border-radius: 12px;
-    padding: 20px 24px;
+    padding: 14px 18px; /* Dipres */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02); 
     height: 100%;
 }
-.card-title { font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
-.card-value { font-size: 34px; font-weight: 800; color: var(--ink); line-height: 1.15; }
-.card-value.sm { font-size: 22px; }
-.unit { font-size: 16px; font-weight: 600; color: var(--muted); margin-left: 6px; }
-.card-sub { font-size: 13px; font-weight: 500; color: var(--muted); margin-top: 6px; }
+.card-title { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+.card-value { font-size: 30px; font-weight: 800; color: var(--ink); line-height: 1.15; }
+.card-value.sm { font-size: 18px; }
+.unit { font-size: 14px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+.card-sub { font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 2px; }
 
-/* Grid & Layouts */
+/* Grid & Layouts (Gap dirapatkan) */
 .row { display: flex; justify-content: space-between; align-items: baseline; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
-.stack { display: grid; gap: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.stack { display: grid; gap: 10px; }
 
 /* Badges & Bars */
-.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #eff6ff; color: var(--accent); }
-.bar { height: 6px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 12px; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; background: #eff6ff; color: var(--accent); }
+.bar { height: 6px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 8px; }
 .bar > span { display: block; height: 100%; border-radius: 99px; background: var(--ok); transition: width 0.5s ease; }
-.empty { display: flex; align-items: center; justify-content: center; min-height: 120px; color: var(--muted); font-weight: 600; }
+.empty { display: flex; align-items: center; justify-content: center; min-height: 80px; color: var(--muted); font-weight: 600; }
 
 /* Header & Text Globals */
-.brand { font-size: 28px; font-weight: 800; color: var(--ink); margin-top: -10px; } 
+.brand { font-size: 26px; font-weight: 800; color: var(--ink); margin-top: -5px; } 
 .brand .gold { color: var(--accent); font-weight:400; } 
 .status { text-align: center; font-size: 14px; font-weight: 600; color: var(--muted); }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--ok); }
@@ -174,14 +186,14 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 }
 
 /* Chat */
-.msg { font-size: 14px; font-weight: 500; margin: 6px 0; }
+.msg { font-size: 13px; font-weight: 500; margin: 4px 0; }
 .msg small { color: var(--muted); font-weight: 400; }
 .msg.web { text-align: right; color: var(--accent); font-weight:700;}
 .msg.gui { text-align: left; color: var(--ok); font-weight:700;}
 
 /* Expander/Logs */
 [data-testid="stExpander"] details { background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-hr { border-color: var(--line) !important; margin: 12px 0 !important; }
+hr { border-color: var(--line) !important; margin: 8px 0 !important; }
 
 /* Tabel Spesifikasi */
 .specs-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 10px; }
@@ -219,7 +231,7 @@ def plot_layout(**kw):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(color=INK),
-        margin=dict(t=4, b=4, l=4, r=4),
+        margin=dict(t=2, b=2, l=2, r=2), # Margin dipres
     )
     base.update(kw)
     return base
@@ -404,24 +416,20 @@ with st.sidebar:
     else:
         st.image(LOGO_REMOTE, use_container_width=True)
         
-    st.markdown("<div style='text-align:right; font-size:11px; font-weight:800; color:#eab308; margin-top:-25px; padding-right:15px; text-transform:uppercase; letter-spacing:1px; position:relative; z-index:10;'>BY DEMIURGEN</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align:right; font-size:11px; font-weight:800; color:#eab308; margin-top:-28px; padding-right:15px; text-transform:uppercase; letter-spacing:1px; position:relative; z-index:10;'>BY DEMIURGEN</div>", unsafe_allow_html=True)
     
     st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;'>Directories</p>", unsafe_allow_html=True)
     
     page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS, HARDWARE, SETTINGS], label_visibility="collapsed")
-    
-    st.divider()
-    live = st.toggle("Live refresh", value=True)
-
-REFRESH = 2 if live else None
+    # TOGGLE DIHAPUS DARI SINI UNTUK DIPINDAH KE MAIN DASHBOARD
 
 
-# ───────────────────────── Komponen HTML ─────────────────────────
+# ───────────────────────── Komponen UI Render ─────────────────────────
 def card(title, value, unit="", sub="", val_color="var(--ink)"):
     unit_html = f'<span class="unit">{esc(unit)}</span>' if unit else ""
     sub_html = f'<div class="card-sub">{esc(sub)}</div>' if sub else ""
-    return (f'<div class="card" style="height:100%;"><div class="card-title">{esc(title)}</div>'
+    return (f'<div class="card"><div class="card-title">{esc(title)}</div>'
             f'<div class="card-value" style="color:{val_color};">{esc(value)}{unit_html}</div>{sub_html}</div>')
 
 def machine_cards(s):
@@ -432,7 +440,7 @@ def machine_cards(s):
         f'<div class="card-value sm">{esc(s["device_id"])}</div>'
         f'<div class="card-sub">Operator: {esc(s["operator"])}</div>'
         f'<div class="card-sub">Shift: {esc(s["shift"])}</div>'
-        f'<div style="margin-top:12px"><span class="pill">{esc(status)}</span></div></div>'
+        f'<div style="margin-top:8px"><span class="pill">{esc(status)}</span></div></div>'
     )
     progress = (
         '<div class="card"><div class="card-title">Cutting Progress</div>'
@@ -511,30 +519,42 @@ def nest_figure(s, mat_p, mat_l):
     fig.add_trace(go.Scatter(x=[num(s["pos_x"], 0.0)], y=[abs(num(s["pos_y"], 0.0))], mode="markers",
                              marker=dict(color=BAD, size=10), name="Laser tool"))
     fig.update_layout(**plot_layout(
-        height=320, showlegend=False, uirevision="nest",
+        height=250, showlegend=False, uirevision="nest", # TINGGI DIPRES JADI 250px
         xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
     ))
     return fig
 
 def layout_card(s):
     mat_p, mat_l = num(s["mat_p"], 0.0), num(s["mat_l"], 0.0)
-    with st.container(key="card_layout"):
-        st.markdown(
-            '<div class="row"><span class="card-title">Live Layout View</span>'
-            f'<span class="card-sub" style="color:var(--muted); border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px; font-size:12px;">{fmt(mat_p)} × {fmt(mat_l)} mm</span></div>',
-            unsafe_allow_html=True,
-        )
-        if mat_p > 0 and mat_l > 0 and s["nested_polys"]:
-            try:
-                st.plotly_chart(nest_figure(s, mat_p, mat_l), key="nest_chart", config=PLOT_CONFIG)
-            except (TypeError, ValueError, IndexError):
-                st.markdown('<div class="empty">Layout data is malformed.</div>', unsafe_allow_html=True)
-        else:
-            st.markdown('<div class="empty" style="min-height:320px">No pattern loaded</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="row"><span class="card-title">Live Layout View</span>'
+        f'<span class="card-sub" style="color:var(--muted); border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px; font-size:12px;">{fmt(mat_p)} × {fmt(mat_l)} mm</span></div>',
+        unsafe_allow_html=True,
+    )
+    if mat_p > 0 and mat_l > 0 and s["nested_polys"]:
+        try:
+            st.plotly_chart(nest_figure(s, mat_p, mat_l), key="nest_chart", config=PLOT_CONFIG)
+        except (TypeError, ValueError, IndexError):
+            st.markdown('<div class="empty">Layout data is malformed.</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="empty" style="min-height:250px">No pattern loaded</div>', unsafe_allow_html=True)
+
+def chat_messages():
+    pings = store.pings_copy()
+    with st.container(height=110, border=False): # TINGGI DIPRES JADI 110px
+        if not pings:
+            st.markdown('<div class="empty" style="min-height:80px">No messages yet.</div>', unsafe_allow_html=True)
+        for p in reversed(pings): 
+            who = "web" if p.get("sender") == "WEB" else "gui"
+            st.markdown(
+                f'<div class="msg {who}">[{who.upper()}] {esc(p.get("message", ""))} '
+                f'<small>({esc(p.get("timestamp", ""))})</small></div>',
+                unsafe_allow_html=True,
+            )
 
 
-# ───────────────────────── Fragment ─────────────────────────
-@st.fragment(run_every=1 if live else None)
+# ───────────────────────── Fragments (Pemisah Logic Biar Rapi) ─────────────────────────
+@st.fragment(run_every=1 if st.session_state.live_refresh else None)
 def header():
     label, color = link_status()
     now = datetime.now(WIB).strftime("%d %B %Y, %H:%M:%S")
@@ -551,51 +571,42 @@ def header():
         c_logo.image(LOGO_PARTNER_REMOTE, width=280)
 
 @st.fragment(run_every=REFRESH)
-def live_panel():
-    s = store.snapshot()
-    col_layout, col_info = st.columns([7, 3])
-    with col_layout:
-        layout_card(s)
-    col_info.markdown(machine_cards(s), unsafe_allow_html=True)
-    st.markdown(metric_grid(s), unsafe_allow_html=True)
+def frag_layout_card():
+    layout_card(store.snapshot())
 
 @st.fragment(run_every=REFRESH)
-def chat_messages():
-    pings = store.pings_copy()
-    with st.container(height=160, border=False):
-        if not pings:
-            st.markdown('<div class="empty" style="min-height:100px">No messages yet.</div>', unsafe_allow_html=True)
-        for p in reversed(pings): 
-            who = "web" if p.get("sender") == "WEB" else "gui"
-            st.markdown(
-                f'<div class="msg {who}">[{who.upper()}] {esc(p.get("message", ""))} '
-                f'<small>({esc(p.get("timestamp", ""))})</small></div>',
-                unsafe_allow_html=True,
-            )
+def frag_machine_cards():
+    st.markdown(machine_cards(store.snapshot()), unsafe_allow_html=True)
+
+@st.fragment(run_every=REFRESH)
+def frag_metric_grid():
+    st.markdown(metric_grid(store.snapshot()), unsafe_allow_html=True)
+
+@st.fragment(run_every=REFRESH)
+def frag_chat_messages():
+    chat_messages()
 
 
-# ───────────────────────── Halaman ─────────────────────────
+# ───────────────────────── Sub-Pages ─────────────────────────
 def chat_card():
     with st.container(key="card_chat"):
         st.markdown('<div class="card-title">Communication Log</div>', unsafe_allow_html=True)
-        chat_messages()
+        frag_chat_messages()
         with st.form("ping_form", clear_on_submit=True, border=False): 
             c_in, c_btn = st.columns([8, 1], vertical_alignment="bottom")
-            text = c_in.text_input("Message", placeholder="Type a message to GUI...",
-                                   label_visibility="collapsed")
+            text = c_in.text_input("Message", placeholder="Type a message to GUI...", label_visibility="collapsed")
             sent = c_btn.form_submit_button("Send", type="primary", use_container_width=True)
         if sent and text.strip():
             send_ping(text.strip())
 
 def style_chart(fig):
     fig.update_layout(**plot_layout(
-        height=300, margin=dict(t=30, b=10, l=10, r=10),
+        height=280, margin=dict(t=30, b=10, l=10, r=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color=INK)),
     ))
     fig.update_xaxes(type="category", showgrid=False, tickfont=dict(color=MUTED))
     fig.update_yaxes(gridcolor=GRID, tickfont=dict(color=MUTED))
     return fig
-
 
 # ─── HALAMAN STATS ───
 def page_summary():
@@ -646,7 +657,6 @@ def page_summary():
     st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
 
     c_a, c_d = st.columns([7, 3])
-    
     with c_a:
         st.markdown('<div class="card" style="height:100%;"><div class="row"><span class="card-title" style="font-size:18px; color:var(--ink);">Production Trend</span><span style="font-size:12px; color:var(--muted); border:1px solid #e2e8f0; padding:2px 8px; border-radius:6px;">Last 7 Cycles</span></div>', unsafe_allow_html=True)
         df_trend = pd.DataFrame(logs[:7][::-1])
@@ -677,9 +687,7 @@ def page_summary():
             color_discrete_sequence=[ACCENT, OK, PURPLE]
         )
         fig_shift.update_layout(**plot_layout(height=260, margin=dict(t=10, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1)))
-        
         fig_shift.update_traces(textinfo='percent', textposition='inside', textfont=dict(color='#ffffff', size=12))
-        
         fig_shift.add_annotation(text=f"Total<br><span style='font-size:24px; font-weight:bold; color:#1e293b;'>{total_cycles}</span><br><span style='font-size:12px; color:#64748b;'>Cycles</span>", x=0.5, y=0.5, font_size=14, font_color=MUTED, showarrow=False)
         st.plotly_chart(fig_shift, key="summary_shift_pie", config=PLOT_CONFIG, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -703,9 +711,7 @@ def page_summary():
         df_sh = pd.DataFrame(list(shape_counts.items()), columns=['Shape', 'Count'])
         fig_sh = px.pie(df_sh, names='Shape', values='Count', hole=0.4, color_discrete_sequence=[PURPLE, OK, ACCENT, GOLD])
         fig_sh.update_layout(**plot_layout(height=240, margin=dict(t=20, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1)))
-        
         fig_sh.update_traces(textinfo='percent', textposition='inside', textfont=dict(color='#ffffff', size=12))
-        
         st.plotly_chart(fig_sh, key="shape_dist_pie", config=PLOT_CONFIG, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -743,7 +749,7 @@ def page_analysis():
 
 def page_logs():
     logs = store.logs_copy()
-    # FITUR RESET LOGS HANYA ADA DI SETTINGS, HAPUS TOMBOL DI SINI
+    # TOMBOL RESET LOGS DIHAPUS DARI SINI
     st.markdown(card("Log Files", f"{len(logs)} records", "", "Newest first"), unsafe_allow_html=True)
 
     if not logs:
@@ -829,7 +835,7 @@ def page_hardware():
         </div>
         """, unsafe_allow_html=True)
 
-# ─── HALAMAN BARU: SYSTEM SETTINGS (DENGAN EXPORT CSV YANG RAPI) ───
+# ─── HALAMAN BARU: SYSTEM SETTINGS ───
 def page_settings():
     st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">System Settings</div>', unsafe_allow_html=True)
     
@@ -885,11 +891,26 @@ def page_settings():
 
 # ───────────────────────── Render Routing ─────────────────────────
 header()
-st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
 if page == HOME:
-    live_panel()
+    col_layout, col_info = st.columns([7, 3])
+    
+    with col_layout:
+        st.markdown('<div class="card" style="padding-bottom:10px; margin-bottom: 12px;">', unsafe_allow_html=True)
+        frag_layout_card()
+        st.markdown('</div>', unsafe_allow_html=True)
+        # Toggle dipindah ke bawah canvas
+        st.toggle("⚡ Enable Live Data Refresh", key="live_refresh")
+        
+    with col_info:
+        frag_machine_cards()
+        
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+    frag_metric_grid()
+    
+    st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
     chat_card()
+
 elif page == SUMMARY:
     page_summary()
 elif page == ANALYSIS:
