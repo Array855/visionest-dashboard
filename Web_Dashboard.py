@@ -44,7 +44,6 @@ st.set_page_config(
 )
 
 # ───────────────────────── CSS ─────────────────────────
-# CSS Ini sudah dirapatkan (compact) biar muat 1 layar dan watermark dihapus
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -56,7 +55,7 @@ CSS = """
 /* Padding dipres biar compact dan muat 1 layar penuh */
 .block-container,[data-testid="stMainBlockContainer"]{padding:1.5rem 1.5rem 1rem !important;max-width:100% !important;}
 
-header[data-testid="stHeader"]{background:transparent;}  /* jangan di-display:none: tombol sidebar ada di sini */
+header[data-testid="stHeader"]{background:transparent;}  
 footer{display:none !important;}
 
 /* PEMBASMI WATERMARK POJOK KANAN BAWAH */
@@ -157,7 +156,7 @@ def load_db():
 
 def save_db(logs, last_ts):
     tmp = DB_FILE + ".tmp"
-    try:  # tulis ke file sementara dulu supaya file utama tidak rusak kalau crash
+    try:
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump({"logs": logs, "last_log_ts": last_ts}, f)
         os.replace(tmp, DB_FILE)
@@ -167,8 +166,6 @@ def save_db(logs, last_ts):
 
 # ───────────────────────── State bersama (thread MQTT <-> Streamlit) ─────────────────────────
 class Store:
-    """Semua akses lewat lock, karena MQTT berjalan di thread terpisah."""
-
     def __init__(self):
         self._lock = threading.Lock()
         self.logs, self.last_log_ts = load_db()
@@ -216,7 +213,7 @@ class Store:
                 if key not in self.state:
                     continue
                 if key in ("shape_poly", "nested_polys") and not value:
-                    continue  # pertahankan pola terakhir kalau payload kosong
+                    continue
                 self.state[key] = value
             self.last_msg_at = time.time()
 
@@ -258,13 +255,12 @@ class Store:
 def get_store():
     return Store()
 
-
 @st.cache_resource
 def get_mqtt():
     store = get_store()
 
     def on_connect(client, userdata, flags, reason_code, properties=None):
-        client.subscribe([(TOPIC_TELEMETRY, 0), (TOPIC_PING, 1)])  # subscribe ulang tiap reconnect
+        client.subscribe([(TOPIC_TELEMETRY, 0), (TOPIC_PING, 1)])
 
     def on_message(client, userdata, msg):
         try:
@@ -276,7 +272,7 @@ def get_mqtt():
                     store.add_ping(payload)
             else:
                 store.update(payload)
-        except Exception:  # exception di callback bisa mematikan thread jaringan paho
+        except Exception:
             log.exception("Gagal memproses pesan MQTT")
 
     client = mqtt.Client(
@@ -289,14 +285,13 @@ def get_mqtt():
     if not DEMO:
         client.tls_set()
         client.reconnect_delay_set(min_delay=1, max_delay=30)
-        client.connect_async(BROKER, PORT, keepalive=60)  # non-blocking: halaman tidak ikut macet
+        client.connect_async(BROKER, PORT, keepalive=60)
         client.loop_start()
     return client
 
 
 store = get_store()
 client = get_mqtt()
-
 
 def link_status():
     if DEMO:
@@ -307,7 +302,6 @@ def link_status():
     if age is not None and age < STALE_AFTER_S:
         return "Machine online", OK
     return "Waiting for machine", WARN
-
 
 def send_ping(text):
     ping = {"sender": "WEB", "message": text, "timestamp": datetime.now(WIB).strftime("%H:%M:%S")}
@@ -335,7 +329,6 @@ with st.sidebar:
     st.divider()
     live = st.toggle("Live refresh", value=True)
 
-# Hanya bagian yang perlu live yang di-refresh (bukan seluruh halaman).
 REFRESH = 2 if live else None
 
 
@@ -382,7 +375,6 @@ def nest_figure(s, mat_p, mat_l):
                                  line=dict(color=WARN, width=2), fillcolor="rgba(245,158,11,0.25)"))
     fig.add_trace(go.Scatter(x=[num(s["pos_x"], 0.0)], y=[abs(num(s["pos_y"], 0.0))], mode="markers",
                              marker=dict(color=BAD, size=12), name="Laser tool"))
-    # Disesuaikan jadi 320px agar mengisi sisa ruang ke bawah
     fig.update_layout(**plot_layout(
         height=320, showlegend=False, uirevision="nest",
         xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
@@ -406,7 +398,7 @@ def layout_card(s):
             st.markdown('<div class="empty" style="min-height:320px">No pattern loaded</div>', unsafe_allow_html=True)
 
 
-# ───────────────────────── Fragment (bagian yang auto-refresh) ─────────────────────────
+# ───────────────────────── Fragment ─────────────────────────
 @st.fragment(run_every=1 if live else None)
 def header():
     label, color = link_status()
@@ -438,7 +430,7 @@ def chat_messages():
     with st.container(height=160, border=False):
         if not pings:
             st.markdown('<div class="empty" style="min-height:100px">No messages yet.</div>', unsafe_allow_html=True)
-        for p in reversed(pings):  # terbaru di atas, tidak perlu scroll
+        for p in reversed(pings): 
             who = "web" if p.get("sender") == "WEB" else "gui"
             st.markdown(
                 f'<div class="msg {who}">[{who.upper()}] {esc(p.get("message", ""))} '
@@ -452,11 +444,11 @@ def chat_card():
     with st.container(key="card_chat"):
         st.markdown('<div class="card-title">Communication log (web ↔ GUI)</div>', unsafe_allow_html=True)
         chat_messages()
-        with st.form("ping_form", clear_on_submit=True, border=False):  # Enter = kirim, kotak otomatis kosong
-            c_in, c_btn = st.columns([8, 1], vertical_alignment="bottom")
+        with st.form("ping_form", clear_on_submit=True, border=False): 
+            c_in, c_btn = st.columns([5, 1], vertical_alignment="bottom")
             text = c_in.text_input("Message", placeholder="Type a message to the cutting GUI",
                                    label_visibility="collapsed")
-            sent = c_btn.form_submit_button("Send", type="primary", use_container_width=True)
+            sent = c_btn.form_submit_button("Send", type="primary")
         if sent and text.strip():
             send_ping(text.strip())
 
@@ -487,7 +479,7 @@ def page_analysis():
         unsafe_allow_html=True,
     )
 
-    df = pd.DataFrame(logs[:30][::-1]).reindex(columns=["waktu", "operator", "shift", "pcs", "waste"])  # 30 terakhir
+    df = pd.DataFrame(logs[:30][::-1]).reindex(columns=["waktu", "operator", "shift", "pcs", "waste"]) 
     df["waste"] = pd.to_numeric(df["waste"], errors="coerce")
     df["pcs"] = pd.to_numeric(df["pcs"], errors="coerce")
     df["shift"] = df["shift"].fillna("-")
@@ -498,7 +490,9 @@ def page_analysis():
             go.Bar(name="Used", x=df["waktu"], y=100 - df["waste"], marker_color=OK),
             go.Bar(name="Waste", x=df["waktu"], y=df["waste"], marker_color=BAD),
         ])
-        style_chart(fig).update_layout(barmode="stack")
+        
+        # ---> FIX 1: GRAFIK DIBUAT BERDAMPINGAN (GROUP), BUKAN NUMPUK (STACK) <---
+        style_chart(fig).update_layout(barmode="group", bargroupgap=0.1)
         fig.update_yaxes(range=[0, 100], ticksuffix="%")
         st.plotly_chart(fig, key="usage_chart", config=PLOT_CONFIG)
 
@@ -536,19 +530,36 @@ def page_logs():
                 f'**Shape:** {entry.get("bentuk", "-")}  \n'
                 f'**Waste:** {fmt(entry.get("waste"))}%'
             )
-            poly = entry.get("shape_poly") or []
-            if poly:
+            
+            # ---> FIX 2: LOGIKA FULL LAYOUT (KOTAK BATAS MATERIAL + SEMUA POLA) DIKEMBALIKAN <---
+            mat_p, mat_l = 0, 0
+            try:
+                parts = entry.get('ukuran', '').split('x')
+                mat_p = float(parts[0].replace('mm', '').strip())
+                mat_l = float(parts[1].replace('mm', '').strip())
+            except: pass
+                
+            fig_nest = go.Figure()
+            
+            # Gambar Kotak Merah Batas Material (Kalau datanya ada)
+            if mat_p > 0 and mat_l > 0:
+                fig_nest.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode='lines', line=dict(color=BAD, width=2), hoverinfo='skip'))
+                
+            # Gambar Semua Pola Nested di dalamnya
+            polys = entry.get("nested_polys") or []
+            for idx, poly in enumerate(polys):
                 try:
                     xs, ys = outline(poly)
+                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx+1}", hoverinfo="name", line=dict(color=WARN, width=1.5), fillcolor="rgba(245,158,11,0.25)"))
                 except (TypeError, ValueError, IndexError):
                     continue
-                fig = go.Figure(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", line=dict(color=ACCENT, width=3),
-                                           fillcolor="rgba(67,24,255,0.15)"))
-                fig.update_layout(**plot_layout(
-                    height=140, showlegend=False, margin=dict(t=0, b=0, l=0, r=0),
+                    
+            if polys:
+                fig_nest.update_layout(**plot_layout(
+                    height=180, showlegend=False, margin=dict(t=10, b=10, l=10, r=10),
                     xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
                 ))
-                c_img.plotly_chart(fig, key=f"hist_{i}", config=PLOT_CONFIG)
+                c_img.plotly_chart(fig_nest, key=f"full_layout_{i}", config=PLOT_CONFIG)
 
     if len(logs) > limit and st.button("Load older"):
         st.session_state.log_limit = limit + PAGE_SIZE
