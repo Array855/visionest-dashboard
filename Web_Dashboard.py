@@ -63,25 +63,8 @@ footer{display:none !important;}
 a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
-/* ========================================== */
-/* SIDEBAR FIX (ANTI-RESIZE & ANTI-COLLAPSE)  */
-/* ========================================== */
-[data-testid="stSidebar"] {
-    background: #fff;
-    border-right: 1px solid var(--line);
-    min-width: 250px !important;  /* Kunci Lebar Minimum */
-    max-width: 250px !important;  /* Kunci Lebar Maksimum */
-}
-/* Membasmi garis pembatas yang bisa digeser-geser */
-[data-testid="stSidebarResizer"] {
-    display: none !important;
-}
-/* Membasmi tombol panah tutup (<<) di pojok kiri atas */
-[data-testid="stSidebarCollapseButton"], button[kind="headerNoPadding"] {
-    display: none !important;
-}
-
-/* Navigasi Sidebar Content */
+/* Sidebar */
+[data-testid="stSidebar"]{background:#fff;border-right:1px solid var(--line);}
 [data-testid="stSidebar"] div[role="radiogroup"]{gap:4px;}
 [data-testid="stSidebar"] div[role="radiogroup"] label{padding:10px 14px;border-radius:10px;width:100%;}
 [data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child{display:none;}
@@ -127,7 +110,7 @@ st.markdown(CSS, unsafe_allow_html=True)
 
 # ───────────────────────── Helper ─────────────────────────
 def esc(value):
-    """Escape semua teks dari MQTT sebelum masuk HTML (broker publik = input tidak tepercaya)."""
+    """Escape semua teks dari MQTT sebelum masuk HTML."""
     return html.escape(str(value))
 
 def num(value, default=None):
@@ -371,7 +354,39 @@ def machine_cards(s):
         f'<div class="card-value" style="color:var(--ok)">{pct:.0f}<span class="unit">%</span></div>'
         f'<div class="bar"><span style="width:{pct:.0f}%"></span></div></div>'
     )
-    return f'<div class="stack">{machine}{progress}</div>'
+    
+    # ─── FITUR BARU: Hitung Dimensi Pola Secara Otomatis dari Bounding Box ───
+    dim_text = "0.0 × 0.0 mm"
+    shape_nm = str(s.get("shape_name", "-"))
+    nested = s.get("nested_polys", [])
+    
+    if nested and len(nested) > 0:
+        poly_mm = nested[0] # Ambil pola 1 pcs yang sudah dikalibrasi jadi ukuran riil mm
+        xs = [float(p[0]) for p in poly_mm]
+        ys = [float(p[1]) for p in poly_mm]
+        w = max(xs) - min(xs)
+        h = max(ys) - min(ys)
+        
+        if "lingkaran" in shape_nm.lower():
+            diameter = max(w, h)
+            dim_text = f"Ø {diameter:.1f} mm"
+        else:
+            # Cari ukuran Bounding box buat persegi/abstrak/tak beraturan (P × L)
+            panjang = max(w, h)
+            lebar = min(w, h)
+            dim_text = f"{panjang:.1f} × {lebar:.1f} mm"
+    elif shape_nm != "-":
+        dim_text = "Calculating..."
+        
+    shape_class = "Undefined" if shape_nm == "-" else shape_nm
+        
+    pattern_size = (
+        '<div class="card"><div class="card-title">Pattern Size</div>'
+        f'<div class="card-value sm" style="color:var(--ink)">{esc(dim_text)}</div>'
+        f'<div class="card-sub">Class: {esc(shape_class)}</div></div>'
+    )
+    
+    return f'<div class="stack">{machine}{progress}{pattern_size}</div>'
 
 def metric_grid(s):
     items = [
@@ -462,10 +477,10 @@ def chat_card():
         st.markdown('<div class="card-title">Communication log (web ↔ GUI)</div>', unsafe_allow_html=True)
         chat_messages()
         with st.form("ping_form", clear_on_submit=True, border=False): 
-            c_in, c_btn = st.columns([5, 1], vertical_alignment="bottom")
+            c_in, c_btn = st.columns([8, 1], vertical_alignment="bottom")
             text = c_in.text_input("Message", placeholder="Type a message to the cutting GUI",
                                    label_visibility="collapsed")
-            sent = c_btn.form_submit_button("Send", type="primary")
+            sent = c_btn.form_submit_button("Send", type="primary", use_container_width=True)
         if sent and text.strip():
             send_ping(text.strip())
 
