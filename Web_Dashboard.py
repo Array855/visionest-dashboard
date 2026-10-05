@@ -47,7 +47,8 @@ def get_shared_data():
         "timestamp": "-",
         "waste_pct": 100.0,
         "logs": db_data.get("logs", []),             
-        "last_log_ts": db_data.get("last_log_ts", None)     
+        "last_log_ts": db_data.get("last_log_ts", None),
+        "ping_msgs": [] # Buffer untuk menampung pesan test komunikasi
     }
 
 shared_data = get_shared_data()
@@ -56,32 +57,42 @@ shared_data = get_shared_data()
 def start_mqtt():
     def on_connect(client, userdata, flags, reason_code, properties):
         client.subscribe("advantech/wise/visionest/telemetry")
+        client.subscribe("advantech/wise/visionest/ping") # Subscribe ke topik chat
 
     def on_message(client, userdata, msg):
         try:
             payload = json.loads(msg.payload.decode('utf-8'))
-            for key, value in payload.items():
-                if key not in ["logs", "last_log_ts"]:
-                    shared_data[key] = value
             
-            if payload.get("status") == "CYCLE_COMPLETE":
-                shared_data["progress_pct"] = 100
-                ts = payload.get("timestamp")
-                if ts != shared_data["last_log_ts"]:
-                    shared_data["last_log_ts"] = ts
-                    entry = {
-                        "waktu": ts,
-                        "operator": payload.get("operator", "Unknown"),
-                        "shift": payload.get("shift", "Shift 1"),
-                        "pcs": payload.get("target_qty", 0),
-                        "ukuran": f"{payload.get('mat_p', 0)} x {payload.get('mat_l', 0)}",
-                        "bentuk": payload.get("shape_name", "-"),
-                        "waste": payload.get("waste_pct", 100.0),
-                        "shape_poly": payload.get("shape_poly", []),
-                        "nested_polys": payload.get("nested_polys", [])
-                    }
-                    shared_data["logs"].insert(0, entry)
-                    save_db(shared_data["logs"], ts)
+            # Pisahkan logika untuk topik PING dan topik TELEMETRY
+            if msg.topic == "advantech/wise/visionest/ping":
+                if payload.get("sender") == "GUI":
+                    shared_data.setdefault("ping_msgs", []).append(payload)
+                    # Batasi riwayat pesan hanya 20 terakhir agar tidak berat
+                    if len(shared_data["ping_msgs"]) > 20:
+                        shared_data["ping_msgs"].pop(0)
+            else:
+                for key, value in payload.items():
+                    if key not in ["logs", "last_log_ts", "ping_msgs"]:
+                        shared_data[key] = value
+                
+                if payload.get("status") == "CYCLE_COMPLETE":
+                    shared_data["progress_pct"] = 100
+                    ts = payload.get("timestamp")
+                    if ts != shared_data["last_log_ts"]:
+                        shared_data["last_log_ts"] = ts
+                        entry = {
+                            "waktu": ts,
+                            "operator": payload.get("operator", "Unknown"),
+                            "shift": payload.get("shift", "Shift 1"),
+                            "pcs": payload.get("target_qty", 0),
+                            "ukuran": f"{payload.get('mat_p', 0)} x {payload.get('mat_l', 0)}",
+                            "bentuk": payload.get("shape_name", "-"),
+                            "waste": payload.get("waste_pct", 100.0),
+                            "shape_poly": payload.get("shape_poly", []),
+                            "nested_polys": payload.get("nested_polys", [])
+                        }
+                        shared_data["logs"].insert(0, entry)
+                        save_db(shared_data["logs"], ts)
         except Exception:
             pass
 
@@ -89,14 +100,12 @@ def start_mqtt():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id, transport="websockets")
     client.on_connect = on_connect
     client.on_message = on_message
-    
-    # --- PERBAIKAN MQTT WEBSOCKETS ---
-    client.tls_set() # WAJIB ADA untuk WSS Streamlit
-    client.connect("broker.hivemq.com", 8884, 60) # WAJIB PORT 8884
+    client.tls_set() 
+    client.connect("broker.hivemq.com", 8884, 60)
     client.loop_start()
     return client
 
-start_mqtt()
+mqtt_client_instance = start_mqtt()
 data = shared_data
 
 # ==========================================
@@ -252,6 +261,48 @@ else:
                     st.plotly_chart(fig_nest, use_container_width=True, key=f"full_layout_{i}")
 
 st.markdown("---")
+
+# ==========================================
+# COMMUNICATION TEST (WEB <-> GUI)
+# ==========================================
+st.markdown("### 📡 Communication Test (Web ↔ GUI)")
+
+if "ping_input" not in st.session_state:
+    st.session_state.ping_input = ""
+
+def send_web_ping():
+    msg = st.session_state.ping_input_widget
+    if msg:
+        payload = {
+            "sender": "WEB", 
+            "message": msg, 
+            "timestamp": time.strftime("%H:%M:%S")
+        }
+        # Publish ke broker
+        mqtt_client_instance.publish("advantech/wise/visionest/ping", json.dumps(payload), qos=1)
+        # Langsung tampilkan di layar chat web
+        shared_data.setdefault("ping_msgs", []).append(payload)
+        st.session_state.ping_input_widget = "" # Bersihkan inputan
+
+c_chat, c_input = st.columns([7, 3])
+with c_chat:
+    chat_box = st.container(height=180)
+    with chat_box:
+        if not data.get("ping_msgs"):
+            st.caption("No messages yet. Try sending a ping to the GUI!")
+        for p in data.get("ping_msgs", []):
+            if p["sender"] == "WEB":
+                st.markdown(f"<div style='text-align: right; color: #0ea5e9;'><b>[WEB]</b> {p['message']} <small style='color: #64748b;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"<div style='text-align: left; color: #10b981;'><b>[GUI]</b> {p['message']} <small style='color: #64748b;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+
+with c_input:
+    st.text_input("Message to GUI Desktop:", key="ping_input_widget", on_change=send_web_ping)
+    st.button("🚀 Send Message", on_click=send_web_ping, use_container_width=True)
+
+st.markdown("---")
+# ==========================================
+
 col_foot1, col_foot2 = st.columns([8, 2])
 with col_foot1:
     st.caption(f"⏱ Last updated: **{data['timestamp']}**")
