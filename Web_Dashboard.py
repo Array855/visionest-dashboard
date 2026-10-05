@@ -29,81 +29,151 @@ LOGO_REMOTE = "https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/
 LOGO_PARTNER = "logo_pens_kanan.png"
 LOGO_PARTNER_REMOTE = "https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/logo_pens_kanan.png"
 
-WIB = timezone(timedelta(hours=7), "WIB")  # WIB tidak pakai DST, offset tetap aman
-STALE_AFTER_S = 60  # tanpa data lebih lama dari ini = mesin dianggap diam
+WIB = timezone(timedelta(hours=7), "WIB")
+STALE_AFTER_S = 60  
 MAX_LOGS, MAX_PINGS, PAGE_SIZE = 500, 20, 25
-DEMO = os.getenv("VISIONEST_DEMO") == "1"  # preview tampilan tanpa mesin
+DEMO = os.getenv("VISIONEST_DEMO") == "1"
 
-INK, MUTED, GOLD = "#1b254b", "#64748b", "#d4af37"
-ACCENT, OK, WARN, BAD, GRID = "#4318ff", "#05cd99", "#f59e0b", "#ff5b5b", "#e8edf9"
+# ---> WARNA CYBER DARK MODE <---
+INK = "#f8fafc"         # Teks Utama (Putih Terang)
+MUTED = "#94a3b8"       # Teks Redup (Abu-abu kebiruan)
+GOLD = "#fbbf24"        # Kuning
+ACCENT = "#8b5cf6"      # Cyber Purple (Warna utama grafik tren)
+OK = "#10b981"          # Neon Green (Warna sukses/Gauge)
+WARN = "#f59e0b"        # Orange
+BAD = "#ef4444"         # Merah
+GRID = "#1e293b"        # Garis Grid Gelap
 
 st.set_page_config(
     page_title="VISIONEST Dashboard",
-    page_icon=LOGO if os.path.exists(LOGO) else "✂️",
+    page_icon=LOGO if os.path.exists(LOGO) else "✂️️",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ───────────────────────── CSS ─────────────────────────
+# ───────────────────────── CSS CYBER DARK MODE ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-:root{--bg:#f4f7fe;--card:#fff;--ink:#1b254b;--muted:#64748b;--line:#e3e9f6;
-      --gold:#d4af37;--navy:#1e3a8a;--accent:#4318ff;--ok:#05cd99;}
-.stApp{background:var(--bg);}
-.stApp,.stApp :is(p,h1,h2,h3,h4,label,input,button,li,small){font-family:'Plus Jakarta Sans',sans-serif !important;}
+:root {
+    --bg: #0b1121;         /* Background utama sangat gelap */
+    --card: #111827;       /* Background kartu sedikit lebih terang */
+    --ink: #f8fafc;        /* Teks Putih */
+    --muted: #94a3b8;      /* Teks Abu */
+    --line: #1e293b;       /* Border kartu */
+    --gold: #fbbf24;
+    --navy: #e2e8f0;       
+    --accent: #8b5cf6;     /* Cyber Purple */
+    --ok: #10b981;         /* Neon Green */
+}
 
-/* Padding dipres biar compact dan muat 1 layar penuh */
-.block-container,[data-testid="stMainBlockContainer"]{padding:1.5rem 1.5rem 1rem !important;max-width:100% !important;}
+html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
 
-header[data-testid="stHeader"]{background:transparent;}  
-footer{display:none !important;}
+/* PAKSA BACKGROUND GELAP 100% */
+.stApp, [data-testid="stAppViewContainer"], .main {
+    background-color: var(--bg) !important;
+    color: var(--ink) !important;
+}
 
-/* PEMBASMI WATERMARK POJOK KANAN BAWAH */
+/* Membasmi elemen bawaan Streamlit */
+header[data-testid="stHeader"] { background: transparent !important; }
+footer { display: none !important; }
 .viewerBadge_container__1QSob, .viewerBadge_link__1S137, .viewerBadge_text__1JaDK, .stDeployButton { display: none !important; }
 a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
-/* Sidebar */
-[data-testid="stSidebar"]{background:#fff;border-right:1px solid var(--line);}
-[data-testid="stSidebar"] div[role="radiogroup"]{gap:4px;}
-[data-testid="stSidebar"] div[role="radiogroup"] label{padding:10px 14px;border-radius:10px;width:100%;}
-[data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child{display:none;}
-[data-testid="stSidebar"] div[role="radiogroup"] label p{font-size:16px;font-weight:700;color:var(--navy);}
-[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked){background:#eaf0ff;}
+/* Padding Layout */
+.block-container, [data-testid="stMainBlockContainer"] {
+    padding: 1.5rem 1.5rem 2rem !important;
+    max-width: 100% !important;
+}
 
-/* Kartu & Typography Baru */
-.card,[class*="st-key-card"]{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;}
-.card-title{font-size:15px;font-weight:700;color:var(--muted);margin-bottom:6px;} 
-.card-value{font-size:36px;font-weight:800;color:var(--ink);line-height:1.15;}   
-.card-value.sm{font-size:22px;}                                                   
-.unit{font-size:17px;font-weight:700;color:var(--muted);margin-left:5px;}         
-.card-sub{font-size:13.5px;font-weight:600;color:var(--muted);margin-top:4px;}    
-.row{display:flex;justify-content:space-between;align-items:baseline;}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
-.stack{display:grid;gap:12px;}
-.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:700;background:#eef2ff;color:var(--accent);}
-.bar{height:8px;border-radius:99px;background:#e8edf9;overflow:hidden;margin-top:10px;}
-.bar > span{display:block;height:100%;border-radius:99px;background:var(--ok); transition: width 0.5s ease;}
-.empty{display:flex;align-items:center;justify-content:center;min-height:120px;color:var(--muted);font-weight:700;}
+/* Sidebar Dark Mode */
+[data-testid="stSidebar"] {
+    background-color: #0b1121 !important;
+    border-right: 1px solid var(--line) !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+}
+[data-testid="stSidebarResizer"] { display: none !important; }
+[data-testid="stSidebarCollapseButton"], button[kind="headerNoPadding"] { display: none !important; }
 
-/* Header Title */
-.brand{font-size:30px;font-weight:800;color:var(--ink);} 
-.brand .gold{color:var(--gold);}
-.status{text-align:center;font-size:16px;font-weight:700;color:var(--muted);} 
-.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;}
-.sep{display:inline-block;width:1px;height:14px;background:var(--line);margin:0 14px;vertical-align:middle;}
+/* Navigasi Sidebar - Glowing Hover & Selected */
+[data-testid="stSidebar"] div[role="radiogroup"] { gap: 8px; }
+[data-testid="stSidebar"] div[role="radiogroup"] label {
+    padding: 12px 16px;
+    border-radius: 8px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+[data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child { display: none; }
+[data-testid="stSidebar"] div[role="radiogroup"] label p {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: var(--muted) !important;
+}
+[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
+    background: rgba(139, 92, 246, 0.15) !important; /* Accent background */
+    border-left: 4px solid var(--accent) !important;
+    border-radius: 0 8px 8px 0;
+}
+[data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) p {
+    color: var(--accent) !important; /* Accent text */
+}
 
-/* Chat Log */
-.msg{font-size:14px;font-weight:600;margin:4px 0;}
-.msg small{color:var(--muted);font-weight:500;}
-.msg.web{text-align:right;color:var(--accent);}
-.msg.gui{text-align:left;color:#059669;}
+/* Dark Cards dengan efek elegan */
+.card, [class*="st-key-card"] {
+    background: var(--card) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+.card-title { font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.card-value { font-size: 36px; font-weight: 800; color: var(--ink); line-height: 1.15; }
+.card-value.sm { font-size: 22px; }
+.unit { font-size: 16px; font-weight: 700; color: var(--muted); margin-left: 6px; }
+.card-sub { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 6px; }
 
-/* Form & expander */
-[data-testid="stForm"]{padding:0;border:0;}
-[data-testid="stFormSubmitButton"] button{width:100%;}
-[data-testid="stExpander"] details{background:var(--card);border-color:var(--line);border-radius:12px;}
+/* Grid & Layouts */
+.row { display: flex; justify-content: space-between; align-items: baseline; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.stack { display: grid; gap: 16px; }
+
+/* Badges & Bars */
+.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 13px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: var(--ok); }
+.bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: 12px; }
+.bar > span { display: block; height: 100%; border-radius: 99px; background: var(--ok); transition: width 0.5s ease; box-shadow: 0 0 10px var(--ok); }
+.empty { display: flex; align-items: center; justify-content: center; min-height: 120px; color: var(--muted); font-weight: 700; }
+
+/* Header & Text Globals */
+.brand { font-size: 28px; font-weight: 800; color: var(--ink); }
+.brand .gold { color: var(--gold); }
+.status { text-align: center; font-size: 15px; font-weight: 700; color: var(--muted); }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; box-shadow: 0 0 8px var(--ok); }
+.sep { display: inline-block; width: 1px; height: 16px; background: var(--line); margin: 0 16px; vertical-align: middle; }
+
+[data-testid="stWidgetLabel"] p, [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
+    color: var(--ink) !important;
+}
+
+/* Warna input box */
+.stTextInput input {
+    background-color: var(--card) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--line) !important;
+    font-weight: 600 !important;
+}
+
+/* Chat */
+.msg { font-size: 14px; font-weight: 600; margin: 6px 0; }
+.msg small { color: var(--muted); font-weight: 500; }
+.msg.web { text-align: right; color: var(--accent); }
+.msg.gui { text-align: left; color: var(--ok); }
+
+/* Expander/Logs */
+[data-testid="stExpander"] details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+hr { border-color: var(--line) !important; margin: 12px 0 !important; }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -312,18 +382,18 @@ def send_ping(text):
     store.add_ping(ping)
 
 
-# ───────────────────────── Sidebar (Summary di Paling Bawah) ─────────────────────────
+# ───────────────────────── Sidebar ─────────────────────────
 HOME, ANALYSIS, LOGS, SUMMARY = "🏠 Home", "📈 Analysis", "📝 Production log", "📋 Executive Summary"
 
 with st.sidebar:
     c_logo, c_name = st.columns([3, 7], vertical_alignment="center")
     c_logo.image(LOGO if os.path.exists(LOGO) else LOGO_REMOTE, width=48)
     c_name.markdown(
-        "<div style='font-size:16px;font-weight:800;color:#d4af37;line-height:1.2'>VISIONEST</div>"
-        "<div style='font-size:11px;font-weight:700;color:#1e3a8a'>by DEMIURGEN</div>",
+        "<div style='font-size:18px;font-weight:800;color:#fbbf24;line-height:1.2'>VISIONEST</div>"
+        "<div style='font-size:12px;font-weight:700;color:#94a3b8'>by DEMIURGEN</div>",
         unsafe_allow_html=True,
     )
-    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     page = st.radio("Menu", [HOME, ANALYSIS, LOGS, SUMMARY], label_visibility="collapsed")
     st.divider()
     live = st.toggle("Live refresh", value=True)
@@ -332,11 +402,11 @@ REFRESH = 2 if live else None
 
 
 # ───────────────────────── Komponen HTML ─────────────────────────
-def card(title, value, unit="", sub=""):
+def card(title, value, unit="", sub="", val_color="var(--ink)"):
     unit_html = f'<span class="unit">{esc(unit)}</span>' if unit else ""
     sub_html = f'<div class="card-sub">{esc(sub)}</div>' if sub else ""
     return (f'<div class="card" style="height:100%;"><div class="card-title">{esc(title)}</div>'
-            f'<div class="card-value">{esc(value)}{unit_html}</div>{sub_html}</div>')
+            f'<div class="card-value" style="color:{val_color};">{esc(value)}{unit_html}</div>{sub_html}</div>')
 
 def machine_cards(s):
     pct = max(0.0, min(100.0, num(s["progress_pct"], 0.0)))
@@ -415,7 +485,7 @@ def nest_figure(s, mat_p, mat_l):
     for i, poly in enumerate(s["nested_polys"], 1):
         xs, ys = outline(poly)
         fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Piece {i}", hoverinfo="name",
-                                 line=dict(color=WARN, width=2), fillcolor="rgba(245,158,11,0.25)"))
+                                 line=dict(color=ACCENT, width=2), fillcolor="rgba(139, 92, 246, 0.25)"))
         if len(xs) > 1:
             avg_x = sum(xs[:-1]) / len(xs[:-1])
             avg_y = sum(ys[:-1]) / len(ys[:-1])
@@ -423,7 +493,7 @@ def nest_figure(s, mat_p, mat_l):
                 x=avg_x, y=avg_y, text=f"<b>{i}</b>", showarrow=False, font=dict(color=INK, size=15)
             )
     fig.add_trace(go.Scatter(x=[num(s["pos_x"], 0.0)], y=[abs(num(s["pos_y"], 0.0))], mode="markers",
-                             marker=dict(color=BAD, size=12), name="Laser tool"))
+                             marker=dict(color=OK, size=12), name="Laser tool"))
     fig.update_layout(**plot_layout(
         height=320, showlegend=False, uirevision="nest",
         xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
@@ -506,18 +576,18 @@ def style_chart(fig):
         height=300, margin=dict(t=30, b=10, l=10, r=10),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     ))
-    fig.update_xaxes(type="category", showgrid=False)
-    fig.update_yaxes(gridcolor=GRID)
+    fig.update_xaxes(type="category", showgrid=False, tickfont=dict(color=MUTED))
+    fig.update_yaxes(gridcolor=GRID, tickfont=dict(color=MUTED))
     return fig
 
 
-# ─── HALAMAN EXECUTIVE SUMMARY (HMI STYLE) ───
+# ─── HALAMAN EXECUTIVE SUMMARY (DARK HACKER / ANALYTICS MODE) ───
 def page_summary():
     logs = store.logs_copy()
-    st.markdown('<div class="card-title" style="font-size:20px; margin-bottom:15px; color:#1b254b;">📋 Executive Summary & Production Resume</div>', unsafe_allow_html=True)
+    st.markdown('<div class="card-title" style="font-size:22px; margin-bottom:15px; color:#f8fafc;">Executive Dashboard <span style="font-size:12px; font-weight:600; background:#1e293b; padding:4px 10px; border-radius:12px; color:#94a3b8; margin-left:10px;">Data Overview</span></div>', unsafe_allow_html=True)
     
     if not logs:
-        st.markdown(card("Resume", "No data available", "", "General summary will appear once production logs are recorded."), unsafe_allow_html=True)
+        st.markdown(card("Overview", "No data available", "", "Data will appear once production logs are recorded."), unsafe_allow_html=True)
         return
 
     # Kalkulasi Metrik Utama
@@ -538,60 +608,63 @@ def page_summary():
         
     top_operator = max(op_counts, key=op_counts.get) if op_counts else "-"
     top_operator_val = op_counts.get(top_operator, 0)
-    top_shift = max(shift_counts, key=shift_counts.get) if shift_counts else "-"
 
-    # 1. BIKIN GAUGE CHART TEBAL ALA SCADA / HMI PABRIK
-    fig_gauge = go.Figure(go.Indicator(
-        mode = "gauge+number",
-        value = avg_used,
-        number = {'suffix': "%", 'font': {'color': INK, 'size': 44, 'family': 'Arial Black'}},
-        gauge = {
-            'axis': {'range': [0, 100], 'tickwidth': 2, 'tickcolor': MUTED, 'ticklen': 5},
-            'bar': {'color': OK, 'thickness': 0.4},  # Ketebalan bar dibuat super tebal 0.4
-            'bgcolor': "#e2e8f0",
-            'borderwidth': 0,
-            'steps': [
-                {'range': [0, 50], 'color': "#fca5a5"},   # Zona Merah (Boros)
-                {'range': [50, 80], 'color': "#fcd34d"},  # Zona Kuning (Lumayan)
-                {'range': [80, 100], 'color': "#86efac"}  # Zona Hijau (Efisien)
-            ],
-        }
-    ))
-    fig_gauge.update_layout(**plot_layout(height=280, margin=dict(t=20, b=10, l=30, r=30)))
+    # 1. KARTU BARIS ATAS (Mirip Gambar Referensi)
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(card("Effective Material Used", f"{avg_used:.1f}", "%", "Average material utilized", val_color=OK), unsafe_allow_html=True)
+    with c2:
+        st.markdown(card("Total Pieces Cut", f"{total_pieces}", "pcs", f"Across {total_cycles} complete cycles", val_color=ACCENT), unsafe_allow_html=True)
+    with c3:
+        st.markdown(card("Top Operator", top_operator, "", f"Most productive: {top_operator_val} pcs", val_color=INK), unsafe_allow_html=True)
 
-    # 2. BIKIN DONUT CHART
-    fig_shift = px.pie(
-        names=list(shift_counts.keys()), 
-        values=list(shift_counts.values()), 
-        hole=0.6,
-        color_discrete_sequence=[ACCENT, "#39b8ff", GOLD]
-    )
-    fig_shift.update_layout(**plot_layout(height=280, margin=dict(t=10, b=10, l=10, r=10), showlegend=True, legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5)))
-    fig_shift.update_traces(textinfo='percent+label', textfont_size=14, textposition='inside')
+    st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
 
-    # 3. PENATAAN LAYOUT (Gauge Kiri, Donut Tengah, Kartu Grid Kanan)
-    c_g, c_d, c_cards = st.columns([3.5, 3.5, 5])
+    # 2. BARIS BAWAH: GAUGE & AREA CHART
+    c_g, c_a = st.columns([3, 7])
     
     with c_g:
-        st.markdown('<div class="card" style="height:100%;"><div class="card-title" style="text-align:center; font-size:16px;">Effective Material Used</div>', unsafe_allow_html=True)
+        st.markdown('<div class="card" style="height:100%;"><div class="card-title">Efisiensi Margin Material</div>', unsafe_allow_html=True)
+        # Gauge Chart ala Hacker / Dark Mode (Setengah Lingkaran)
+        fig_gauge = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = avg_used,
+            number = {'suffix': "%", 'font': {'color': INK, 'size': 40, 'family': 'Arial Black'}},
+            gauge = {
+                'axis': {'range': [0, 100], 'visible': False},
+                'bar': {'color': OK, 'thickness': 0.25}, 
+                'bgcolor': GRID,
+                'borderwidth': 0,
+            }
+        ))
+        fig_gauge.update_layout(**plot_layout(height=260, margin=dict(t=20, b=0, l=10, r=10)))
         st.plotly_chart(fig_gauge, key="summary_gauge", config=PLOT_CONFIG, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="text-align:center; color:var(--muted); font-size:13px; margin-top:-20px;">Target: 65%</div></div>', unsafe_allow_html=True)
         
-    with c_d:
-        st.markdown('<div class="card" style="height:100%;"><div class="card-title" style="text-align:center; font-size:16px;">Shift Productivity Share</div>', unsafe_allow_html=True)
-        st.plotly_chart(fig_shift, key="summary_shift_pie", config=PLOT_CONFIG, use_container_width=True)
+    with c_a:
+        st.markdown('<div class="card" style="height:100%;"><div class="card-title">Tren Penjualan / Produksi (7 Siklus Terakhir)</div>', unsafe_allow_html=True)
+        
+        # Ekstrak data 7 terakhir
+        df_trend = pd.DataFrame(logs[:7][::-1])
+        if not df_trend.empty:
+            df_trend["waktu_short"] = df_trend["waktu"].str.split(" ").str[-1] # Ambil Jam nya saja
+            fig_trend = go.Figure()
+            # Bikin Area Chart melengkung yang Glowing
+            fig_trend.add_trace(go.Scatter(
+                x=df_trend["waktu_short"], y=df_trend["pcs"],
+                fill='tozeroy',
+                mode='lines+markers',
+                line=dict(color=ACCENT, width=4, shape='spline'),
+                marker=dict(size=8, color=INK),
+                fillcolor='rgba(139, 92, 246, 0.25)' # Ungu transparan
+            ))
+            fig_trend.update_layout(**plot_layout(height=260, margin=dict(t=10, b=30, l=10, r=10)))
+            fig_trend.update_xaxes(showgrid=False, tickfont=dict(color=MUTED))
+            fig_trend.update_yaxes(showgrid=True, gridcolor=GRID, tickfont=dict(color=MUTED))
+            st.plotly_chart(fig_trend, key="summary_trend", config=PLOT_CONFIG, use_container_width=True)
+        else:
+            st.markdown('<div class="empty">Not enough data to form a trend.</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-
-    with c_cards:
-        st.markdown(
-            '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; height: 100%;">'
-            + card("Total Production", total_pieces, "pcs", f"From {total_cycles} cycles")
-            + card("Avg Material Waste", f"{avg_waste:.1f}", "%", "Estimated scrap")
-            + card("Top Operator", top_operator, "", f"{top_operator_val} pcs produced")
-            + card("Most Active Shift", top_shift, "", f"{shift_counts.get(top_shift, 0)} cycles run")
-            + '</div>',
-            unsafe_allow_html=True
-        )
 
 
 def page_analysis():
@@ -600,17 +673,6 @@ def page_analysis():
         st.markdown(card("Analysis", "No data yet", "", "Charts appear after the first completed cut."),
                     unsafe_allow_html=True)
         return
-
-    wastes = [w for w in (num(entry.get("waste")) for entry in logs) if w is not None]
-    pieces = sum(int(num(entry.get("pcs"), 0)) for entry in logs)
-    st.markdown(
-        '<div class="grid">'
-        + card("Completed cycles", len(logs), "", "In the log")
-        + card("Pieces cut", pieces, "pcs", "All cycles")
-        + card("Average waste", fmt(sum(wastes) / len(wastes)) if wastes else "–", "%", "All cycles")
-        + "</div>",
-        unsafe_allow_html=True,
-    )
 
     df = pd.DataFrame(logs[:30][::-1]).reindex(columns=["waktu", "operator", "shift", "pcs", "waste"]) 
     df["waste"] = pd.to_numeric(df["waste"], errors="coerce")
@@ -678,7 +740,7 @@ def page_logs():
             for idx, poly in enumerate(polys, 1):
                 try:
                     xs, ys = outline(poly)
-                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx}", hoverinfo="name", line=dict(color=WARN, width=1.5), fillcolor="rgba(245,158,11,0.25)"))
+                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx}", hoverinfo="name", line=dict(color=ACCENT, width=1.5), fillcolor="rgba(139, 92, 246, 0.25)"))
                     if len(xs) > 1:
                         avg_x = sum(xs[:-1]) / len(xs[:-1])
                         avg_y = sum(ys[:-1]) / len(ys[:-1])
