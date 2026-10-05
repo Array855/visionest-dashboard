@@ -52,13 +52,29 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# INIT SESSION STATE UNTUK TOGGLE REFRESH
 if "live_refresh" not in st.session_state:
     st.session_state.live_refresh = True
 
 REFRESH = 2 if st.session_state.live_refresh else None
 
-# ───────────────────────── CSS CLEAN ANALYTICS (ULTRA COMPACT) ─────────────────────────
+# ───────────────────────── Auto-Translator B.Indo -> English ─────────────────────────
+SHAPE_TRANSLATOR = {
+    "Segitiga": "Triangle",
+    "Persegi": "Square",
+    "Persegi Panjang": "Rectangle",
+    "Lingkaran": "Circle",
+    "Tidak Beraturan": "Irregular",
+    "Bintang": "Star",
+    "Undefined": "Undefined",
+    "-": "-"
+}
+
+def translate_shape(shape_name):
+    # Membersihkan string dan menerjemahkan kalau ada di dictionary
+    clean_name = str(shape_name).strip()
+    return SHAPE_TRANSLATOR.get(clean_name, clean_name)
+
+# ───────────────────────── CSS CLEAN ANALYTICS (ULTRA COMPACT & DYNAMIC) ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -76,46 +92,41 @@ CSS = """
 
 html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
 
-/* PAKSA BACKGROUND LIGHT MODE */
 .stApp, [data-testid="stAppViewContainer"], .main {
     background-color: var(--bg) !important;
     color: var(--ink) !important;
 }
 
-/* Membasmi elemen bawaan Streamlit */
 header[data-testid="stHeader"] { background: transparent !important; height:0px !important; }
 footer { display: none !important; }
 .viewerBadge_container__1QSob, .viewerBadge_link__1S137, .viewerBadge_text__1JaDK, .stDeployButton { display: none !important; }
 a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
-/* Padding Layout (SUPER DIPRES BIAR MUAT 1 LAYAR PENUH) */
+/* Padding Layout Pres 1 Layar */
 .block-container, [data-testid="stMainBlockContainer"] {
     padding: 1rem 1rem 0rem !important;
     max-width: 100% !important;
 }
 
-/* Sidebar Putih Bersih */
+/* Sidebar Putih Bersih (FIX: min-width dicabut biar bisa nutup mulus) */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: 1px solid var(--line) !important;
-    min-width: 250px !important;
-    max-width: 250px !important;
 }
+/* Hanya sembunyikan garis penarik ukurannya aja, biar ukurannya statis tapi bisa diclose */
 [data-testid="stSidebarResizer"] { display: none !important; }
 
-/* Narik Logo Sidebar ke atas biar sejajar sama Header */
+/* Narik Logo Sidebar ke atas */
 [data-testid="stSidebar"] [data-testid="stImage"] {
     margin-top: -25px !important;
 }
 
-/* Kustomisasi Toggle Switch Refresh */
 div[data-testid="stToggle"] {
     margin-top: -10px;
     padding-left: 5px;
 }
 
-/* Navigasi Sidebar - Pill Shape Halus */
 [data-testid="stSidebar"] div[role="radiogroup"] { gap: 8px; }
 [data-testid="stSidebar"] div[role="radiogroup"] label {
     padding: 12px 16px;
@@ -139,12 +150,11 @@ div[data-testid="stToggle"] {
     font-weight: 800 !important;
 }
 
-/* Kartu Bersih & Soft Shadow (Ukuran Dipadatkan) */
 .card, [class*="st-key-card"] {
     background: var(--card) !important;
     border: 1px solid #f1f5f9 !important;
     border-radius: 12px;
-    padding: 14px 18px; /* Dipres */
+    padding: 14px 18px; 
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02); 
     height: 100%;
 }
@@ -154,18 +164,15 @@ div[data-testid="stToggle"] {
 .unit { font-size: 14px; font-weight: 600; color: var(--muted); margin-left: 4px; }
 .card-sub { font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 2px; }
 
-/* Grid & Layouts (Gap dirapatkan) */
 .row { display: flex; justify-content: space-between; align-items: baseline; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
 .stack { display: grid; gap: 10px; }
 
-/* Badges & Bars */
 .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; background: #eff6ff; color: var(--accent); }
 .bar { height: 6px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 8px; }
 .bar > span { display: block; height: 100%; border-radius: 99px; background: var(--ok); transition: width 0.5s ease; }
 .empty { display: flex; align-items: center; justify-content: center; min-height: 80px; color: var(--muted); font-weight: 600; }
 
-/* Header & Text Globals */
 .brand { font-size: 26px; font-weight: 800; color: var(--ink); margin-top: -5px; } 
 .brand .gold { color: var(--accent); font-weight:400; } 
 .status { text-align: center; font-size: 14px; font-weight: 600; color: var(--muted); }
@@ -176,7 +183,6 @@ div[data-testid="stToggle"] {
     color: var(--ink) !important;
 }
 
-/* Warna input box */
 .stTextInput input {
     background-color: #ffffff !important;
     color: var(--ink) !important;
@@ -185,17 +191,14 @@ div[data-testid="stToggle"] {
     border-radius: 6px;
 }
 
-/* Chat */
 .msg { font-size: 13px; font-weight: 500; margin: 4px 0; }
 .msg small { color: var(--muted); font-weight: 400; }
 .msg.web { text-align: right; color: var(--accent); font-weight:700;}
 .msg.gui { text-align: left; color: var(--ok); font-weight:700;}
 
-/* Expander/Logs */
 [data-testid="stExpander"] details { background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
 hr { border-color: var(--line) !important; margin: 8px 0 !important; }
 
-/* Tabel Spesifikasi */
 .specs-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 10px; }
 .specs-table th { padding: 12px 0; color: var(--muted); font-weight: 600; font-size: 14px; border-bottom: 1px solid var(--line); }
 .specs-table td { padding: 12px 0; color: var(--ink); font-weight: 800; font-size: 14px; border-bottom: 1px solid var(--line); text-align: right; }
@@ -231,7 +234,7 @@ def plot_layout(**kw):
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font=dict(color=INK),
-        margin=dict(t=2, b=2, l=2, r=2), # Margin dipres
+        margin=dict(t=2, b=2, l=2, r=2), 
     )
     base.update(kw)
     return base
@@ -255,7 +258,7 @@ def save_db(logs, last_ts):
             json.dump({"logs": logs, "last_log_ts": last_ts}, f)
         os.replace(tmp, DB_FILE)
     except OSError:
-        log.exception("Gagal menyimpan log")
+        log.exception("Failed to save log")
 
 
 # ───────────────────────── State bersama ─────────────────────────
@@ -330,19 +333,12 @@ class Store:
     def _seed_demo(self):
         rects = [[[x, y], [x + 170, y], [x + 170, y + 170], [x, y + 170]] for y in (20, 210) for x in (20, 210, 400)]
         self.state.update(
-            device_id="VISIONEST-01", operator="Rizky", shift="Shift 1", status="CUTTING", target_qty=6,
+            device_id="VISIONEST-01", operator="User 1", shift="Shift 1", status="CUTTING", target_qty=6,
             progress_pct=62, pos_x=210.0, pos_y=-95.0, mat_p=600.0, mat_l=400.0, shape_name="Square",
             shape_poly=rects[0], nested_polys=rects, duration_sec=84.3, waste_pct=18.4,
         )
         self.last_msg_at = time.time()
-        self.pings = [{"sender": "GUI", "message": "Cutting started", "timestamp": "09:12:03"}]
-        if not self.logs:
-            for i in range(8):
-                self.logs.insert(0, {
-                    "waktu": f"{9 + i:02d}:{i * 7 % 60:02d}:00", "operator": "Rizky" if i < 4 else "Dewi",
-                    "shift": "Shift 1" if i < 4 else "Shift 2", "pcs": 4 + i % 5, "ukuran": "600 x 400",
-                    "bentuk": "Square", "waste": 14 + (i * 5) % 13, "shape_poly": rects[0], "nested_polys": rects,
-                })
+        self.pings = [{"sender": "GUI", "message": "System Ready", "timestamp": "09:12:03"}]
 
 
 @st.cache_resource
@@ -367,7 +363,7 @@ def get_mqtt():
             else:
                 store.update(payload)
         except Exception:
-            log.exception("Gagal memproses pesan MQTT")
+            log.exception("Failed processing MQTT message")
 
     client = mqtt.Client(
         mqtt.CallbackAPIVersion.VERSION2,
@@ -408,7 +404,7 @@ def send_ping(text):
 
 
 # ───────────────────────── Sidebar ─────────────────────────
-HOME, SUMMARY, ANALYSIS, LOGS, HARDWARE, SETTINGS = "Dashboard", "Stats", "Reports", "Log Files", "Hardware Monitor", "System Settings"
+HOME, SUMMARY, ANALYSIS, LOGS, HARDWARE, SETTINGS = "Dashboard", "Stats", "Reports", "Log Files", "Hardware Info", "System Settings"
 
 with st.sidebar:
     if os.path.exists(LOGO):
@@ -422,7 +418,6 @@ with st.sidebar:
     st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;'>Directories</p>", unsafe_allow_html=True)
     
     page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS, HARDWARE, SETTINGS], label_visibility="collapsed")
-    # TOGGLE DIHAPUS DARI SINI UNTUK DIPINDAH KE MAIN DASHBOARD
 
 
 # ───────────────────────── Komponen UI Render ─────────────────────────
@@ -449,7 +444,7 @@ def machine_cards(s):
     )
     
     dim_text = "0.0 × 0.0 mm"
-    shape_nm = str(s.get("shape_name", "-"))
+    shape_nm = translate_shape(str(s.get("shape_name", "-")))
     nested = s.get("nested_polys", [])
     
     if nested and len(nested) > 0:
@@ -459,7 +454,7 @@ def machine_cards(s):
         w = max(xs) - min(xs)
         h = max(ys) - min(ys)
         
-        if "lingkaran" in shape_nm.lower():
+        if "circle" in shape_nm.lower() or "lingkaran" in shape_nm.lower():
             diameter = max(w, h)
             dim_text = f"Ø {diameter:.1f} mm"
         else:
@@ -493,12 +488,13 @@ def metric_grid(s):
             curr = 1
             
     qty_text = f"{curr} / {target}" if target > 0 else "0"
+    trans_shape = translate_shape(s.get("shape_name", "-"))
 
     items = [
         card("Target Output", qty_text, "pcs", "Current vs Target", val_color=ACCENT),
         card("Cycle Duration", fmt(s["duration_sec"]), "s", "Execution time", val_color=INK),
         card("Material Waste", fmt(s["waste_pct"]), "%", "Scrap percentage", val_color=BAD),
-        card("Shape Class", s["shape_name"], "", "Detected pattern", val_color=INK),
+        card("Shape Class", trans_shape, "", "Detected pattern", val_color=INK),
     ]
     return f'<div class="grid">{"".join(items)}</div>'
 
@@ -519,7 +515,7 @@ def nest_figure(s, mat_p, mat_l):
     fig.add_trace(go.Scatter(x=[num(s["pos_x"], 0.0)], y=[abs(num(s["pos_y"], 0.0))], mode="markers",
                              marker=dict(color=BAD, size=10), name="Laser tool"))
     fig.update_layout(**plot_layout(
-        height=250, showlegend=False, uirevision="nest", # TINGGI DIPRES JADI 250px
+        height=250, showlegend=False, uirevision="nest", 
         xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
     ))
     return fig
@@ -541,7 +537,7 @@ def layout_card(s):
 
 def chat_messages():
     pings = store.pings_copy()
-    with st.container(height=110, border=False): # TINGGI DIPRES JADI 110px
+    with st.container(height=110, border=False): 
         if not pings:
             st.markdown('<div class="empty" style="min-height:80px">No messages yet.</div>', unsafe_allow_html=True)
         for p in reversed(pings): 
@@ -553,7 +549,7 @@ def chat_messages():
             )
 
 
-# ───────────────────────── Fragments (Pemisah Logic Biar Rapi) ─────────────────────────
+# ───────────────────────── Fragments ─────────────────────────
 @st.fragment(run_every=1 if st.session_state.live_refresh else None)
 def header():
     label, color = link_status()
@@ -632,7 +628,7 @@ def page_summary():
     for e in logs:
         op = e.get("operator", "Unknown")
         sh = e.get("shift", "Shift 1")
-        shp = e.get("bentuk", "Undefined")
+        shp = translate_shape(e.get("bentuk", "Undefined"))
         op_counts[op] = op_counts.get(op, 0) + int(num(e.get("pcs"), 0))
         shift_counts[sh] = shift_counts.get(sh, 0) + 1
         shape_counts[shp] = shape_counts.get(shp, 0) + 1
@@ -749,7 +745,6 @@ def page_analysis():
 
 def page_logs():
     logs = store.logs_copy()
-    # TOMBOL RESET LOGS DIHAPUS DARI SINI
     st.markdown(card("Log Files", f"{len(logs)} records", "", "Newest first"), unsafe_allow_html=True)
 
     if not logs:
@@ -758,13 +753,14 @@ def page_logs():
 
     limit = st.session_state.setdefault("log_limit", PAGE_SIZE)
     for i, entry in enumerate(logs[:limit]):
+        trans_shape = translate_shape(entry.get("bentuk", "-"))
         title = f'📄 {entry.get("waktu", "-")} | Op: {entry.get("operator", "-")} | {entry.get("pcs", 0)} pcs'
         with st.expander(title):
             c_text, c_img = st.columns([6, 4])
             c_text.markdown(
                 f'<span style="color:var(--ink);">**Pieces:** {entry.get("pcs", 0)}</span>  \n'
                 f'<span style="color:var(--ink);">**Material:** {entry.get("ukuran", "-")} mm</span>  \n'
-                f'<span style="color:var(--ink);">**Shape:** {entry.get("bentuk", "-")}</span>  \n'
+                f'<span style="color:var(--ink);">**Shape:** {trans_shape}</span>  \n'
                 f'<span style="color:var(--bad);">**Waste:** {fmt(entry.get("waste"))}%</span>',
                 unsafe_allow_html=True
             )
@@ -806,10 +802,10 @@ def page_logs():
         st.rerun()
 
 
-# ─── HALAMAN BARU: HARDWARE MONITOR ───
+# ─── HALAMAN BARU: HARDWARE INFO ───
 def page_hardware():
     s = store.snapshot()
-    st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">Hardware Monitor</div>', unsafe_allow_html=True)
+    st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">Hardware Info</div>', unsafe_allow_html=True)
     
     conn_status = "CONNECTED" if client.is_connected() else "OFFLINE"
     conn_color = OK if client.is_connected() else BAD
@@ -843,16 +839,17 @@ def page_settings():
     
     logs = store.logs_copy()
     if logs:
-        # Bikin salinan DataFrame biar log aslinya ga rusak
         df_export = pd.DataFrame(logs)
         
-        # HAPUS KOLOM KOORDINAT ALIEN YANG BIKIN RUSAK EXCEL
         if 'shape_poly' in df_export.columns:
             df_export = df_export.drop(columns=['shape_poly'])
         if 'nested_polys' in df_export.columns:
             df_export = df_export.drop(columns=['nested_polys'])
             
-        # GANTI NAMA KOLOM BIAR BAHASA INGGRIS DAN RAPI
+        # Terjemahkan kolom bentuk ke bahasa inggris sebelum di download
+        if 'bentuk' in df_export.columns:
+            df_export['bentuk'] = df_export['bentuk'].apply(translate_shape)
+            
         df_export.rename(columns={
             'waktu': 'Timestamp',
             'operator': 'Operator Name',
@@ -899,7 +896,6 @@ if page == HOME:
         st.markdown('<div class="card" style="padding-bottom:10px; margin-bottom: 12px;">', unsafe_allow_html=True)
         frag_layout_card()
         st.markdown('</div>', unsafe_allow_html=True)
-        # Toggle dipindah ke bawah canvas
         st.toggle("⚡ Enable Live Data Refresh", key="live_refresh")
         
     with col_info:
