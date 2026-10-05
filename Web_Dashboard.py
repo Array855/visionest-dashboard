@@ -9,8 +9,36 @@ import plotly.express as px
 import plotly.graph_objects as go
 from streamlit_autorefresh import st_autorefresh
 
-# Mode 'Light' bergantung pada konfigurasi sistem/browser
+# Mode 'Light' secara bawaan untuk ikon
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide")
+
+# SUNTIKAN CSS UNTUK MEMAKSA TEMA TERANG (LIGHT THEME) 100%
+st.markdown("""
+<style>
+    /* Paksa Latar Belakang Web Jadi Putih/Terang */
+    .stApp {
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+    /* Paksa Teks Utama Jadi Hitam/Gelap */
+    h1, h2, h3, h4, h5, h6, p, div, span, label {
+        color: #0f172a !important;
+    }
+    /* Ganti Warna Kotak Expander dan Metrik Biar Pas Sama Tema Terang */
+    .st-emotion-cache-1y4p8pa {
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+    }
+    /* Warnai Garis Pembatas (Divider) */
+    hr {
+        border-color: #cbd5e1 !important;
+    }
+    /* Teks dalam kotak notifikasi Info/Success/Error tetap terbaca */
+    .stAlert p {
+        color: inherit !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 DB_FILE = "visionest_logs.json"
 
@@ -107,19 +135,9 @@ def start_mqtt():
 mqtt_client_instance = start_mqtt()
 data = shared_data
 
-st.markdown("""
-<style>
-    /* Paksa warna background untuk Light Theme kalau dirasa butuh, tapi Streamlit punya toggle sendiri */
-    div.block-container {
-        padding-top: 1rem;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 col_title, col_logo = st.columns([7, 3])
 with col_title:
-    # Logo disematkan di sebelah kiri teks judul
-    st.markdown("<h1><img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='45' style='vertical-align: bottom; margin-right: 10px;'> VISIONEST Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<h1><img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='45' style='vertical-align: bottom; margin-right: 10px;'> <span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
 with col_logo:
     if os.path.exists("logo_pens_kanan.png"): 
         st.image("logo_pens_kanan.png", use_container_width=True)
@@ -175,16 +193,15 @@ if data["logs"]:
             go.Bar(name='Used (Effective)', x=df['waktu'], y=df['Terpakai'], marker_color='#10b981'),
             go.Bar(name='Fabric Waste (Scrap)', x=df['waktu'], y=df['Waste'], marker_color='#ef4444')
         ])
-        # TEMA TERANG: Hapus 'font=dict(color='white')' biar fontnya otomatis hitam di mode light
-        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        # TEMA TERANG: Font grafik jadi hitam biar kelihatan di bg putih
+        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#0f172a'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_group, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True) 
 
         st.markdown("**2. Production History (Pieces per Cycle)**")
         fig_bar = px.bar(df, x="waktu", y="pcs", color="shift", text="pcs", color_discrete_sequence=px.colors.qualitative.Set2)
-        # TEMA TERANG: Hapus 'font=dict(color='white')'
-        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#0f172a'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_bar, use_container_width=True)
 else:
     st.info("No completed production data (CYCLE_COMPLETE) to display analytical graphs yet.")
@@ -286,9 +303,9 @@ with c_chat:
             st.caption("No messages yet. Try sending a ping to the GUI!")
         for p in data.get("ping_msgs", []):
             if p["sender"] == "WEB":
-                st.markdown(f"<div style='text-align: right; color: #0ea5e9;'><b>[WEB]</b> {p['message']} <small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: right; color: #0ea5e9;'><b>[WEB]</b> {p['message']} <small style='color: #64748b;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
             else:
-                st.markdown(f"<div style='text-align: left; color: #10b981;'><b>[GUI]</b> {p['message']} <small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align: left; color: #10b981;'><b>[GUI]</b> {p['message']} <small style='color: #64748b;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
 
 with c_input:
     st.text_input("Message to GUI Desktop:", key="ping_input_widget", on_change=send_web_ping)
