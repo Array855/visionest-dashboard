@@ -12,27 +12,33 @@ from streamlit_autorefresh import st_autorefresh
 # Mode 'Light' dan Sidebar default kebuka
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide", initial_sidebar_state="expanded")
 
-# SUNTIKAN CSS TERANG
+# SUNTIKAN CSS TERANG (Perbaikan Bug Teks Ngilang & Sidebar)
 st.markdown("""
 <style>
+    /* Paksa background cerah */
     .stApp {
         background-color: #f1f5f9;
         color: #0f172a;
     }
+    /* Paksa Sidebar cerah */
     [data-testid="stSidebar"] {
         background-color: #e2e8f0;
         border-right: 2px solid #cbd5e1;
     }
+    /* PAKSA SEMUA TEKS METRIK & LABEL JADI GELAP BIAR GAK NGILANG */
     [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stRadio p, .stMarkdown p, h1, h2, h3, h4, h5, h6 {
         color: #0f172a !important;
     }
+    /* Warna kotak expander dan kontainer */
     .st-emotion-cache-1y4p8pa {
         background-color: #ffffff;
         border: 1px solid #cbd5e1;
     }
+    /* Garis pemisah */
     hr {
         border-color: #cbd5e1 !important;
     }
+    /* Sembunyikan margin atas biar lebih rapi */
     .block-container {
         padding-top: 2rem !important;
     }
@@ -99,9 +105,6 @@ def start_mqtt():
             else:
                 for key, value in payload.items():
                     if key not in ["logs", "last_log_ts", "ping_msgs"]:
-                        # ---> ANTI BLOKIR: Kalau data poly kosong dari GUI, jangan hapus memori web-nya <---
-                        if key in ["shape_poly", "nested_polys"] and not value:
-                            continue
                         shared_data[key] = value
                 
                 if payload.get("status") == "CYCLE_COMPLETE":
@@ -137,21 +140,36 @@ def start_mqtt():
 mqtt_client_instance = start_mqtt()
 data = shared_data
 
+
+# ==========================================
+# 1. SIDEBAR / NAVBAR KIRI (Sesuai Sketsa)
+# ==========================================
 with st.sidebar:
+    # --- LOGO & NAMA APP ---
     col_log1, col_log2 = st.columns([2, 8])
     with col_log1:
         st.markdown("<img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='50'>", unsafe_allow_html=True)
     with col_log2:
         st.markdown("<h3 style='color: #d4af37; margin:0; padding:0;'>VISIONEST</h3><p style='color: #1e3a8a; margin:0; font-weight:bold;'>by DEMIURGEN</p>", unsafe_allow_html=True)
+    
     st.markdown("---")
+    
+    # --- NAVIGASI UTAMA ---
     page = st.radio("Navigation Menu", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
     
+
+# ==========================================
+# 2. HEADER ATAS (Online, Time, Logo PENS)
+# ==========================================
 c_stat, c_time, c_logo = st.columns([3, 4, 3])
 with c_stat:
     st.markdown("<h4 style='color:#10b981; margin-top:15px;'>📶 ONLINE</h4>", unsafe_allow_html=True)
+
 with c_time:
+    # Waktu Realtime
     waktu_skrg = time.strftime('%d %B %Y - %H:%M:%S')
     st.markdown(f"<h4 style='text-align:center; color:#475569; margin-top:15px;'>{waktu_skrg}</h4>", unsafe_allow_html=True)
+
 with c_logo:
     if os.path.exists("logo_pens_kanan.png"): 
         st.image("logo_pens_kanan.png", use_container_width=True)
@@ -160,7 +178,14 @@ with c_logo:
 
 st.markdown("---")
 
+
+# ==========================================
+# 3. KONTEN BERDASARKAN NAVIGASI
+# ==========================================
+
 if page == "🏠 HOME":
+    
+    # ---> BARIS 1: DEVICE ID, OPERATOR, STATUS <---
     info1, info2, info3 = st.columns(3)
     with info1:
         st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
@@ -179,44 +204,68 @@ if page == "🏠 HOME":
 
     st.markdown("---")
     
+    # ---> BARIS 2: PREVIEW 2D (TOP-DOWN) PENGGANTI 3D YANG BERAT <---
     st.markdown(f"<h4 style='text-align: center;'>👁️ Live Nesting Preview - Material: {data.get('mat_p', 0)} x {data.get('mat_l', 0)} mm</h4>", unsafe_allow_html=True)
+    
     mat_p = data.get('mat_p', 0.0)
     mat_l = data.get('mat_l', 0.0)
     
     if mat_p > 0 and mat_l > 0 and data.get('status') not in ["SYSTEM_READY", "OFFLINE"] and data.get('nested_polys'):
+        
+        # Bikin Figure 2D Flat (Sangat ringan dan jelas)
         fig_nest = go.Figure()
+        
+        # 1. Gambar Kotak Batas Material (Garis Merah)
         fig_nest.add_trace(go.Scatter(
-            x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], 
-            mode='lines', line=dict(color='#ef4444', width=3), hoverinfo='skip'
+            x=[0, mat_p, mat_p, 0, 0], 
+            y=[0, 0, mat_l, mat_l, 0], 
+            mode='lines', 
+            line=dict(color='#ef4444', width=3), 
+            hoverinfo='skip'
         ))
         
+        # 2. Gambar Pola Sarang (Kuning Emas Transparan)
         for idx, poly in enumerate(data['nested_polys']):
             xs = [p[0] for p in poly] + [poly[0][0]]
             ys = [p[1] for p in poly] + [poly[0][1]]
             fig_nest.add_trace(go.Scatter(
                 x=xs, y=ys, fill='toself', mode='lines', 
-                line=dict(color='#eab308', width=1.5), fillcolor='rgba(234, 179, 8, 0.4)', name=f'Pcs {idx+1}'
+                line=dict(color='#eab308', width=1.5), 
+                fillcolor='rgba(234, 179, 8, 0.4)', 
+                name=f'Pcs {idx+1}'
             ))
             
+        # 3. Gambar TITIK LASER MERAH (Posisi CNC Real-time)
         curr_x = data.get('pos_x', 0.0)
         curr_y = data.get('pos_y', 0.0)
         fig_nest.add_trace(go.Scatter(
             x=[curr_x], y=[abs(curr_y)], 
-            mode='markers', marker=dict(color='red', size=12, symbol='circle'), name='Laser Tool'
+            mode='markers', 
+            marker=dict(color='red', size=12, symbol='circle'), 
+            name='Laser Tool'
         ))
         
+        # Atur Layout 2D agar Presisi Skala 1:1
         fig_nest.update_layout(
-            xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), 
-            margin=dict(t=10, b=10, l=10, r=10), height=400, 
-            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False
+            xaxis=dict(visible=False), 
+            yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), 
+            margin=dict(t=10, b=10, l=10, r=10), 
+            height=400, 
+            paper_bgcolor='rgba(0,0,0,0)', 
+            plot_bgcolor='rgba(0,0,0,0)', 
+            showlegend=False
         )
         
+        # Tengahkan grafik biar rapi
         c_kiri, c_tengah, c_kanan = st.columns([1, 4, 1])
         with c_tengah:
             st.plotly_chart(fig_nest, use_container_width=True)
+            
     else:
         st.info("NO PATTERN LOADED. Menunggu komputasi dari GUI / Mesin belum berjalan.")
 
+
+    # ---> BARIS 3: METRIK DATA <---
     st.markdown("---")
     m1, m2, m3, m4, m5 = st.columns(5)
     m1.metric("⏱ Duration", f"{data['duration_sec']} s")
@@ -228,6 +277,8 @@ if page == "🏠 HOME":
     st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
     st.markdown("---")
     
+    
+    # ---> BARIS 4: SERIAL LOG / CHAT <---
     st.markdown("### 📡 Serial Log (Web ↔ GUI)")
     if "ping_input" not in st.session_state:
         st.session_state.ping_input = ""
@@ -256,6 +307,7 @@ if page == "🏠 HOME":
         st.text_input("Type message:", key="ping_input_widget", on_change=send_web_ping, label_visibility="collapsed", placeholder="Tulis pesan...")
         st.button("🚀 Send", type="primary", on_click=send_web_ping, use_container_width=True)
 
+
 elif page == "📈 ANALYSIS":
     st.markdown("### 📈 Executive Analytics")
     if data["logs"]:
@@ -280,6 +332,7 @@ elif page == "📈 ANALYSIS":
         st.plotly_chart(fig_bar, use_container_width=True)
     else:
         st.info("No completed production data (CYCLE_COMPLETE) to display analytical graphs yet.")
+
 
 elif page == "📝 PRODUCTION LOG":
     col_log_1, col_log_2 = st.columns([8, 2])
@@ -311,7 +364,7 @@ elif page == "📝 PRODUCTION LOG":
                     st.write("")
                     
                     if log.get('nested_polys'):
-                        show_layout = st.toggle("👁️️ Show Full Layout Simulation", key=f"tgl_modal_{i}")
+                        show_layout = st.toggle("👁️ Show Full Layout Simulation", key=f"tgl_modal_{i}")
                 
                 with c_img:
                     poly_data = log.get('shape_poly', [])
@@ -345,8 +398,12 @@ elif page == "📝 PRODUCTION LOG":
                         fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#eab308', width=1.5), fillcolor='rgba(234, 179, 8, 0.4)', name=f'Pcs {idx+1}'))
                         
                     fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=10, b=10, l=10, r=10), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+                    
                     st.plotly_chart(fig_nest, use_container_width=True, key=f"full_layout_{i}")
 
+# ==========================================
+# FOOTER & AUTO REFRESH
+# ==========================================
 st.sidebar.markdown("---")
 is_auto_refresh = st.sidebar.toggle("🔄 Auto-Refresh", value=True, help="Disable this to analyze graphs without reloading.")
 
