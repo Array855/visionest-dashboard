@@ -9,33 +9,26 @@ import plotly.express as px
 import plotly.graph_objects as go
 from streamlit_autorefresh import st_autorefresh
 
-# Mode 'Light' secara bawaan untuk ikon
+# Mode 'Light'
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide")
 
-# SUNTIKAN CSS UNTUK MEMAKSA TEMA TERANG (LIGHT THEME) 100%
+# SUNTIKAN CSS TERANG YANG LEBIH AMAN (Tidak Merusak Warna Tombol Bawaan)
 st.markdown("""
 <style>
-    /* Paksa Latar Belakang Web Jadi Putih/Terang */
     .stApp {
         background-color: #f1f5f9;
         color: #0f172a;
     }
-    /* Paksa Teks Utama Jadi Hitam/Gelap */
-    h1, h2, h3, h4, h5, h6, p, div, span, label {
-        color: #0f172a !important;
-    }
-    /* Ganti Warna Kotak Expander dan Metrik Biar Pas Sama Tema Terang */
     .st-emotion-cache-1y4p8pa {
         background-color: #ffffff;
         border: 1px solid #cbd5e1;
     }
-    /* Warnai Garis Pembatas (Divider) */
     hr {
         border-color: #cbd5e1 !important;
     }
-    /* Teks dalam kotak notifikasi Info/Success/Error tetap terbaca */
-    .stAlert p {
-        color: inherit !important;
+    /* Pastikan header dan teks standar berwarna gelap, tapi abaikan button/input */
+    h1, h2, h3, h4, h5, h6, .stMarkdown p {
+        color: #0f172a;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -150,7 +143,7 @@ with col1: st.info(f"**🖥️ Device ID:**\n### {data['device_id']}")
 with col2: st.info(f"**👷 Active Operator:**\n### {data['operator']} | {data['shift']}")
 with col3:
     stat = data['status']
-    if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS", "CYCLE_COMPLETE"]:
+    if stat in ["MACHINE_RUNNING", "CUTTING_IN_PROGRESS", "CYCLE_COMPLETE", "SYSTEM_READY"]:
         st.success(f"**🔄 Status:**\n### {stat}")
     elif stat == "EMERGENCY_STOP_TRIGGERED":
         st.error(f"**🚨 Status:**\n### {stat}")
@@ -193,7 +186,6 @@ if data["logs"]:
             go.Bar(name='Used (Effective)', x=df['waktu'], y=df['Terpakai'], marker_color='#10b981'),
             go.Bar(name='Fabric Waste (Scrap)', x=df['waktu'], y=df['Waste'], marker_color='#ef4444')
         ])
-        # TEMA TERANG: Font grafik jadi hitam biar kelihatan di bg putih
         fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=320, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#0f172a'), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_group, use_container_width=True)
 
@@ -212,7 +204,8 @@ col_log_1, col_log_2 = st.columns([8, 2])
 with col_log_1:
     st.markdown("### 📝 Daily Production Logs Data")
 with col_log_2:
-    if st.button("🗑 Reset Web Data", use_container_width=True):
+    # ---> PERBAIKAN TOMBOL RESET: Memakai type="primary" agar tidak tertelan CSS <---
+    if st.button("🗑 Reset Web Data", type="primary", use_container_width=True):
         data["logs"] = []
         data["last_log_ts"] = None
         save_db([], None)
@@ -309,7 +302,8 @@ with c_chat:
 
 with c_input:
     st.text_input("Message to GUI Desktop:", key="ping_input_widget", on_change=send_web_ping)
-    st.button("🚀 Send Message", on_click=send_web_ping, use_container_width=True)
+    # ---> PERBAIKAN TOMBOL SEND: Memakai type="primary" <---
+    st.button("🚀 Send Message", type="primary", on_click=send_web_ping, use_container_width=True)
 
 st.markdown("---")
 
