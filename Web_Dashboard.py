@@ -44,7 +44,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ───────────────────────── CSS ─────────────────────────
+# ───────────────────────── CSS (DIOPTIMALKAN UKURAN FONT-NYA) ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -69,33 +69,33 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 [data-testid="stSidebar"] div[role="radiogroup"]{gap:4px;}
 [data-testid="stSidebar"] div[role="radiogroup"] label{padding:10px 14px;border-radius:10px;width:100%;}
 [data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child{display:none;}
-[data-testid="stSidebar"] div[role="radiogroup"] label p{font-size:15px;font-weight:700;color:var(--navy);}
+[data-testid="stSidebar"] div[role="radiogroup"] label p{font-size:16px;font-weight:700;color:var(--navy);}
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked){background:#eaf0ff;}
 
-/* Kartu */
+/* Kartu & Typography Baru (Makin Jumbo & Tegas) */
 .card,[class*="st-key-card"]{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;}
-.card-title{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:4px;}
-.card-value{font-size:28px;font-weight:800;color:var(--ink);line-height:1.15;}
-.card-value.sm{font-size:19px;}
-.unit{font-size:14px;font-weight:700;color:var(--muted);margin-left:4px;}
-.card-sub{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px;}
+.card-title{font-size:15px;font-weight:700;color:var(--muted);margin-bottom:6px;} /* Diperbesar dari 13px -> 15px */
+.card-value{font-size:36px;font-weight:800;color:var(--ink);line-height:1.15;}   /* Diperbesar dari 28px -> 36px */
+.card-value.sm{font-size:22px;}                                                   /* Diperbesar dari 19px -> 22px */
+.unit{font-size:17px;font-weight:700;color:var(--muted);margin-left:5px;}         /* Diperbesar dari 14px -> 17px */
+.card-sub{font-size:13.5px;font-weight:600;color:var(--muted);margin-top:4px;}    /* Diperbesar dari 12.5px -> 13.5px */
 .row{display:flex;justify-content:space-between;align-items:baseline;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
 .stack{display:grid;gap:12px;}
-.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:700;background:#eef2ff;color:var(--accent);}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:13px;font-weight:700;background:#eef2ff;color:var(--accent);}
 .bar{height:8px;border-radius:99px;background:#e8edf9;overflow:hidden;margin-top:10px;}
 .bar > span{display:block;height:100%;border-radius:99px;background:var(--ok); transition: width 0.5s ease;}
 .empty{display:flex;align-items:center;justify-content:center;min-height:120px;color:var(--muted);font-weight:700;}
 
-/* Header */
-.brand{font-size:26px;font-weight:800;color:var(--ink);}
+/* Header Title (Makin Besar) */
+.brand{font-size:30px;font-weight:800;color:var(--ink);} /* Diperbesar dari 26px -> 30px */
 .brand .gold{color:var(--gold);}
-.status{text-align:center;font-size:15px;font-weight:700;color:var(--muted);}
+.status{text-align:center;font-size:16px;font-weight:700;color:var(--muted);} /* Diperbesar ke 16px */
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;}
 .sep{display:inline-block;width:1px;height:14px;background:var(--line);margin:0 14px;vertical-align:middle;}
 
-/* Chat */
-.msg{font-size:13.5px;font-weight:600;margin:4px 0;}
+/* Chat Log */
+.msg{font-size:14px;font-weight:600;margin:4px 0;}
 .msg small{color:var(--muted);font-weight:500;}
 .msg.web{text-align:right;color:var(--accent);}
 .msg.gui{text-align:left;color:#059669;}
@@ -422,7 +422,7 @@ def nest_figure(s, mat_p, mat_l):
         fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Piece {i}", hoverinfo="name",
                                  line=dict(color=WARN, width=2), fillcolor="rgba(245,158,11,0.25)"))
         
-        # ---> FITUR BARU: NOMOR POLA DI TENGAH GAMBAR <---
+        # NOMOR POLA DI TENGAH GAMBAR
         if len(xs) > 1:
             avg_x = sum(xs[:-1]) / len(xs[:-1])
             avg_y = sum(ys[:-1]) / len(ys[:-1])
@@ -505,10 +505,10 @@ def chat_card():
         st.markdown('<div class="card-title">Communication log (web ↔ GUI)</div>', unsafe_allow_html=True)
         chat_messages()
         with st.form("ping_form", clear_on_submit=True, border=False): 
-            c_in, c_btn = st.columns([5, 1], vertical_alignment="bottom")
+            c_in, c_btn = st.columns([8, 1], vertical_alignment="bottom")
             text = c_in.text_input("Message", placeholder="Type a message to the cutting GUI",
                                    label_visibility="collapsed")
-            sent = c_btn.form_submit_button("Send", type="primary")
+            sent = c_btn.form_submit_button("Send", type="primary", use_container_width=True)
         if sent and text.strip():
             send_ping(text.strip())
 
@@ -608,7 +608,6 @@ def page_logs():
                     xs, ys = outline(poly)
                     fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx}", hoverinfo="name", line=dict(color=WARN, width=1.5), fillcolor="rgba(245,158,11,0.25)"))
                     
-                    # Tambahkan nomor juga di histori log
                     if len(xs) > 1:
                         avg_x = sum(xs[:-1]) / len(xs[:-1])
                         avg_y = sum(ys[:-1]) / len(ys[:-1])
