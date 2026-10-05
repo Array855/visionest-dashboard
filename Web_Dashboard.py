@@ -3,6 +3,7 @@
 import html
 import json
 import logging
+import math
 import os
 import random
 import threading
@@ -110,7 +111,7 @@ st.markdown(CSS, unsafe_allow_html=True)
 
 # ───────────────────────── Helper ─────────────────────────
 def esc(value):
-    """Escape semua teks dari MQTT sebelum masuk HTML."""
+    """Escape semua teks dari MQTT sebelum masuk HTML (broker publik = input tidak tepercaya)."""
     return html.escape(str(value))
 
 def num(value, default=None):
@@ -355,13 +356,12 @@ def machine_cards(s):
         f'<div class="bar"><span style="width:{pct:.0f}%"></span></div></div>'
     )
     
-    # ─── FITUR BARU: Hitung Dimensi Pola Secara Otomatis dari Bounding Box ───
     dim_text = "0.0 × 0.0 mm"
     shape_nm = str(s.get("shape_name", "-"))
     nested = s.get("nested_polys", [])
     
     if nested and len(nested) > 0:
-        poly_mm = nested[0] # Ambil pola 1 pcs yang sudah dikalibrasi jadi ukuran riil mm
+        poly_mm = nested[0] 
         xs = [float(p[0]) for p in poly_mm]
         ys = [float(p[1]) for p in poly_mm]
         w = max(xs) - min(xs)
@@ -371,7 +371,6 @@ def machine_cards(s):
             diameter = max(w, h)
             dim_text = f"Ø {diameter:.1f} mm"
         else:
-            # Cari ukuran Bounding box buat persegi/abstrak/tak beraturan (P × L)
             panjang = max(w, h)
             lebar = min(w, h)
             dim_text = f"{panjang:.1f} × {lebar:.1f} mm"
@@ -389,8 +388,24 @@ def machine_cards(s):
     return f'<div class="stack">{machine}{progress}{pattern_size}</div>'
 
 def metric_grid(s):
+    # Logika Cerdas Menghitung Current Item Progress
+    target = int(num(s.get("target_qty"), 0))
+    pct = float(num(s.get("progress_pct"), 0.0))
+    
+    if pct >= 100 or str(s.get("status")) == "CYCLE_COMPLETE":
+        curr = target
+    elif pct <= 0:
+        curr = 0
+    else:
+        # Estimasi barang ke-berapa yang sedang dikerjakan berdasarkan persenan
+        curr = math.ceil((pct / 100.0) * target)
+        if curr == 0 and target > 0:
+            curr = 1
+            
+    qty_text = f"{curr} / {target}" if target > 0 else "0"
+
     items = [
-        card("Target output", fmt(s["target_qty"], 0), "pcs", "Total items in layout"),
+        card("Target output", qty_text, "pcs", "Current / Total items"),
         card("Cycle duration", fmt(s["duration_sec"]), "s", "Current execution time"),
         card("Material waste", fmt(s["waste_pct"]), "%", "Estimated scrap fabric"),
         card("Shape class", s["shape_name"], "", "Detected pattern"),
@@ -401,10 +416,23 @@ def nest_figure(s, mat_p, mat_l):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode="lines",
                              line=dict(color=BAD, width=2), hoverinfo="skip"))
+                             
     for i, poly in enumerate(s["nested_polys"], 1):
         xs, ys = outline(poly)
         fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Piece {i}", hoverinfo="name",
                                  line=dict(color=WARN, width=2), fillcolor="rgba(245,158,11,0.25)"))
+        
+        # ---> FITUR BARU: NOMOR POLA DI TENGAH GAMBAR <---
+        if len(xs) > 1:
+            avg_x = sum(xs[:-1]) / len(xs[:-1])
+            avg_y = sum(ys[:-1]) / len(ys[:-1])
+            fig.add_annotation(
+                x=avg_x, y=avg_y,
+                text=f"<b>{i}</b>",
+                showarrow=False,
+                font=dict(color=INK, size=15)
+            )
+                                 
     fig.add_trace(go.Scatter(x=[num(s["pos_x"], 0.0)], y=[abs(num(s["pos_y"], 0.0))], mode="markers",
                              marker=dict(color=BAD, size=12), name="Laser tool"))
     fig.update_layout(**plot_layout(
@@ -477,10 +505,10 @@ def chat_card():
         st.markdown('<div class="card-title">Communication log (web ↔ GUI)</div>', unsafe_allow_html=True)
         chat_messages()
         with st.form("ping_form", clear_on_submit=True, border=False): 
-            c_in, c_btn = st.columns([8, 1], vertical_alignment="bottom")
+            c_in, c_btn = st.columns([5, 1], vertical_alignment="bottom")
             text = c_in.text_input("Message", placeholder="Type a message to the cutting GUI",
                                    label_visibility="collapsed")
-            sent = c_btn.form_submit_button("Send", type="primary", use_container_width=True)
+            sent = c_btn.form_submit_button("Send", type="primary")
         if sent and text.strip():
             send_ping(text.strip())
 
@@ -575,10 +603,21 @@ def page_logs():
                 fig_nest.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode='lines', line=dict(color=BAD, width=2), hoverinfo='skip'))
                 
             polys = entry.get("nested_polys") or []
-            for idx, poly in enumerate(polys):
+            for idx, poly in enumerate(polys, 1):
                 try:
                     xs, ys = outline(poly)
-                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx+1}", hoverinfo="name", line=dict(color=WARN, width=1.5), fillcolor="rgba(245,158,11,0.25)"))
+                    fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Pcs {idx}", hoverinfo="name", line=dict(color=WARN, width=1.5), fillcolor="rgba(245,158,11,0.25)"))
+                    
+                    # Tambahkan nomor juga di histori log
+                    if len(xs) > 1:
+                        avg_x = sum(xs[:-1]) / len(xs[:-1])
+                        avg_y = sum(ys[:-1]) / len(ys[:-1])
+                        fig_nest.add_annotation(
+                            x=avg_x, y=avg_y,
+                            text=f"<b>{idx}</b>",
+                            showarrow=False,
+                            font=dict(color=INK, size=12)
+                        )
                 except (TypeError, ValueError, IndexError):
                     continue
                     
