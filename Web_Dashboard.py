@@ -31,7 +31,7 @@ html, body, [class*="css"] {
 
 /* Hilangkan padding default Streamlit yang mengganggu */
 .block-container {
-    padding-top: 1rem !important;
+    padding-top: 1.5rem !important;
     padding-left: 2rem !important;
     padding-right: 2rem !important;
     max-width: 100% !important;
@@ -88,7 +88,7 @@ html, body, [class*="css"] {
     margin-top: 4px;
 }
 
-/* Tombol Navigasi Radio Streamlit diakali biar mirip menu aplikasi */
+/* Tombol Navigasi Radio Streamlit */
 div.row-widget.stRadio > div {
     background: transparent;
 }
@@ -104,12 +104,14 @@ div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
     display: none;
 }
 
-/* Paksa teks jadi hitam pekat/navy kalau masih tertelan CSS */
+/* Paksa teks jadi hitam pekat/navy */
 [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
     color: #0f172a !important;
 }
-hr {
-    border-color: #cbd5e1 !important;
+
+/* Hilangkan garis tebal hitam bawaan topbar Streamlit Cloud */
+header[data-testid="stHeader"] {
+    background: rgba(244, 247, 254, 0.0);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -211,40 +213,41 @@ mqtt_client = start_mqtt()
 
 
 # ==========================================
-# 1. SIDEBAR (Putih Bersih)
+# 1. SIDEBAR (Dikembalikan Pake URL Biar Gak Ilang)
 # ==========================================
 with st.sidebar:
     st.markdown("<br>", unsafe_allow_html=True)
     col_log1, col_log2 = st.columns([3, 7])
     with col_log1:
-        if os.path.exists("visionest_logo.png"):
-            st.image("visionest_logo.png", use_container_width=True)
+        # ---> PAKAI URL URL GITHUB LAGI BIAR PASTI MUNCUL <---
+        st.markdown("<img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='55' style='margin-left: 10px;'>", unsafe_allow_html=True)
     with col_log2:
         st.markdown("<h3 style='color: #d4af37; margin:0; padding:0; font-size:18px;'>VISIONEST</h3><p style='color: #1e3a8a; margin:0; font-weight:bold; font-size:12px;'>by DEMIURGEN</p>", unsafe_allow_html=True)
     
-    st.markdown("---")
+    st.markdown("<br>", unsafe_allow_html=True)
     page = st.radio("Navigation Menu", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
     
 
 # ==========================================
-# 2. HEADER ATAS (Satu Baris Saja)
+# 2. HEADER ATAS (Rapi & Tanpa Garis-Garis Aneh)
 # ==========================================
 waktu_skrg = time.strftime('%d %B %Y - %H:%M:%S')
 
 col_kiri, col_tengah, col_kanan = st.columns([4, 4, 3])
 with col_kiri:
-    st.markdown("<h1 style='margin-top:0px;'><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='margin-top:0px; font-weight:800;'><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
 
 with col_tengah:
-    st.markdown(f"<h4 style='color:#10b981; margin-top:15px; text-align:center;'>📶 ONLINE &nbsp;&nbsp;|&nbsp;&nbsp; <span style='color:#475569;'>{waktu_skrg}</span></h4>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='color:#10b981; margin-top:20px; text-align:center; font-weight:800;'>📶 ONLINE &nbsp;&nbsp;<span style='color:#cbd5e1;'>|</span>&nbsp;&nbsp; <span style='color:#475569; font-weight:600;'>{waktu_skrg}</span></h4>", unsafe_allow_html=True)
 
 with col_kanan:
     if os.path.exists("logo_pens_kanan.png"): 
         st.image("logo_pens_kanan.png", use_container_width=True)
     else:
-        st.markdown("<h4 style='text-align:right; color:#1e3a8a; margin-top:15px;'>[LOGO PENS]</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='text-align:right; color:#1e3a8a; margin-top:20px;'>[LOGO PENS & EFORTECH]</h4>", unsafe_allow_html=True)
 
-st.markdown("---")
+# ---> Garis pembatas dihapus biar UI keliatan lebih plong <---
+st.markdown("<br>", unsafe_allow_html=True)
 
 
 # ==========================================
@@ -271,17 +274,13 @@ if page == "🏠 HOME":
 </div>
         """, unsafe_allow_html=True)
         
-        # ---> FIX GARIS HITAM DIHILANGKAN: Menggunakan Custom HTML Progress Bar yang rapi <---
+        # ---> FIX UTAMA: PROGRESS BAR DIHILANGKAN TOTAL 100% (Sisa Angka Aja) <---
         st.markdown(f"""
 <div class="nexus-card">
     <div class="nexus-card-title">Cutting Progress</div>
     <div class="nexus-card-value" style="color: #05cd99;">{data['progress_pct']}<span style="font-size:20px;">%</span></div>
-    <div style="width: 100%; background-color: #e2e8f0; border-radius: 10px; height: 8px; margin-top: 15px;">
-        <div style="width: {data['progress_pct']}%; background-color: #05cd99; height: 8px; border-radius: 10px; transition: width 0.5s ease;"></div>
-    </div>
 </div>
         """, unsafe_allow_html=True)
-        # st.progress SUDAH DIHAPUS ❌
         
     with col_kiri:
         # Card 2D Preview Nesting (Top-Down Flat)
@@ -429,7 +428,8 @@ elif page == "📝 PRODUCTION LOG":
 # ==========================================
 # AUTO REFRESH FOOTER
 # ==========================================
-st.sidebar.markdown("---")
-is_auto_refresh = st.sidebar.toggle("🔄 Live Auto-Refresh", value=True)
+with st.sidebar:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    is_auto_refresh = st.toggle("🔄 Live Auto-Refresh", value=True)
 if is_auto_refresh:
     st_autorefresh(interval=2000, limit=None, key="auto_refresh")
