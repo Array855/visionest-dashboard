@@ -8,12 +8,13 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from streamlit_autorefresh import st_autorefresh
+from datetime import datetime, timedelta
 
 # Setting Page
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
-# SUNTIKAN CSS "SYNAPSE" ENTERPRISE THEME (High Contrast)
+# SUNTIKAN CSS "ANTI DARK-MODE" & COMPACT
 # ==========================================
 st.markdown("""
 <style>
@@ -24,95 +25,98 @@ html, body, [class*="css"] {
     font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
-/* Background Utama Abu-Abu Sangat Muda */
-.stApp {
-    background-color: #f4f7fe;
+/* PAKSA BACKGROUND TERANG ANTI DARK MODE */
+.stApp, [data-testid="stAppViewContainer"], .main {
+    background-color: #f4f7fe !important;
 }
 
-/* Hilangkan padding default Streamlit yang mengganggu */
+/* Hilangkan padding default Streamlit biar muat 1 layar penuh */
 .block-container {
-    padding-top: 1.5rem !important;
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+    padding-top: 1rem !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    padding-bottom: 0rem !important;
     max-width: 100% !important;
 }
 
-/* Sidebar Putih Bersih */
+/* Sidebar Putih Bersih Anti Dark Mode */
 [data-testid="stSidebar"] {
-    background-color: #ffffff;
-    border-right: none;
-    box-shadow: 2px 0px 20px rgba(0, 0, 0, 0.03);
+    background-color: #ffffff !important;
+    border-right: none !important;
+    box-shadow: 2px 0px 20px rgba(0, 0, 0, 0.03) !important;
 }
 
-/* CUSTOM ENTERPRISE CARD */
+/* CUSTOM ENTERPRISE CARD (Di-press Biar Compact) */
 .nexus-card {
-    background-color: #ffffff;
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: 0px 10px 30px rgba(17, 38, 146, 0.05);
-    margin-bottom: 20px;
+    background-color: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+    box-shadow: 0px 8px 24px rgba(17, 38, 146, 0.05) !important;
+    margin-bottom: 12px !important;
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-/* Header Card (Warna Ditebalkan jadi #475569) */
+/* Teks dan Label Anti Tembus Dark Mode */
 .nexus-card-title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 800;
-    color: #475569;
+    color: #475569 !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
-/* Nilai Utama Metrik */
 .nexus-card-value {
-    font-size: 38px;
+    font-size: 32px;
     font-weight: 800;
-    color: #1b254b;
+    color: #1b254b !important;
     line-height: 1.2;
 }
 
 .nexus-card-value-small {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 800;
-    color: #1b254b;
+    color: #1b254b !important;
     line-height: 1.2;
 }
 
-/* Sub-teks (Warna Ditebalkan jadi #475569) */
 .nexus-card-sub {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    color: #475569;
-    margin-top: 4px;
+    color: #475569 !important;
+    margin-top: 2px;
 }
 
-/* Tombol Navigasi Radio Streamlit di Sidebar (Warna Navy Blue) */
+/* Navigasi Sidebar */
 div.row-widget.stRadio > div {
     background: transparent;
 }
 div.row-widget.stRadio > div label {
     background-color: transparent !important;
     border: none !important;
-    padding: 10px 15px !important;
+    padding: 8px 12px !important;
     font-weight: 800 !important;
     color: #1e3a8a !important;
-    font-size: 15px !important;
+    font-size: 14px !important;
 }
 div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
     display: none;
 }
 
-/* Paksa teks metrik, toggle label, jadi hitam pekat/navy */
-[data-testid="stWidgetLabel"] p, [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stMarkdown p, h1, h2, h3, h4, h5, h6 {
+/* Paksa Teks Streamlit Jadi Gelap */
+[data-testid="stWidgetLabel"] p, .stMarkdown p, h1, h2, h3, h4, h5, h6 {
     color: #0f172a !important;
 }
 
-/* Hilangkan garis tebal hitam bawaan topbar Streamlit Cloud */
+/* Header atas Streamlit disembunyikan */
 header[data-testid="stHeader"] {
-    background: rgba(244, 247, 254, 0.0);
+    background: rgba(244, 247, 254, 0.0) !important;
+}
+hr {
+    border-color: #cbd5e1 !important;
+    margin: 8px 0 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -214,77 +218,81 @@ mqtt_client = start_mqtt()
 
 
 # ==========================================
-# 1. SIDEBAR (Bersih Tanpa Gambar Rusak)
+# 1. SIDEBAR
 # ==========================================
 with st.sidebar:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    
-    # Hanya Text Saja, Gambar Pecah Dihapus
-    st.markdown("<h3 style='color: #d4af37; margin:0; padding:0; font-size:24px; text-align:center;'>VISIONEST</h3><p style='color: #1e3a8a; margin:0; font-weight:800; font-size:14px; text-align:center;'>by DEMIURGEN</p>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    col_log1, col_log2 = st.columns([3, 7])
+    with col_log1:
+        st.markdown("<img src='https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png' width='50' style='margin-left: 5px;'>", unsafe_allow_html=True)
+    with col_log2:
+        st.markdown("<h3 style='color: #d4af37 !important; margin:0; padding:0; font-size:16px;'>VISIONEST</h3><p style='color: #1e3a8a !important; margin:0; font-weight:800; font-size:11px;'>by DEMIURGEN</p>", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #475569; font-weight: 800; font-size: 13px; margin-left: 15px; margin-bottom: 5px; text-transform: uppercase;'>Main Menu</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #475569 !important; font-weight: 800; font-size: 11px; margin-left: 15px; margin-bottom: 0px; text-transform: uppercase;'>MAIN MENU</p>", unsafe_allow_html=True)
     
     page = st.radio("", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
     
 
 # ==========================================
-# 2. HEADER ATAS (Satu Baris Saja)
+# 2. HEADER ATAS (Waktu Realtime & Logo)
 # ==========================================
-waktu_skrg = time.strftime('%d %B %Y - %H:%M:%S')
+# Ambil waktu UTC lalu konversi Manual ke WIB (UTC+7) Biar Realtime Akurat
+waktu_skrg = (datetime.utcnow() + timedelta(hours=7)).strftime('%d %B %Y - %H:%M:%S')
 
-col_kiri, col_tengah, col_kanan = st.columns([4, 4, 3])
+# Logo Wi-Fi berbasis SVG (Tajam dan Profesional)
+wifi_svg = """<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-bottom: 4px; margin-right: 4px;"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>"""
+
+# Proporsi kolom dirubah biar tulisan waktu luas & nggak patah ke bawah
+col_kiri, col_tengah, col_kanan = st.columns([3, 5, 2.5])
 with col_kiri:
-    st.markdown("<h1 style='margin-top:0px; font-weight:800;'><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='margin-top:0px; font-weight:800; font-size:26px; color:#0f172a !important;'><span style='color: #d4af37;'>VISIONEST</span> Dashboard</h1>", unsafe_allow_html=True)
 
 with col_tengah:
-    st.markdown(f"<h4 style='color:#10b981; margin-top:20px; text-align:center; font-weight:800;'>📶 ONLINE &nbsp;&nbsp;<span style='color:#cbd5e1;'>|</span>&nbsp;&nbsp; <span style='color:#475569; font-weight:700;'>{waktu_skrg}</span></h4>", unsafe_allow_html=True)
+    st.markdown(f"<h5 style='margin-top:8px; text-align:center; font-weight:800; font-size:16px;'>{wifi_svg}<span style='color:#10b981;'>ONLINE</span> &nbsp;&nbsp;<span style='color:#cbd5e1;'>|</span>&nbsp;&nbsp; <span style='color:#475569 !important; font-weight:700;'>{waktu_skrg}</span></h5>", unsafe_allow_html=True)
 
 with col_kanan:
     if os.path.exists("logo_pens_kanan.png"): 
         st.image("logo_pens_kanan.png", use_container_width=True)
     else:
-        st.markdown("<h4 style='text-align:right; color:#1e3a8a; margin-top:20px; font-weight:800;'>[LOGO PENS & EFORTECH]</h4>", unsafe_allow_html=True)
+        st.markdown("<h5 style='text-align:right; color:#1e3a8a !important; margin-top:10px; font-weight:800;'>[LOGO PENS & EFORTECH]</h5>", unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<div style='margin-bottom:10px;'></div>", unsafe_allow_html=True)
 
 
 # ==========================================
-# 3. KONTEN HALAMAN (Tetap Elegan & High Contrast)
+# 3. KONTEN HALAMAN (Compact Layout 100%)
 # ==========================================
 if page == "🏠 HOME":
     
-    # BARIS 1: PREVIEW (Kiri Besar) + DEVICE INFO (Kanan Kecil)
+    # BARIS 1: PREVIEW (Kiri) + INFO (Kanan)
     col_kiri, col_kanan = st.columns([7, 3])
     
     with col_kanan:
-        # Card Device ID & Operator 
         st.markdown(f"""
 <div class="nexus-card">
     <div class="nexus-card-title">Machine Identity</div>
-    <div class="nexus-card-value-small" style="margin-bottom: 15px;">{data['device_id']}</div>
+    <div class="nexus-card-value-small" style="margin-bottom: 10px;">{data['device_id']}</div>
     <div class="nexus-card-title">Active Operator</div>
     <div class="nexus-card-value-small">{data['operator']}</div>
     <div class="nexus-card-sub">Shift: {data['shift']}</div>
-    <div style="margin-top: 20px;">
+    <div style="margin-top: 15px;">
         <div class="nexus-card-title">Machine Status</div>
-        <div class="nexus-card-value-small" style="color: #4318ff; font-size: 16px;">{str(data['status']).replace('_', ' ')}</div>
+        <div class="nexus-card-value-small" style="color: #4318ff !important; font-size: 15px;">{str(data['status']).replace('_', ' ')}</div>
     </div>
 </div>
         """, unsafe_allow_html=True)
         
-        # Card Progress (Tanpa Progress Bar)
         st.markdown(f"""
-<div class="nexus-card">
+<div class="nexus-card" style="margin-bottom:0;">
     <div class="nexus-card-title">Cutting Progress</div>
-    <div class="nexus-card-value" style="color: #05cd99;">{data['progress_pct']}<span style="font-size:20px;">%</span></div>
+    <div class="nexus-card-value" style="color: #05cd99 !important;">{data['progress_pct']}<span style="font-size:18px;">%</span></div>
 </div>
         """, unsafe_allow_html=True)
         
     with col_kiri:
-        # Card 2D Preview Nesting (Top-Down Flat)
         st.markdown(f"""
-<div class="nexus-card" style="padding-bottom: 0px;">
+<div class="nexus-card" style="padding-bottom: 0px; margin-bottom:0;">
     <div style="display: flex; justify-content: space-between;">
         <div class="nexus-card-title">Live Production Layout</div>
         <div class="nexus-card-sub" style="margin-top:0;">{data.get('mat_p', 0)} x {data.get('mat_l', 0)} mm</div>
@@ -306,22 +314,22 @@ if page == "🏠 HOME":
                 fig_nest.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#ffb547', width=2), fillcolor='rgba(255, 181, 71, 0.3)', name=f'Pcs {idx+1}'))
                 
             # Laser Merah
-            fig_nest.add_trace(go.Scatter(x=[data.get('pos_x', 0.0)], y=[abs(data.get('pos_y', 0.0))], mode='markers', marker=dict(color='#ff5b5b', size=14, symbol='circle'), name='Laser Tool'))
+            fig_nest.add_trace(go.Scatter(x=[data.get('pos_x', 0.0)], y=[abs(data.get('pos_y', 0.0))], mode='markers', marker=dict(color='#ff5b5b', size=12, symbol='circle'), name='Laser Tool'))
             
-            fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=10, b=10, l=10, r=10), height=340, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
+            # ---> TINGGI KANVAS DIPRESS JADI 260px BIAR GAK SCROLL <---
+            fig_nest.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=5, b=5, l=5, r=5), height=260, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
             st.plotly_chart(fig_nest, use_container_width=True)
         else:
-            # Warna Ditebalkan
-            st.markdown("<div style='height: 340px; display:flex; align-items:center; justify-content:center; color:#475569; font-weight:800;'>NO PATTERN LOADED</div>", unsafe_allow_html=True)
+            st.markdown("<div style='height: 260px; display:flex; align-items:center; justify-content:center; color:#475569 !important; font-weight:800;'>NO PATTERN LOADED</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # BARIS 2: METRIK BAWAH (Berjejer 4 Kolom)
+    # BARIS 2: METRIK BAWAH 
     st.markdown("""
-<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 12px; margin-bottom: 12px;">
     """, unsafe_allow_html=True)
     
     metrics_data = [
-        ("TARGET OUTPUT", f"{data['target_qty']}", "Pieces", "Total items layout"),
+        ("TARGET OUTPUT", f"{data['target_qty']}", "Pcs", "Total items layout"),
         ("CYCLE DURATION", f"{data['duration_sec']}", "Sec", "Current execution time"),
         ("MATERIAL WASTE", f"{data['waste_pct']}", "%", "Estimated scrap fabric"),
         ("SHAPE CLASS", f"{data['shape_name']}", "", "Detected pattern")
@@ -335,7 +343,7 @@ if page == "🏠 HOME":
     <div class="nexus-card-title">{metrics_data[i][0]}</div>
     <div style="display:flex; align-items:baseline; gap:5px;">
         <div class="nexus-card-value">{metrics_data[i][1]}</div>
-        <div style="font-size: 16px; font-weight:800; color:#475569;">{metrics_data[i][2]}</div>
+        <div style="font-size: 14px; font-weight:800; color:#475569 !important;">{metrics_data[i][2]}</div>
     </div>
     <div class="nexus-card-sub">{metrics_data[i][3]}</div>
 </div>
@@ -343,7 +351,7 @@ if page == "🏠 HOME":
 
     # BARIS 3: SERIAL LOG CHAT
     st.markdown("""
-<div class="nexus-card" style="margin-top: 20px;">
+<div class="nexus-card" style="margin-bottom: 0px;">
     <div class="nexus-card-title">Communication Log (Web ↔ GUI)</div>
 </div>
     """, unsafe_allow_html=True)
@@ -361,19 +369,21 @@ if page == "🏠 HOME":
 
     c_chat, c_input = st.columns([8, 2])
     with c_chat:
-        chat_box = st.container(height=180)
+        # ---> TINGGI CHAT BOX DIPRESS JADI 120px <---
+        chat_box = st.container(height=120)
         with chat_box:
             if not data.get("ping_msgs"):
-                st.markdown("<p style='color:#475569; font-weight:700;'>No messages yet.</p>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#475569 !important; font-weight:700;'>No messages yet.</p>", unsafe_allow_html=True)
             for p in data.get("ping_msgs", []):
                 if p["sender"] == "WEB":
-                    st.markdown(f"<div style='text-align: right; color: #4318ff; font-weight:800; font-size:15px;'>[WEB] {p['message']} <br><small style='color: #475569;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='text-align: right; color: #4318ff !important; font-weight:800; font-size:14px;'>[WEB] {p['message']} <small style='color: #475569 !important;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
                 else:
-                    st.markdown(f"<div style='text-align: left; color: #05cd99; font-weight:800; font-size:15px;'>[GUI] {p['message']} <br><small style='color: #475569;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='text-align: left; color: #05cd99 !important; font-weight:800; font-size:14px;'>[GUI] {p['message']} <small style='color: #475569 !important;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
 
     with c_input:
         st.text_input("Msg:", key="ping_input_widget", on_change=send_web_ping, label_visibility="collapsed", placeholder="Type message...")
         st.button("🚀 Send Ping", type="primary", on_click=send_web_ping, use_container_width=True)
+
 
 elif page == "📈 ANALYSIS":
     st.markdown("""<div class="nexus-card"><div class="nexus-card-value-small">Material Usage Trends</div></div>""", unsafe_allow_html=True)
@@ -386,15 +396,15 @@ elif page == "📈 ANALYSIS":
             go.Bar(name='Used (Effective)', x=df['waktu'], y=df['Terpakai'], marker_color='#05cd99'),
             go.Bar(name='Fabric Waste (Scrap)', x=df['waktu'], y=df['Waste'], marker_color='#ff5b5b')
         ])
-        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#1b254b', weight=700), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        fig_group.update_layout(barmode='group', bargroupgap=0.1, margin=dict(t=20, b=20, l=20, r=20), height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#1b254b', weight=700), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_group, use_container_width=True)
 
         st.markdown("""<div class="nexus-card"><div class="nexus-card-value-small">Production History (Qty)</div></div>""", unsafe_allow_html=True)
         fig_bar = px.bar(df, x="waktu", y="pcs", color="shift", text="pcs", color_discrete_sequence=['#4318ff', '#39b8ff'])
-        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=350, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#1b254b', weight=700), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
+        fig_bar.update_layout(margin=dict(t=20, b=20, l=20, r=20), height=300, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#1b254b', weight=700), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
         st.plotly_chart(fig_bar, use_container_width=True)
     else:
-        st.markdown("<p style='color:#475569; font-weight:700;'>No data available for analytics yet.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#475569 !important; font-weight:700;'>No data available for analytics yet.</p>", unsafe_allow_html=True)
 
 elif page == "📝 PRODUCTION LOG":
     c_title, c_btn = st.columns([8, 2])
@@ -408,7 +418,7 @@ elif page == "📝 PRODUCTION LOG":
             st.rerun()
 
     if not data["logs"]:
-        st.markdown("<p style='color:#475569; font-weight:700;'>No cutting history yet.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#475569 !important; font-weight:700;'>No cutting history yet.</p>", unsafe_allow_html=True)
     else:
         for i, log in enumerate(data["logs"]):
             with st.expander(f"✅ Finished at {log['waktu']} (Op: {log['operator']})"):
@@ -424,6 +434,7 @@ elif page == "📝 PRODUCTION LOG":
                         fig_hist.add_trace(go.Scatter(x=xs, y=ys, fill='toself', mode='lines', line=dict(color='#4318ff', width=3), fillcolor='rgba(67, 24, 255, 0.2)'))
                         fig_hist.update_layout(xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1), margin=dict(t=0, b=0, l=0, r=0), height=100, paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', showlegend=False)
                         st.plotly_chart(fig_hist, use_container_width=True, key=f"hist_{i}")
+
 
 # ==========================================
 # AUTO REFRESH FOOTER
