@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide", initial_sidebar_state="expanded")
 
 # ==========================================
-# SUNTIKAN CSS "ANTI DARK-MODE" & COMPACT
+# SUNTIKAN CSS "ANTI DARK-MODE" & HIDE MANAGE APP
 # ==========================================
 st.markdown("""
 <style>
@@ -30,12 +30,12 @@ html, body, [class*="css"] {
     background-color: #f4f7fe !important;
 }
 
-/* Hilangkan padding default Streamlit biar muat 1 layar penuh */
+/* Padding diatur: DITINGGIKAN BAWAHNYA BIAR GAK MENTOK KE EDGE LAYAR */
 .block-container {
     padding-top: 1rem !important;
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
-    padding-bottom: 0rem !important;
+    padding-bottom: 6rem !important; /* <--- INI BIAR LAYOUT NAIK KE ATAS */
     max-width: 100% !important;
 }
 
@@ -46,7 +46,7 @@ html, body, [class*="css"] {
     box-shadow: 2px 0px 20px rgba(0, 0, 0, 0.03) !important;
 }
 
-/* CUSTOM ENTERPRISE CARD (Di-press Biar Compact) */
+/* CUSTOM ENTERPRISE CARD */
 .nexus-card {
     background-color: #ffffff !important;
     border-radius: 16px !important;
@@ -58,10 +58,10 @@ html, body, [class*="css"] {
     flex-direction: column;
 }
 
-/* Teks dan Label Anti Tembus Dark Mode */
+/* Teks dan Label Anti Tembus Dark Mode (Warna dipaksa !important) */
 .nexus-card-title {
-    font-size: 13px;
-    font-weight: 800;
+    font-size: 13px !important;
+    font-weight: 800 !important;
     color: #475569 !important;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -69,51 +69,75 @@ html, body, [class*="css"] {
 }
 
 .nexus-card-value {
-    font-size: 32px;
-    font-weight: 800;
+    font-size: 32px !important;
+    font-weight: 800 !important;
     color: #1b254b !important;
     line-height: 1.2;
 }
 
 .nexus-card-value-small {
-    font-size: 20px;
-    font-weight: 800;
+    font-size: 20px !important;
+    font-weight: 800 !important;
     color: #1b254b !important;
     line-height: 1.2;
 }
 
 .nexus-card-sub {
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 13px !important;
+    font-weight: 700 !important;
     color: #475569 !important;
     margin-top: 2px;
 }
 
-/* Navigasi Sidebar */
+/* ========================================= */
+/* NAVIGASI SIDEBAR - FONT DIGEDEIN (17px)   */
+/* ========================================= */
 div.row-widget.stRadio > div {
     background: transparent;
 }
 div.row-widget.stRadio > div label {
     background-color: transparent !important;
     border: none !important;
-    padding: 8px 12px !important;
+    padding: 12px 15px !important; 
     font-weight: 800 !important;
-    color: #1e3a8a !important;
-    font-size: 14px !important;
+    color: #1e3a8a !important; 
+    font-size: 17px !important; /* <--- FONT DIGEDEIN */
 }
 div.row-widget.stRadio > div label[data-baseweb="radio"] > div:first-child {
     display: none;
 }
 
-/* Paksa Teks Streamlit Jadi Gelap */
-[data-testid="stWidgetLabel"] p, .stMarkdown p, h1, h2, h3, h4, h5, h6 {
+/* ========================================= */
+/* JURUS ANTI DARK-MODE TEXT INVISIBILITY    */
+/* ========================================= */
+/* Paksa warna label Streamlit jadi biru navy pekat */
+[data-testid="stWidgetLabel"] p {
+    color: #1e3a8a !important; 
+    font-weight: 800 !important;
+    font-size: 14px !important;
+}
+/* Paksa warna teks biasa, heading, & markdown jadi Slate-900 (Hitam Pekat) */
+.stMarkdown p, h1, h2, h3, h4, h5, h6 {
+    color: #0f172a !important; 
+}
+/* Paksa warna input box & teks ketikan di chat box */
+.stTextInput input {
+    background-color: #ffffff !important;
     color: #0f172a !important;
+    border: 2px solid #cbd5e1 !important;
+    font-weight: 600 !important;
 }
 
-/* Header atas Streamlit disembunyikan */
-header[data-testid="stHeader"] {
-    background: rgba(244, 247, 254, 0.0) !important;
-}
+/* ========================================= */
+/* PEMBASMI TOMBOL MANAGE APP & FOOTER       */
+/* ========================================= */
+footer { visibility: hidden !important; }
+.viewerBadge_container__1QSob, .viewerBadge_link__1S137 { display: none !important; }
+div[data-testid="stAppViewContainer"] > div:last-child { display: none !important; opacity: 0 !important; }
+#Manage\ app, .stDeployButton { display: none !important; }
+div[style*="position: fixed"][style*="bottom: 0"] { display: none !important; }
+header[data-testid="stHeader"] { background: rgba(244, 247, 254, 0.0) !important; display: none !important; }
+
 hr {
     border-color: #cbd5e1 !important;
     margin: 8px 0 !important;
@@ -229,7 +253,7 @@ with st.sidebar:
         st.markdown("<h3 style='color: #d4af37 !important; margin:0; padding:0; font-size:16px;'>VISIONEST</h3><p style='color: #1e3a8a !important; margin:0; font-weight:800; font-size:11px;'>by DEMIURGEN</p>", unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #475569 !important; font-weight: 800; font-size: 11px; margin-left: 15px; margin-bottom: 0px; text-transform: uppercase;'>MAIN MENU</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #475569 !important; font-weight: 800; font-size: 13px; margin-left: 15px; margin-bottom: 0px; text-transform: uppercase;'>MAIN MENU</p>", unsafe_allow_html=True)
     
     page = st.radio("", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
     
