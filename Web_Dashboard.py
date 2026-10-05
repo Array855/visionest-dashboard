@@ -150,7 +150,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 .empty { display: flex; align-items: center; justify-content: center; min-height: 120px; color: var(--muted); font-weight: 600; }
 
 /* Header & Text Globals */
-.brand { font-size: 28px; font-weight: 800; color: var(--ink); }
+.brand { font-size: 28px; font-weight: 800; color: var(--ink); margin-top: -10px; } /* Margin atas dikurangi biar sejajar logo */
 .brand .gold { color: var(--accent); font-weight:400; } 
 .status { text-align: center; font-size: 14px; font-weight: 600; color: var(--muted); }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--ok); }
@@ -386,18 +386,20 @@ def send_ping(text):
     store.add_ping(ping)
 
 
-# ───────────────────────── Sidebar (Dengan Logo Baru) ─────────────────────────
+# ───────────────────────── Sidebar (Penyelarasan Logo & Tulisan Demiurgen) ─────────────────────────
 HOME, SUMMARY, ANALYSIS, LOGS = "Dashboard", "Stats", "Reports", "Log Files"
 
 with st.sidebar:
-    st.markdown("<br>", unsafe_allow_html=True)
-    # RENDER LOGO BARU FULL-WIDTH DI SIDEBAR
+    # Render Logo Baru Full-Width tanpa spasi <br> pembatas
     if os.path.exists(LOGO):
         st.image(LOGO, use_container_width=True)
     else:
         st.image(LOGO_REMOTE, use_container_width=True)
         
-    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+    # Tambahan tulisan "by DEMIURGEN" warna emas logo PENS persis di bawah logo
+    st.markdown("<div style='text-align:right; font-size:11px; font-weight:800; color:#eab308; margin-top:-10px; padding-right:15px; text-transform:uppercase; letter-spacing:1px;'>by DEMIURGEN</div>", unsafe_allow_html=True)
+    
+    st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;'>Directories</p>", unsafe_allow_html=True)
     page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS], label_visibility="collapsed")
     st.divider()
@@ -485,10 +487,12 @@ def metric_grid(s):
 
 def nest_figure(s, mat_p, mat_l):
     fig = go.Figure()
+    # Garis Batas Material (Abu-abu terang)
     fig.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode="lines",
                              line=dict(color="#cbd5e1", width=2), hoverinfo="skip"))
     for i, poly in enumerate(s["nested_polys"], 1):
         xs, ys = outline(poly)
+        # Pola Kain Biru Terang (Clean look)
         fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Piece {i}", hoverinfo="name",
                                  line=dict(color=ACCENT, width=2), fillcolor="rgba(59, 130, 246, 0.1)"))
         if len(xs) > 1:
