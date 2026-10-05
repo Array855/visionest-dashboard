@@ -26,6 +26,7 @@ DB_FILE = "visionest_logs.json"
 LOGO = "visionest_logo.png"
 LOGO_REMOTE = "https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/visionest_logo.png"
 LOGO_PARTNER = "logo_pens_kanan.png"
+LOGO_PARTNER_REMOTE = "https://raw.githubusercontent.com/alzak123/Textile-Nest/main/app/logo_pens_kanan.png"
 
 WIB = timezone(timedelta(hours=7), "WIB")  # WIB tidak pakai DST, offset tetap aman
 STALE_AFTER_S = 60  # tanpa data lebih lama dari ini = mesin dianggap diam
@@ -43,8 +44,7 @@ st.set_page_config(
 )
 
 # ───────────────────────── CSS ─────────────────────────
-# Tema terang diatur lewat .streamlit/config.toml, jadi CSS di sini hanya untuk
-# komponen custom. Jangan sembunyikan stAppViewContainer / stMain: itu area konten.
+# CSS Ini sudah dirapatkan (compact) biar muat 1 layar dan watermark dihapus
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
@@ -52,9 +52,17 @@ CSS = """
       --gold:#d4af37;--navy:#1e3a8a;--accent:#4318ff;--ok:#05cd99;}
 .stApp{background:var(--bg);}
 .stApp,.stApp :is(p,h1,h2,h3,h4,label,input,button,li,small){font-family:'Plus Jakarta Sans',sans-serif !important;}
-.block-container,[data-testid="stMainBlockContainer"]{padding:3rem 1.5rem 4rem !important;max-width:100% !important;}
+
+/* Padding dipres biar compact dan muat 1 layar penuh */
+.block-container,[data-testid="stMainBlockContainer"]{padding:1.5rem 1.5rem 1rem !important;max-width:100% !important;}
+
 header[data-testid="stHeader"]{background:transparent;}  /* jangan di-display:none: tombol sidebar ada di sini */
 footer{display:none !important;}
+
+/* PEMBASMI WATERMARK POJOK KANAN BAWAH */
+.viewerBadge_container__1QSob, .viewerBadge_link__1S137, .viewerBadge_text__1JaDK, .stDeployButton { display: none !important; }
+a[href^="https://streamlit.io/cloud"] { display: none !important; }
+#Manage\\ app { display: none !important; }
 
 /* Sidebar */
 [data-testid="stSidebar"]{background:#fff;border-right:1px solid var(--line);}
@@ -65,18 +73,18 @@ footer{display:none !important;}
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked){background:#eaf0ff;}
 
 /* Kartu */
-.card,[class*="st-key-card"]{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;}
-.card-title{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+.card,[class*="st-key-card"]{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;}
+.card-title{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:4px;}
 .card-value{font-size:28px;font-weight:800;color:var(--ink);line-height:1.15;}
 .card-value.sm{font-size:19px;}
 .unit{font-size:14px;font-weight:700;color:var(--muted);margin-left:4px;}
-.card-sub{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:4px;}
+.card-sub{font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px;}
 .row{display:flex;justify-content:space-between;align-items:baseline;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
-.stack{display:grid;gap:14px;}
+.stack{display:grid;gap:12px;}
 .pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12.5px;font-weight:700;background:#eef2ff;color:var(--accent);}
 .bar{height:8px;border-radius:99px;background:#e8edf9;overflow:hidden;margin-top:10px;}
-.bar > span{display:block;height:100%;border-radius:99px;background:var(--ok);}
+.bar > span{display:block;height:100%;border-radius:99px;background:var(--ok); transition: width 0.5s ease;}
 .empty{display:flex;align-items:center;justify-content:center;min-height:120px;color:var(--muted);font-weight:700;}
 
 /* Header */
@@ -106,13 +114,11 @@ def esc(value):
     """Escape semua teks dari MQTT sebelum masuk HTML (broker publik = input tidak tepercaya)."""
     return html.escape(str(value))
 
-
 def num(value, default=None):
     try:
         return float(value)
     except (TypeError, ValueError):
         return default
-
 
 def fmt(value, digits=1):
     v = num(value)
@@ -122,12 +128,10 @@ def fmt(value, digits=1):
         return f"{v:.0f}"
     return f"{v:.{digits}f}".rstrip("0").rstrip(".")
 
-
 def outline(poly):
     """Daftar titik [x, y] -> (xs, ys) dengan polygon tertutup."""
     pts = [(float(p[0]), float(p[1])) for p in poly]
     return [p[0] for p in pts] + [pts[0][0]], [p[1] for p in pts] + [pts[0][1]]
-
 
 def plot_layout(**kw):
     base = dict(
@@ -138,7 +142,6 @@ def plot_layout(**kw):
     )
     base.update(kw)
     return base
-
 
 PLOT_CONFIG = {"displayModeBar": False}
 
@@ -151,7 +154,6 @@ def load_db():
         return db.get("logs", []), db.get("last_log_ts")
     except (OSError, ValueError):
         return [], None
-
 
 def save_db(logs, last_ts):
     tmp = DB_FILE + ".tmp"
@@ -344,7 +346,6 @@ def card(title, value, unit="", sub=""):
     return (f'<div class="card"><div class="card-title">{esc(title)}</div>'
             f'<div class="card-value">{esc(value)}{unit_html}</div>{sub_html}</div>')
 
-
 def machine_cards(s):
     pct = max(0.0, min(100.0, num(s["progress_pct"], 0.0)))
     status = str(s["status"]).replace("_", " ").title()
@@ -362,7 +363,6 @@ def machine_cards(s):
     )
     return f'<div class="stack">{machine}{progress}</div>'
 
-
 def metric_grid(s):
     items = [
         card("Target output", fmt(s["target_qty"], 0), "pcs", "Total items in layout"),
@@ -371,7 +371,6 @@ def metric_grid(s):
         card("Shape class", s["shape_name"], "", "Detected pattern"),
     ]
     return f'<div class="grid">{"".join(items)}</div>'
-
 
 def nest_figure(s, mat_p, mat_l):
     fig = go.Figure()
@@ -383,12 +382,12 @@ def nest_figure(s, mat_p, mat_l):
                                  line=dict(color=WARN, width=2), fillcolor="rgba(245,158,11,0.25)"))
     fig.add_trace(go.Scatter(x=[num(s["pos_x"], 0.0)], y=[abs(num(s["pos_y"], 0.0))], mode="markers",
                              marker=dict(color=BAD, size=12), name="Laser tool"))
+    # Disesuaikan jadi 320px agar mengisi sisa ruang ke bawah
     fig.update_layout(**plot_layout(
-        height=270, showlegend=False, uirevision="nest",
+        height=320, showlegend=False, uirevision="nest",
         xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
     ))
     return fig
-
 
 def layout_card(s):
     mat_p, mat_l = num(s["mat_p"], 0.0), num(s["mat_l"], 0.0)
@@ -404,7 +403,7 @@ def layout_card(s):
             except (TypeError, ValueError, IndexError):
                 st.markdown('<div class="empty">Layout data is malformed.</div>', unsafe_allow_html=True)
         else:
-            st.markdown('<div class="empty" style="min-height:270px">No pattern loaded</div>', unsafe_allow_html=True)
+            st.markdown('<div class="empty" style="min-height:320px">No pattern loaded</div>', unsafe_allow_html=True)
 
 
 # ───────────────────────── Fragment (bagian yang auto-refresh) ─────────────────────────
@@ -421,7 +420,8 @@ def header():
     )
     if os.path.exists(LOGO_PARTNER):
         c_logo.image(LOGO_PARTNER, width=200)
-
+    else:
+        c_logo.image(LOGO_PARTNER_REMOTE, width=200)
 
 @st.fragment(run_every=REFRESH)
 def live_panel():
@@ -432,11 +432,10 @@ def live_panel():
     col_info.markdown(machine_cards(s), unsafe_allow_html=True)
     st.markdown(metric_grid(s), unsafe_allow_html=True)
 
-
 @st.fragment(run_every=REFRESH)
 def chat_messages():
     pings = store.pings_copy()
-    with st.container(height=140, border=False):
+    with st.container(height=160, border=False):
         if not pings:
             st.markdown('<div class="empty" style="min-height:100px">No messages yet.</div>', unsafe_allow_html=True)
         for p in reversed(pings):  # terbaru di atas, tidak perlu scroll
@@ -454,13 +453,12 @@ def chat_card():
         st.markdown('<div class="card-title">Communication log (web ↔ GUI)</div>', unsafe_allow_html=True)
         chat_messages()
         with st.form("ping_form", clear_on_submit=True, border=False):  # Enter = kirim, kotak otomatis kosong
-            c_in, c_btn = st.columns([5, 1], vertical_alignment="bottom")
+            c_in, c_btn = st.columns([8, 1], vertical_alignment="bottom")
             text = c_in.text_input("Message", placeholder="Type a message to the cutting GUI",
                                    label_visibility="collapsed")
-            sent = c_btn.form_submit_button("Send", type="primary")
+            sent = c_btn.form_submit_button("Send", type="primary", use_container_width=True)
         if sent and text.strip():
             send_ping(text.strip())
-
 
 def style_chart(fig):
     fig.update_layout(**plot_layout(
@@ -470,7 +468,6 @@ def style_chart(fig):
     fig.update_xaxes(type="category", showgrid=False)
     fig.update_yaxes(gridcolor=GRID)
     return fig
-
 
 def page_analysis():
     logs = store.logs_copy()
@@ -512,7 +509,6 @@ def page_analysis():
         style_chart(fig).update_traces(cliponaxis=False)
         fig.update_layout(legend_title_text="")
         st.plotly_chart(fig, key="qty_chart", config=PLOT_CONFIG)
-
 
 def page_logs():
     logs = store.logs_copy()
