@@ -12,31 +12,35 @@ from streamlit_autorefresh import st_autorefresh
 # Mode 'Light' dan Sidebar default kebuka
 st.set_page_config(page_title="VISIONEST Dashboard", page_icon="visionest_logo.png", layout="wide", initial_sidebar_state="expanded")
 
-# SUNTIKAN CSS TERANG (Sopan & Bersih)
+# SUNTIKAN CSS TERANG (Perbaikan Bug Teks Ngilang & Sidebar)
 st.markdown("""
 <style>
+    /* Paksa background cerah */
     .stApp {
         background-color: #f1f5f9;
         color: #0f172a;
     }
+    /* Paksa Sidebar cerah */
+    [data-testid="stSidebar"] {
+        background-color: #e2e8f0;
+        border-right: 2px solid #cbd5e1;
+    }
+    /* PAKSA SEMUA TEKS METRIK & LABEL JADI GELAP BIAR GAK NGILANG */
+    [data-testid="stMetricValue"], [data-testid="stMetricLabel"], .stRadio p, .stMarkdown p, h1, h2, h3, h4, h5, h6 {
+        color: #0f172a !important;
+    }
+    /* Warna kotak expander dan kontainer */
     .st-emotion-cache-1y4p8pa {
         background-color: #ffffff;
         border: 1px solid #cbd5e1;
     }
+    /* Garis pemisah */
     hr {
         border-color: #cbd5e1 !important;
-    }
-    h1, h2, h3, h4, h5, h6, .stMarkdown p {
-        color: #0f172a;
     }
     /* Sembunyikan margin atas biar lebih rapi */
     .block-container {
         padding-top: 2rem !important;
-    }
-    /* Percantik Sidebar */
-    [data-testid="stSidebar"] {
-        background-color: #e2e8f0;
-        border-right: 2px solid #cbd5e1;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -153,42 +157,12 @@ with st.sidebar:
     # --- NAVIGASI ---
     page = st.radio("Navigation Menu", ["🏠 HOME", "📈 ANALYSIS", "📝 PRODUCTION LOG"], label_visibility="collapsed")
     
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown("---")
-    
-    # --- SERIAL LOG / PING CHAT ---
-    st.markdown("### 📡 Serial Log")
-    if "ping_input" not in st.session_state:
-        st.session_state.ping_input = ""
-
-    def send_web_ping():
-        msg = st.session_state.ping_input_widget
-        if msg:
-            payload = {"sender": "WEB", "message": msg, "timestamp": time.strftime("%H:%M:%S")}
-            mqtt_client_instance.publish("advantech/wise/visionest/ping", json.dumps(payload), qos=1)
-            shared_data.setdefault("ping_msgs", []).append(payload)
-            st.session_state.ping_input_widget = "" 
-
-    chat_box = st.container(height=250)
-    with chat_box:
-        if not data.get("ping_msgs"):
-            st.caption("No messages. Send ping to GUI.")
-        for p in data.get("ping_msgs", []):
-            if p["sender"] == "WEB":
-                st.markdown(f"<div style='text-align: right; color: #0ea5e9; font-size:14px;'><b>[WEB]</b> {p['message']} <br><small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<div style='text-align: left; color: #10b981; font-size:14px;'><b>[GUI]</b> {p['message']} <br><small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
-
-    st.text_input("Msg box:", key="ping_input_widget", on_change=send_web_ping, label_visibility="collapsed", placeholder="Type message...")
-    st.button("🚀 Send", type="primary", on_click=send_web_ping, use_container_width=True)
-
 
 # ==========================================
 # 2. HEADER ATAS (Online, Time, Logo PENS)
 # ==========================================
 c_stat, c_time, c_logo = st.columns([3, 4, 3])
 with c_stat:
-    # ---> BUG FIX: Hilangin variabel MQTT_AVAILABLE, paksa selalu nulis ONLINE <---
     st.markdown("<h4 style='color:#10b981; margin-top:15px;'>📶 ONLINE</h4>", unsafe_allow_html=True)
 
 with c_time:
@@ -248,6 +222,37 @@ if page == "🏠 HOME":
     m5.metric("💠 Bentuk Kerja", f"{data['shape_name']}")
     
     st.progress(max(0.0, min(1.0, data['progress_pct'] / 100.0)))
+    
+    st.markdown("---")
+    
+    # ---> PERBAIKAN: SERIAL LOG DIPINDAH KE BAWAH 3D PREVIEW <---
+    st.markdown("### 📡 Serial Log (Web ↔ GUI)")
+    if "ping_input" not in st.session_state:
+        st.session_state.ping_input = ""
+
+    def send_web_ping():
+        msg = st.session_state.ping_input_widget
+        if msg:
+            payload = {"sender": "WEB", "message": msg, "timestamp": time.strftime("%H:%M:%S")}
+            mqtt_client_instance.publish("advantech/wise/visionest/ping", json.dumps(payload), qos=1)
+            shared_data.setdefault("ping_msgs", []).append(payload)
+            st.session_state.ping_input_widget = "" 
+
+    c_chat, c_input = st.columns([8, 2])
+    with c_chat:
+        chat_box = st.container(height=200)
+        with chat_box:
+            if not data.get("ping_msgs"):
+                st.caption("No messages yet. Send ping to GUI desktop.")
+            for p in data.get("ping_msgs", []):
+                if p["sender"] == "WEB":
+                    st.markdown(f"<div style='text-align: right; color: #0ea5e9; font-size:16px;'><b>[WEB]</b> {p['message']} <small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+                else:
+                    st.markdown(f"<div style='text-align: left; color: #10b981; font-size:16px;'><b>[GUI]</b> {p['message']} <small style='color: #94a3b8;'>({p['timestamp']})</small></div>", unsafe_allow_html=True)
+
+    with c_input:
+        st.text_input("Type message:", key="ping_input_widget", on_change=send_web_ping, label_visibility="collapsed", placeholder="Tulis pesan...")
+        st.button("🚀 Send", type="primary", on_click=send_web_ping, use_container_width=True)
 
 
 elif page == "📈 ANALYSIS":
@@ -347,7 +352,7 @@ elif page == "📝 PRODUCTION LOG":
 # ==========================================
 # FOOTER & AUTO REFRESH
 # ==========================================
-st.markdown("---")
+st.sidebar.markdown("---")
 is_auto_refresh = st.sidebar.toggle("🔄 Auto-Refresh", value=True, help="Disable this to analyze graphs without reloading.")
 
 if is_auto_refresh:
