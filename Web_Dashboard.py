@@ -34,16 +34,16 @@ STALE_AFTER_S = 60
 MAX_LOGS, MAX_PINGS, PAGE_SIZE = 500, 20, 25
 DEMO = os.getenv("VISIONEST_DEMO") == "1"
 
-# ---> WARNA THEME HYBRID (LIGHT BACKGROUND + POSTER COLORS) <---
-INK = "#0a1f54"         # Teks Utama (Deep Space Blue dari Poster)
-MUTED = "#64748b"       # Teks Sekunder (Abu-abu biru)
-GOLD = "#38bdf8"        # Aksen Biru Muda
-ACCENT = "#1e3a8a"      # Royal Blue (Untuk elemen penegas)
-OK = "#00d2ff"          # Neon Cyan dari Poster (Warna nyawa utama)
-WARN = "#f59e0b"        # Orange (Untuk Pola 2D)
-BAD = "#ef4444"         # Merah
-GRID = "#e2e8f0"        # Garis Grid terang
-PURPLE = "#8b5cf6"      # Ungu (Ditambahkan buat fix grafik error)
+# ---> WARNA THEME CLEAN ANALYTICS (LIGHT MODE) <---
+INK = "#1e293b"         
+MUTED = "#64748b"       
+GOLD = "#f59e0b"        
+ACCENT = "#3b82f6"      
+PURPLE = "#8b5cf6"      
+OK = "#0ea5e9"          
+WARN = "#f97316"        
+BAD = "#ef4444"         
+GRID = "#f1f5f9"        
 
 st.set_page_config(
     page_title="VISIONEST Dashboard",
@@ -52,20 +52,20 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ───────────────────────── CSS HYBRID CORPORATE ─────────────────────────
+# ───────────────────────── CSS CLEAN ANALYTICS ─────────────────────────
 CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 :root {
-    --bg: #f4f7fe;         
+    --bg: #f8fafc;         
     --card: #ffffff;       
-    --ink: #0a1f54;        
+    --ink: #1e293b;        
     --muted: #64748b;      
     --line: #e2e8f0;       
-    --gold: #38bdf8;       
-    --navy: #1e3a8a;       
-    --accent: #0a1f54;     
-    --ok: #00d2ff;         
+    --gold: #f59e0b;       
+    --navy: #0f172a;       
+    --accent: #3b82f6;     
+    --ok: #0ea5e9;         
 }
 
 html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
@@ -99,7 +99,7 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 [data-testid="stSidebarResizer"] { display: none !important; }
 [data-testid="stSidebarCollapseButton"], button[kind="headerNoPadding"] { display: none !important; }
 
-/* Navigasi Sidebar - Pill Shape Halus dengan Highlight Neon Cyan */
+/* Navigasi Sidebar - Pill Shape Halus */
 [data-testid="stSidebar"] div[role="radiogroup"] { gap: 8px; }
 [data-testid="stSidebar"] div[role="radiogroup"] label {
     padding: 12px 16px;
@@ -114,12 +114,12 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     color: var(--muted) !important;
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) {
-    background: #f4f7fe !important; 
-    border-left: 4px solid var(--ok); 
-    border-radius: 0 8px 8px 0;
+    background: #f1f5f9 !important; 
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
 }
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input:checked) p {
-    color: var(--ink) !important; 
+    color: var(--accent) !important; 
     font-weight: 800 !important;
 }
 
@@ -129,7 +129,8 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     border: 1px solid #f1f5f9 !important;
     border-radius: 12px;
     padding: 20px 24px;
-    box-shadow: 0 4px 15px rgba(10, 31, 84, 0.05); 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02); 
+    height: 100%;
 }
 .card-title { font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
 .card-value { font-size: 34px; font-weight: 800; color: var(--ink); line-height: 1.15; }
@@ -142,15 +143,15 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
 .stack { display: grid; gap: 16px; }
 
-/* Badges & Bars (Aksen Biru & Cyan) */
-.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #e0f2fe; color: #0284c7; }
-.bar { height: 8px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 12px; }
-.bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #1e3a8a, var(--ok)); transition: width 0.5s ease; } 
+/* Badges & Bars */
+.pill { display: inline-block; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #eff6ff; color: var(--accent); }
+.bar { height: 6px; border-radius: 99px; background: #f1f5f9; overflow: hidden; margin-top: 12px; }
+.bar > span { display: block; height: 100%; border-radius: 99px; background: var(--ok); transition: width 0.5s ease; }
 .empty { display: flex; align-items: center; justify-content: center; min-height: 120px; color: var(--muted); font-weight: 600; }
 
 /* Header & Text Globals */
 .brand { font-size: 28px; font-weight: 800; color: var(--ink); }
-.brand .gold { color: #0284c7; font-weight: 400; } 
+.brand .gold { color: var(--accent); font-weight:400; } 
 .status { text-align: center; font-size: 14px; font-weight: 600; color: var(--muted); }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; background: var(--ok); }
 .sep { display: inline-block; width: 1px; height: 14px; background: var(--line); margin: 0 16px; vertical-align: middle; }
@@ -171,8 +172,8 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 /* Chat */
 .msg { font-size: 14px; font-weight: 500; margin: 6px 0; }
 .msg small { color: var(--muted); font-weight: 400; }
-.msg.web { text-align: right; color: var(--navy); font-weight:700;}
-.msg.gui { text-align: left; color: #0284c7; font-weight:700;}
+.msg.web { text-align: right; color: var(--accent); }
+.msg.gui { text-align: left; color: var(--ok); }
 
 /* Expander/Logs */
 [data-testid="stExpander"] details { background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
@@ -385,17 +386,17 @@ def send_ping(text):
     store.add_ping(ping)
 
 
-# ───────────────────────── Sidebar ─────────────────────────
+# ───────────────────────── Sidebar (Dengan Logo Baru) ─────────────────────────
 HOME, SUMMARY, ANALYSIS, LOGS = "Dashboard", "Stats", "Reports", "Log Files"
 
 with st.sidebar:
-    c_logo, c_name = st.columns([3, 7], vertical_alignment="center")
-    c_logo.image(LOGO if os.path.exists(LOGO) else LOGO_REMOTE, width=48)
-    c_name.markdown(
-        "<div style='font-size:18px;font-weight:800;color:#0a1f54;line-height:1.2'>VISIONEST</div>"
-        "<div style='font-size:12px;font-weight:600;color:#38bdf8'>by DEMIURGEN</div>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("<br>", unsafe_allow_html=True)
+    # RENDER LOGO BARU FULL-WIDTH DI SIDEBAR
+    if os.path.exists(LOGO):
+        st.image(LOGO, use_container_width=True)
+    else:
+        st.image(LOGO_REMOTE, use_container_width=True)
+        
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;'>Directories</p>", unsafe_allow_html=True)
     page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS], label_visibility="collapsed")
@@ -585,7 +586,7 @@ def style_chart(fig):
     return fig
 
 
-# ─── HALAMAN STATS (FIXED PURPLE ERROR) ───
+# ─── HALAMAN STATS ───
 def page_summary():
     logs = store.logs_copy()
     
