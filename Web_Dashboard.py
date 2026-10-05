@@ -172,12 +172,17 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
 /* Chat */
 .msg { font-size: 14px; font-weight: 500; margin: 6px 0; }
 .msg small { color: var(--muted); font-weight: 400; }
-.msg.web { text-align: right; color: var(--accent); }
-.msg.gui { text-align: left; color: var(--ok); }
+.msg.web { text-align: right; color: var(--accent); font-weight:700;}
+.msg.gui { text-align: left; color: var(--ok); font-weight:700;}
 
 /* Expander/Logs */
 [data-testid="stExpander"] details { background: var(--card); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
 hr { border-color: var(--line) !important; margin: 12px 0 !important; }
+
+/* Tabel Spesifikasi */
+.specs-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 10px; }
+.specs-table th { padding: 12px 0; color: var(--muted); font-weight: 600; font-size: 14px; border-bottom: 1px solid var(--line); }
+.specs-table td { padding: 12px 0; color: var(--ink); font-weight: 800; font-size: 14px; border-bottom: 1px solid var(--line); text-align: right; }
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
@@ -386,8 +391,8 @@ def send_ping(text):
     store.add_ping(ping)
 
 
-# ───────────────────────── Sidebar ─────────────────────────
-HOME, SUMMARY, ANALYSIS, LOGS = "Dashboard", "Stats", "Reports", "Log Files"
+# ───────────────────────── Sidebar (Penyelarasan Menu Tambahan) ─────────────────────────
+HOME, SUMMARY, ANALYSIS, LOGS, HARDWARE, SETTINGS = "Dashboard", "Stats", "Reports", "Log Files", "Hardware Monitor", "System Settings"
 
 with st.sidebar:
     if os.path.exists(LOGO):
@@ -395,12 +400,14 @@ with st.sidebar:
     else:
         st.image(LOGO_REMOTE, use_container_width=True)
         
-    # FIX: MARGIN TOP NEGATIF DIPERBESAR AGAR TEKS NAIK MENEMPEL DENGAN LOGO
     st.markdown("<div style='text-align:right; font-size:11px; font-weight:800; color:#eab308; margin-top:-28px; padding-right:15px; text-transform:uppercase; letter-spacing:1px; position:relative; z-index:10;'>BY DEMIURGEN</div>", unsafe_allow_html=True)
     
     st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;'>Directories</p>", unsafe_allow_html=True)
-    page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS], label_visibility="collapsed")
+    
+    # ─── MENU BARU DIMASUKAN KESINI ───
+    page = st.radio("Menu", [HOME, SUMMARY, ANALYSIS, LOGS, HARDWARE, SETTINGS], label_visibility="collapsed")
+    
     st.divider()
     live = st.toggle("Live refresh", value=True)
 
@@ -564,7 +571,7 @@ def chat_messages():
             )
 
 
-# ───────────────────────── Halaman ─────────────────────────
+# ───────────────────────── Halaman Routing ─────────────────────────
 def chat_card():
     with st.container(key="card_chat"):
         st.markdown('<div class="card-title">Communication Log</div>', unsafe_allow_html=True)
@@ -587,7 +594,6 @@ def style_chart(fig):
     return fig
 
 
-# ─── HALAMAN STATS ───
 def page_summary():
     logs = store.logs_copy()
     
@@ -796,7 +802,70 @@ def page_logs():
         st.rerun()
 
 
-# ───────────────────────── Render ─────────────────────────
+# ─── HALAMAN BARU: HARDWARE MONITOR ───
+def page_hardware():
+    s = store.snapshot()
+    st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">Hardware Monitor</div>', unsafe_allow_html=True)
+    
+    conn_status = "CONNECTED" if client.is_connected() else "OFFLINE"
+    conn_color = OK if client.is_connected() else BAD
+    
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(card("Broker Connection", conn_status, "MQTT", f"Host: {BROKER}:{PORT}", val_color=conn_color), unsafe_allow_html=True)
+    with c2:
+        st.markdown(card("Device Identity", s.get("device_id", "Unknown"), "", "Main CNC Controller", val_color=ACCENT), unsafe_allow_html=True)
+        
+    st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
+    
+    with st.container(key="hardware_specs"):
+        st.markdown('<div class="card"><div class="card-title">Machine Specifications</div>', unsafe_allow_html=True)
+        st.markdown("""
+        <table class="specs-table">
+            <tr><th>Machine Model</th><td>Visionest Edge AI 2-Axis CNC</td></tr>
+            <tr><th>Main Controller</th><td>ESP32 + FluidNC Framework</td></tr>
+            <tr><th>Vision System</th><td>OpenCV Automated Nesting</td></tr>
+            <tr><th>Max Working Area</th><td>1200 mm × 800 mm</td></tr>
+            <tr><th>Telemetry Protocol</th><td>MQTT v5 over WebSockets</td></tr>
+        </table>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ─── HALAMAN BARU: SYSTEM SETTINGS ───
+def page_settings():
+    st.markdown('<div class="card-title" style="font-size:24px; margin-bottom:15px; color:var(--ink);">System Settings</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="card"><div class="card-title" style="color:var(--ink); font-size:18px; border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:15px;">Data Management</div>', unsafe_allow_html=True)
+    
+    logs = store.logs_copy()
+    if logs:
+        df = pd.DataFrame(logs)
+        csv_data = df.to_csv(index=False).encode('utf-8')
+        st.markdown("<p style='color:var(--muted); font-size:14px;'>Download all recorded production cycles to your local machine for external analysis.</p>", unsafe_allow_html=True)
+        st.download_button(
+            label="📥 Download Logs as CSV",
+            data=csv_data,
+            file_name=f"visionest_logs_{datetime.now(WIB).strftime('%Y%m%d')}.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+    else:
+        st.info("No production logs available to download.")
+        
+    st.markdown('<div style="height:30px;"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="card-title" style="color:var(--bad); font-size:18px; border-bottom:1px solid var(--bad); padding-bottom:10px; margin-bottom:15px;">Danger Zone</div>', unsafe_allow_html=True)
+    st.markdown("<p style='color:var(--muted); font-size:14px;'>Permanently delete all stored telemetry data and production logs from the dashboard's local storage.</p>", unsafe_allow_html=True)
+    
+    if st.button("🚨 Factory Reset (Delete All Logs & Data)", type="primary", use_container_width=True):
+        store.reset_logs()
+        st.toast("System wiped successfully!", icon="✅")
+        time.sleep(1)
+        st.rerun()
+        
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+# ───────────────────────── Render Routing ─────────────────────────
 header()
 st.markdown("<div style='height:6px'></div>", unsafe_allow_html=True)
 
@@ -807,5 +876,9 @@ elif page == SUMMARY:
     page_summary()
 elif page == ANALYSIS:
     page_analysis()
-else:
+elif page == LOGS:
     page_logs()
+elif page == HARDWARE:
+    page_hardware()
+elif page == SETTINGS:
+    page_settings()
