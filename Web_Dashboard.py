@@ -32,7 +32,6 @@ LOGO_PARTNER_REMOTE = "https://raw.githubusercontent.com/alzak123/Textile-Nest/m
 WIB = timezone(timedelta(hours=7), "WIB")
 STALE_AFTER_S = 60  
 MAX_LOGS, MAX_PINGS, PAGE_SIZE = 500, 20, 25
-DEMO = os.getenv("VISIONEST_DEMO") == "1"
 
 # ---> WARNA THEME CLEAN ANALYTICS (LIGHT MODE) <---
 INK = "#1e293b"         
@@ -311,8 +310,6 @@ class Store:
             "mat_p": 0.0, "mat_l": 0.0, "shape_name": "-", "shape_poly": [], "nested_polys": [],
             "duration_sec": None, "waste_pct": None, "timestamp": "",
         }
-        if DEMO:
-            self._seed_demo()
 
     def snapshot(self):
         with self._lock:
@@ -346,19 +343,30 @@ class Store:
             for key, value in payload.items():
                 if key not in self.state:
                     continue
-                # -> BUG FIX: Gak nolak array kosong lagi, biar pas di-reset beneran nampilin 0x0
                 self.state[key] = value
                 
             self.last_msg_at = time.time()
 
             if payload.get("status") != "CYCLE_COMPLETE":
                 return
-            self.state["progress_pct"] = 100
+                
             ts = payload.get("timestamp")
             if not ts or ts == self.last_log_ts:
                 return
+                
+            # ---> ANTI-GHOST PROTOCOL (Tolak Pesan Usang dari MQTT Server) <---
+            try:
+                msg_time = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+                # Kalau waktu pesan lebih jadul dari 1 jam yang lalu, anggep itu ghost message
+                if (datetime.now() - msg_time).total_seconds() > 3600:
+                    return 
+            except Exception:
+                pass 
+                
+            self.state["progress_pct"] = 100
             self.last_log_ts = ts
             s = self.state
+            
             self.logs.insert(0, {
                 "waktu": ts, "operator": s["operator"], "shift": s["shift"], "pcs": s["target_qty"],
                 "ukuran": f"{fmt(s['mat_p'])} x {fmt(s['mat_l'])}", "bentuk": s["shape_name"],
@@ -366,16 +374,6 @@ class Store:
             })
             del self.logs[MAX_LOGS:]
             save_db(self.logs, ts)
-
-    def _seed_demo(self):
-        rects = [[[x, y], [x + 170, y], [x + 170, y + 170], [x, y + 170]] for y in (20, 210) for x in (20, 210, 400)]
-        self.state.update(
-            device_id="VISIONEST-01", operator="User 1", shift="Shift 1", status="CUTTING", target_qty=6,
-            progress_pct=62, pos_x=210.0, pos_y=-95.0, mat_p=600.0, mat_l=400.0, shape_name="Square",
-            shape_poly=rects[0], nested_polys=rects, duration_sec=84.3, waste_pct=18.4,
-        )
-        self.last_msg_at = time.time()
-        self.pings = [{"sender": "GUI", "message": "System Ready", "timestamp": "09:12:03"}]
 
 
 @st.cache_resource
@@ -409,11 +407,12 @@ def get_mqtt():
     )
     client.on_connect = on_connect
     client.on_message = on_message
-    if not DEMO:
-        client.tls_set()
-        client.reconnect_delay_set(min_delay=1, max_delay=30)
-        client.connect_async(BROKER, PORT, keepalive=60)
-        client.loop_start()
+    
+    # Hubungkan selalu ke MQTT, hapus batasan mode demo
+    client.tls_set()
+    client.reconnect_delay_set(min_delay=1, max_delay=30)
+    client.connect_async(BROKER, PORT, keepalive=60)
+    client.loop_start()
     return client
 
 
@@ -421,8 +420,6 @@ store = get_store()
 client = get_mqtt()
 
 def link_status():
-    if DEMO:
-        return "Demo mode", ACCENT
     if not client.is_connected():
         return "Broker offline", BAD
     age = store.seconds_since_data()
@@ -432,11 +429,10 @@ def link_status():
 
 def send_ping(text):
     ping = {"sender": "WEB", "message": text, "timestamp": datetime.now(WIB).strftime("%H:%M:%S")}
-    if not DEMO:
-        if not client.is_connected():
-            st.toast("Broker offline, message not sent.", icon="⚠️")
-            return
-        client.publish(TOPIC_PING, json.dumps(ping), qos=1)
+    if not client.is_connected():
+        st.toast("Broker offline, message not sent.", icon="⚠️")
+        return
+    client.publish(TOPIC_PING, json.dumps(ping), qos=1)
     store.add_ping(ping)
 
 
@@ -922,6 +918,10 @@ def page_settings():
     
     if st.button("🚨 Factory Reset (Delete All Logs & Data)", type="primary", use_container_width=True):
         store.reset_logs()
+        # ---> SISTEM PENGUSIR HANTU (GHOST SWEEPER) <---
+        # Kita publish pesan kosong pakai retain=True biar server MQTT nge-delete cache nyangkutnya
+        if client.is_connected():
+            client.publish(TOPIC_TELEMETRY, json.dumps({"status": "SYSTEM_READY", "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")}), retain=True)
         st.toast("System wiped successfully!", icon="✅")
         time.sleep(1)
         st.rerun()
