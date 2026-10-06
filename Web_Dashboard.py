@@ -102,7 +102,7 @@ footer { display: none !important; }
 a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
-/* Padding Layout Pres 1 Layar */
+/* Padding Layout Pres 1 Layar untuk Desktop */
 .block-container, [data-testid="stMainBlockContainer"] {
     padding: 1rem 1rem 0rem !important;
     max-width: 100% !important;
@@ -113,8 +113,6 @@ a[href^="https://streamlit.io/cloud"] { display: none !important; }
     background-color: #ffffff !important;
     border-right: 1px solid var(--line) !important;
 }
-
-/* Sembunyikan pembatas tarik biar ukurannya statis tapi tetep bisa collapse */
 [data-testid="stSidebarResizer"] { display: none !important; }
 
 div[data-testid="stToggle"] {
@@ -198,15 +196,12 @@ hr { border-color: var(--line) !important; margin: 8px 0 !important; }
 .specs-table th { padding: 12px 0; color: var(--muted); font-weight: 600; font-size: 14px; border-bottom: 1px solid var(--line); }
 .specs-table td { padding: 12px 0; color: var(--ink); font-weight: 800; font-size: 14px; border-bottom: 1px solid var(--line); text-align: right; }
 
+/* ==================== MEDIA QUERIES ==================== */
 
-/* ==================== MEDIA QUERIES (RESPONSIVE HP & DESKTOP) ==================== */
-
-/* Tampilan khusus HP (Layar Kecil) */
 @media (max-width: 768px) {
     .block-container, [data-testid="stMainBlockContainer"] {
         padding: 0.5rem 0.5rem 1rem !important; 
     }
-    
     .brand { font-size: 22px; text-align: left; margin-bottom: 5px; }
     .status { font-size: 12px; text-align: left; }
     .sep { margin: 0 8px; }
@@ -219,24 +214,21 @@ hr { border-color: var(--line) !important; margin: 8px 0 !important; }
     [data-testid="stSidebar"] [data-testid="stImage"] {
         margin-top: 20px !important;
     }
-    
     .demiurgen-text {
-        margin-top: 5px !important;
+        margin-top: -10px !important;
         text-align: center !important;
         padding-right: 0px !important;
     }
 }
 
-/* Tampilan khusus Desktop / Laptop */
 @media (min-width: 769px) {
-    /* Narik Logo Sidebar ke atas biar sejajar sama Header (Cuma di Desktop) */
     [data-testid="stSidebar"] [data-testid="stImage"] {
         margin-top: -25px !important;
     }
     
-    /* Tulisan "By Demiurgen" masuk nyelip ke bawah logo (Cuma di Desktop) */
+    /* FIX MEPET: Margin ditarik lebih kuat lagi (-38px) */
     .demiurgen-text {
-        margin-top: -28px !important;
+        margin-top: -38px !important; 
         text-align: right !important;
         padding-right: 15px !important;
     }
