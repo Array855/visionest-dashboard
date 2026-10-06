@@ -226,7 +226,6 @@ hr { border-color: var(--line) !important; margin: 8px 0 !important; }
         margin-top: -25px !important;
     }
     
-    /* FIX MEPET: Margin ditarik lebih kuat lagi (-38px) */
     .demiurgen-text {
         margin-top: -38px !important; 
         text-align: right !important;
@@ -347,9 +346,9 @@ class Store:
             for key, value in payload.items():
                 if key not in self.state:
                     continue
-                if key in ("shape_poly", "nested_polys") and not value:
-                    continue
+                # -> BUG FIX: Gak nolak array kosong lagi, biar pas di-reset beneran nampilin 0x0
                 self.state[key] = value
+                
             self.last_msg_at = time.time()
 
             if payload.get("status") != "CYCLE_COMPLETE":
@@ -450,7 +449,7 @@ with st.sidebar:
     else:
         st.image(LOGO_REMOTE, use_container_width=True)
         
-    st.markdown("<div class='demiurgen-text' style='font-size:11px; font-weight:800; color:#eab308; text-transform:uppercase; letter-spacing:1px; position:relative; z-index:10;'>BY DEMIURGEN</div>", unsafe_allow_html=True)
+    st.markdown("<div class='demiurgen-text' style='font-size:11px; font-weight:800; color:#eab308; margin-top:-28px; padding-right:15px; text-transform:uppercase; letter-spacing:1px; position:relative; z-index:10;'>BY DEMIURGEN</div>", unsafe_allow_html=True)
     
     st.markdown("<div style='height:15px'></div>", unsafe_allow_html=True)
     st.markdown("<p style='font-size:11px; font-weight:700; color:#94a3b8; padding-left:15px; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;'>Directories</p>", unsafe_allow_html=True)
