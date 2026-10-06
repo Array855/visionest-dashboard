@@ -56,7 +56,7 @@ if "live_refresh" not in st.session_state:
 
 REFRESH = 2 if st.session_state.live_refresh else None
 
-# ───────────────────────── Auto-Translator B.Indo -> English ─────────────────────────
+# ───────────────────────── Auto-Translator & Optimizer ─────────────────────────
 SHAPE_TRANSLATOR = {
     "Segitiga": "Triangle",
     "Persegi": "Square",
@@ -71,6 +71,18 @@ SHAPE_TRANSLATOR = {
 def translate_shape(shape_name):
     clean_name = str(shape_name).strip()
     return SHAPE_TRANSLATOR.get(clean_name, clean_name)
+
+# FUNGSI BARU: NGitung kotak terkecil yang bisa nampung semua pola biar ga waste
+def calculate_optimal_material(nested_polys):
+    if not nested_polys:
+        return 0.0, 0.0
+    max_x, max_y = 0.0, 0.0
+    for poly in nested_polys:
+        for pt in poly:
+            if pt[0] > max_x: max_x = pt[0]
+            if pt[1] > max_y: max_y = pt[1]
+    # Kasih safety margin 10mm (5mm tiap sisi) buat ruang jepit mesin
+    return round(max_x + 10, 1), round(max_y + 10, 1)
 
 # ───────────────────────── CSS CLEAN ANALYTICS ─────────────────────────
 CSS = """
@@ -354,10 +366,8 @@ class Store:
             if not ts or ts == self.last_log_ts:
                 return
                 
-            # ---> ANTI-GHOST PROTOCOL (Tolak Pesan Usang dari MQTT Server) <---
             try:
                 msg_time = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
-                # Kalau waktu pesan lebih jadul dari 1 jam yang lalu, anggep itu ghost message
                 if (datetime.now() - msg_time).total_seconds() > 3600:
                     return 
             except Exception:
@@ -408,7 +418,6 @@ def get_mqtt():
     client.on_connect = on_connect
     client.on_message = on_message
     
-    # Hubungkan selalu ke MQTT, hapus batasan mode demo
     client.tls_set()
     client.reconnect_delay_set(min_delay=1, max_delay=30)
     client.connect_async(BROKER, PORT, keepalive=60)
@@ -534,19 +543,21 @@ def metric_grid(s):
 def nest_figure(s, mat_p, mat_l):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=[0, mat_p, mat_p, 0, 0], y=[0, 0, mat_l, mat_l, 0], mode="lines",
-                             line=dict(color="#cbd5e1", width=2), hoverinfo="skip"))
+                             line=dict(color="#94a3b8", width=3), hoverinfo="skip"))
+    
     for i, poly in enumerate(s["nested_polys"], 1):
         xs, ys = outline(poly)
         fig.add_trace(go.Scatter(x=xs, y=ys, fill="toself", mode="lines", name=f"Piece {i}", hoverinfo="name",
-                                 line=dict(color=ACCENT, width=2), fillcolor="rgba(59, 130, 246, 0.1)"))
+                                 line=dict(color=ACCENT, width=4), fillcolor="rgba(59, 130, 246, 0.15)"))
         if len(xs) > 1:
             avg_x = sum(xs[:-1]) / len(xs[:-1])
             avg_y = sum(ys[:-1]) / len(ys[:-1])
             fig.add_annotation(
                 x=avg_x, y=avg_y, text=f"<b>{i}</b>", showarrow=False, font=dict(color=INK, size=14)
             )
+            
     fig.add_trace(go.Scatter(x=[num(s["pos_x"], 0.0)], y=[abs(num(s["pos_y"], 0.0))], mode="markers",
-                             marker=dict(color=BAD, size=10), name="Laser tool"))
+                             marker=dict(color=BAD, size=12), name="Laser tool"))
     fig.update_layout(**plot_layout(
         height=250, showlegend=False, uirevision="nest", 
         xaxis=dict(visible=False), yaxis=dict(visible=False, scaleanchor="x", scaleratio=1),
@@ -745,13 +756,51 @@ def page_summary():
         st.markdown('</div>', unsafe_allow_html=True)
 
 
-# ─── HALAMAN REPORTS ───
+# ─── HALAMAN REPORTS (DENGAN SMART INSIGHT MATERIAL OPTIMIZATION) ───
 def page_analysis():
     logs = store.logs_copy()
     if not logs:
         st.markdown(card("Reports", "No data yet", "", "Charts appear after the first completed cut."),
                     unsafe_allow_html=True)
         return
+
+    # Hitung rata-rata waste dan potensi penghematan
+    total_input_area = 0.0
+    total_opt_area = 0.0
+    total_waste_pct = 0.0
+    valid_logs = 0
+    
+    for log_data in logs[:30]:
+        try:
+            waste = float(log_data.get("waste", 0))
+            total_waste_pct += waste
+            valid_logs += 1
+            
+            parts = str(log_data.get("ukuran", "0x0")).split('x')
+            w = float(parts[0].strip().replace('mm', ''))
+            h = float(parts[1].strip().replace('mm', ''))
+            total_input_area += (w * h)
+            
+            opt_w, opt_h = calculate_optimal_material(log_data.get("nested_polys", []))
+            if opt_w > 0 and opt_h > 0:
+                total_opt_area += (opt_w * opt_h)
+            else:
+                total_opt_area += (w * h)
+        except Exception:
+            pass
+            
+    avg_waste = (total_waste_pct / valid_logs) if valid_logs > 0 else 0.0
+    saved_pct = 0.0
+    if total_input_area > 0:
+        saved_pct = ((total_input_area - total_opt_area) / total_input_area) * 100
+        
+    if saved_pct > 0:
+        st.markdown(f'''
+        <div style="background-color:#eff6ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="color:#1e3a8a; margin-top:0px; margin-bottom:5px;">💡 Smart Insight: Material Optimization</h4>
+            <p style="color:#334155; font-size: 14px; margin:0px;">Your average material waste is currently <b>{avg_waste:.1f}%</b>. Based on actual bounding box calculations, you could save up to <b>{saved_pct:.1f}%</b> of your raw fabric supply if you pre-cut your materials closer to the <i>Optimal Material Size</i> recommended in the Log Files.</p>
+        </div>
+        ''', unsafe_allow_html=True)
 
     df = pd.DataFrame(logs[:30][::-1]).reindex(columns=["waktu", "operator", "shift", "pcs", "waste"]) 
     df["waste"] = pd.to_numeric(df["waste"], errors="coerce")
@@ -781,7 +830,7 @@ def page_analysis():
         st.plotly_chart(fig, key="qty_chart", config=PLOT_CONFIG)
 
 
-# ─── HALAMAN LOG FILES ───
+# ─── HALAMAN LOG FILES (DENGAN REKOMENDASI OPTIMAL SIZE) ───
 def page_logs():
     logs = store.logs_copy()
     st.markdown(card("Log Files", f"{len(logs)} records", "", "Newest first"), unsafe_allow_html=True)
@@ -794,11 +843,17 @@ def page_logs():
     for i, entry in enumerate(logs[:limit]):
         trans_shape = translate_shape(entry.get("bentuk", "-"))
         title = f'📄 {entry.get("waktu", "-")} | Op: {entry.get("operator", "-")} | {entry.get("pcs", 0)} pcs'
+        
+        # Hitung ukuran kotak pas (optimal) buat dipotong ke depannya
+        opt_w, opt_h = calculate_optimal_material(entry.get("nested_polys", []))
+        opt_text = f"{opt_w} x {opt_h} mm" if opt_w > 0 else "Unknown"
+        
         with st.expander(title):
             c_text, c_img = st.columns([6, 4])
             c_text.markdown(
                 f'<span style="color:var(--ink);">**Pieces:** {entry.get("pcs", 0)}</span>  \n'
-                f'<span style="color:var(--ink);">**Material:** {entry.get("ukuran", "-")} mm</span>  \n'
+                f'<span style="color:var(--ink);">**Input Size:** {entry.get("ukuran", "-")} mm</span>  \n'
+                f'<span style="color:#0ea5e9;">**Optimal Size:** {opt_text} (Recommended)</span>  \n'
                 f'<span style="color:var(--ink);">**Shape:** {trans_shape}</span>  \n'
                 f'<span style="color:var(--bad);">**Waste:** {fmt(entry.get("waste"))}%</span>',
                 unsafe_allow_html=True
@@ -918,8 +973,6 @@ def page_settings():
     
     if st.button("🚨 Factory Reset (Delete All Logs & Data)", type="primary", use_container_width=True):
         store.reset_logs()
-        # ---> SISTEM PENGUSIR HANTU (GHOST SWEEPER) <---
-        # Kita publish pesan kosong pakai retain=True biar server MQTT nge-delete cache nyangkutnya
         if client.is_connected():
             client.publish(TOPIC_TELEMETRY, json.dumps({"status": "SYSTEM_READY", "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")}), retain=True)
         st.toast("System wiped successfully!", icon="✅")
