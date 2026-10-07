@@ -81,7 +81,9 @@ def calculate_optimal_material(nested_polys):
         for pt in poly:
             if pt[0] > max_x: max_x = pt[0]
             if pt[1] > max_y: max_y = pt[1]
-         return round(max_x + 2.0, 1), round(max_y + 2.0, 1)   
+            
+
+    return round(max_x + 2.0, 1), round(max_y + 2.0, 1)
 
 # ───────────────────────── CSS CLEAN ANALYTICS ─────────────────────────
 CSS = """
