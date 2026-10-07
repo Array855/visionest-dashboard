@@ -72,7 +72,6 @@ def translate_shape(shape_name):
     clean_name = str(shape_name).strip()
     return SHAPE_TRANSLATOR.get(clean_name, clean_name)
 
-# FUNGSI BARU: NGitung kotak terkecil yang bisa nampung semua pola biar ga waste
 def calculate_optimal_material(nested_polys):
     if not nested_polys:
         return 0.0, 0.0
@@ -81,7 +80,6 @@ def calculate_optimal_material(nested_polys):
         for pt in poly:
             if pt[0] > max_x: max_x = pt[0]
             if pt[1] > max_y: max_y = pt[1]
-    # Kasih safety margin 10mm (5mm tiap sisi) buat ruang jepit mesin
     return round(max_x + 10, 1), round(max_y + 10, 1)
 
 # ───────────────────────── CSS CLEAN ANALYTICS ─────────────────────────
@@ -113,23 +111,18 @@ footer { display: none !important; }
 a[href^="https://streamlit.io/cloud"] { display: none !important; }
 #Manage\\ app { display: none !important; }
 
-/* Padding Layout Pres 1 Layar untuk Desktop */
 .block-container, [data-testid="stMainBlockContainer"] {
     padding: 1rem 1rem 0rem !important;
     max-width: 100% !important;
 }
 
-/* Sidebar Putih Bersih */
 [data-testid="stSidebar"] {
     background-color: #ffffff !important;
     border-right: 1px solid var(--line) !important;
 }
 [data-testid="stSidebarResizer"] { display: none !important; }
 
-div[data-testid="stToggle"] {
-    margin-top: -10px;
-    padding-left: 5px;
-}
+div[data-testid="stToggle"] { margin-top: -10px; padding-left: 5px; }
 
 [data-testid="stSidebar"] div[role="radiogroup"] { gap: 8px; }
 [data-testid="stSidebar"] div[role="radiogroup"] label {
@@ -207,41 +200,22 @@ hr { border-color: var(--line) !important; margin: 8px 0 !important; }
 .specs-table th { padding: 12px 0; color: var(--muted); font-weight: 600; font-size: 14px; border-bottom: 1px solid var(--line); }
 .specs-table td { padding: 12px 0; color: var(--ink); font-weight: 800; font-size: 14px; border-bottom: 1px solid var(--line); text-align: right; }
 
-/* ==================== MEDIA QUERIES ==================== */
-
 @media (max-width: 768px) {
-    .block-container, [data-testid="stMainBlockContainer"] {
-        padding: 0.5rem 0.5rem 1rem !important; 
-    }
+    .block-container, [data-testid="stMainBlockContainer"] { padding: 0.5rem 0.5rem 1rem !important; }
     .brand { font-size: 22px; text-align: left; margin-bottom: 5px; }
     .status { font-size: 12px; text-align: left; }
     .sep { margin: 0 8px; }
-    
     .card { padding: 12px 14px; }
     .card-value { font-size: 26px !important; }
     .card-value.sm { font-size: 16px !important; }
     .card-title { font-size: 12px; }
-    
-    [data-testid="stSidebar"] [data-testid="stImage"] {
-        margin-top: 20px !important;
-    }
-    .demiurgen-text {
-        margin-top: -10px !important;
-        text-align: center !important;
-        padding-right: 0px !important;
-    }
+    [data-testid="stSidebar"] [data-testid="stImage"] { margin-top: 20px !important; }
+    .demiurgen-text { margin-top: -10px !important; text-align: center !important; padding-right: 0px !important; }
 }
 
 @media (min-width: 769px) {
-    [data-testid="stSidebar"] [data-testid="stImage"] {
-        margin-top: -25px !important;
-    }
-    
-    .demiurgen-text {
-        margin-top: -38px !important; 
-        text-align: right !important;
-        padding-right: 15px !important;
-    }
+    [data-testid="stSidebar"] [data-testid="stImage"] { margin-top: -25px !important; }
+    .demiurgen-text { margin-top: -38px !important; text-align: right !important; padding-right: 15px !important; }
 }
 </style>
 """
@@ -756,7 +730,7 @@ def page_summary():
         st.markdown('</div>', unsafe_allow_html=True)
 
 
-# ─── HALAMAN REPORTS (DENGAN SMART INSIGHT MATERIAL OPTIMIZATION) ───
+# ─── HALAMAN REPORTS (SMART INSIGHT OPTIMIZED) ───
 def page_analysis():
     logs = store.logs_copy()
     if not logs:
@@ -764,7 +738,6 @@ def page_analysis():
                     unsafe_allow_html=True)
         return
 
-    # Hitung rata-rata waste dan potensi penghematan
     total_input_area = 0.0
     total_opt_area = 0.0
     total_waste_pct = 0.0
@@ -794,11 +767,19 @@ def page_analysis():
     if total_input_area > 0:
         saved_pct = ((total_input_area - total_opt_area) / total_input_area) * 100
         
-    if saved_pct > 0:
+    # LOGIKA THRESHOLD (Biar gak disuruh kecilin terus kalau udah optimal)
+    if saved_pct > 5.0:
         st.markdown(f'''
         <div style="background-color:#eff6ff; border-left: 4px solid #3b82f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
             <h4 style="color:#1e3a8a; margin-top:0px; margin-bottom:5px;">💡 Smart Insight: Material Optimization</h4>
             <p style="color:#334155; font-size: 14px; margin:0px;">Your average material waste is currently <b>{avg_waste:.1f}%</b>. Based on actual bounding box calculations, you could save up to <b>{saved_pct:.1f}%</b> of your raw fabric supply if you pre-cut your materials closer to the <i>Optimal Material Size</i> recommended in the Log Files.</p>
+        </div>
+        ''', unsafe_allow_html=True)
+    else:
+        st.markdown(f'''
+        <div style="background-color:#f0fdf4; border-left: 4px solid #10b981; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <h4 style="color:#047857; margin-top:0px; margin-bottom:5px;">✅ Excellent Material Efficiency</h4>
+            <p style="color:#334155; font-size: 14px; margin:0px;">Your average material waste is <b>{avg_waste:.1f}%</b>. Your material inputs are already perfectly matched to the bounding box of your patterns. Great job minimizing waste!</p>
         </div>
         ''', unsafe_allow_html=True)
 
@@ -830,7 +811,7 @@ def page_analysis():
         st.plotly_chart(fig, key="qty_chart", config=PLOT_CONFIG)
 
 
-# ─── HALAMAN LOG FILES (DENGAN REKOMENDASI OPTIMAL SIZE) ───
+# ─── HALAMAN LOG FILES ───
 def page_logs():
     logs = store.logs_copy()
     st.markdown(card("Log Files", f"{len(logs)} records", "", "Newest first"), unsafe_allow_html=True)
@@ -844,27 +825,35 @@ def page_logs():
         trans_shape = translate_shape(entry.get("bentuk", "-"))
         title = f'📄 {entry.get("waktu", "-")} | Op: {entry.get("operator", "-")} | {entry.get("pcs", 0)} pcs'
         
-        # Hitung ukuran kotak pas (optimal) buat dipotong ke depannya
         opt_w, opt_h = calculate_optimal_material(entry.get("nested_polys", []))
-        opt_text = f"{opt_w} x {opt_h} mm" if opt_w > 0 else "Unknown"
+        
+        mat_p, mat_l = 0, 0
+        try:
+            parts = entry.get('ukuran', '').split('x')
+            mat_p = float(parts[0].replace('mm', '').strip())
+            mat_l = float(parts[1].replace('mm', '').strip())
+        except: pass
+        
+        diff_w = abs(mat_p - opt_w)
+        diff_h = abs(mat_l - opt_h)
+        
+        if diff_w <= 15 and diff_h <= 15:
+            opt_text = "Already Optimal ✅"
+            opt_color = "#10b981"
+        else:
+            opt_text = f"{opt_w} x {opt_h} mm (Recommended)"
+            opt_color = "#0ea5e9"
         
         with st.expander(title):
             c_text, c_img = st.columns([6, 4])
             c_text.markdown(
                 f'<span style="color:var(--ink);">**Pieces:** {entry.get("pcs", 0)}</span>  \n'
                 f'<span style="color:var(--ink);">**Input Size:** {entry.get("ukuran", "-")} mm</span>  \n'
-                f'<span style="color:#0ea5e9;">**Optimal Size:** {opt_text} (Recommended)</span>  \n'
+                f'<span style="color:{opt_color};">**Optimal Size:** {opt_text}</span>  \n'
                 f'<span style="color:var(--ink);">**Shape:** {trans_shape}</span>  \n'
                 f'<span style="color:var(--bad);">**Waste:** {fmt(entry.get("waste"))}%</span>',
                 unsafe_allow_html=True
             )
-            
-            mat_p, mat_l = 0, 0
-            try:
-                parts = entry.get('ukuran', '').split('x')
-                mat_p = float(parts[0].replace('mm', '').strip())
-                mat_l = float(parts[1].replace('mm', '').strip())
-            except: pass
                 
             fig_nest = go.Figure()
             if mat_p > 0 and mat_l > 0:
