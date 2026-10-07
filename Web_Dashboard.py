@@ -72,6 +72,7 @@ def translate_shape(shape_name):
     clean_name = str(shape_name).strip()
     return SHAPE_TRANSLATOR.get(clean_name, clean_name)
 
+# ───────────────────────── FUNGSI ALGORITMA MATERIAL OPTIMIZER ─────────────────────────
 def calculate_optimal_material(nested_polys):
     if not nested_polys:
         return 0.0, 0.0
@@ -80,7 +81,7 @@ def calculate_optimal_material(nested_polys):
         for pt in poly:
             if pt[0] > max_x: max_x = pt[0]
             if pt[1] > max_y: max_y = pt[1]
-    return round(max_x + 10, 1), round(max_y + 10, 1)
+         return round(max_x + 2.0, 1), round(max_y + 2.0, 1)   
 
 # ───────────────────────── CSS CLEAN ANALYTICS ─────────────────────────
 CSS = """
